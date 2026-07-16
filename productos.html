@@ -16,6 +16,7 @@
     --gold:#c89b3c;
     --gold-deep:#9c7326;
     --aubergine:#3d2b2e;
+    --coffee:#3f2e20;
     --linen:#f3eee0;
     --paper:#fbf9f2;
     --line:rgba(32,40,26,0.14);
@@ -29,26 +30,27 @@
   img,svg{ display:block; }
 
   /* ---------- top utility bar ---------- */
-  .topbar{ background:var(--ink); color:var(--paper); font-size:12.5px;}
-  .topbar .wrap{ display:flex; justify-content:flex-end; gap:22px; padding:7px 32px; opacity:0.8;}
+  .topbar{ background:var(--coffee); color:var(--paper); font-size:12.5px; padding:9px 0;}
+  .topbar .wrap{ display:flex; align-items:center; justify-content:center; gap:10px; text-transform:uppercase; letter-spacing:0.05em; font-weight:600;}
 
   /* ---------- header ---------- */
   header{ position:sticky; top:0; z-index:50; background:rgba(251,249,242,0.96); backdrop-filter:blur(6px); border-bottom:1px solid var(--line);}
-  .nav{ display:flex; align-items:center; justify-content:space-between; padding:16px 0; gap:28px;}
-  .logo{ display:flex; align-items:center; gap:10px; font-family:'Archivo', sans-serif; font-size:21px; font-weight:600;}
+  .nav{ display:grid; grid-template-columns:1fr auto 1fr; align-items:center; padding:16px 0; gap:20px;}
+  .logo{ display:flex; align-items:center; justify-content:center; gap:10px; font-family:'Archivo', sans-serif; font-size:21px; font-weight:600;}
   .logo-mark{ height:46px; width:auto; display:block; }
-  .nav-links{ display:flex; align-items:center; gap:30px; font-size:14.5px; font-weight:500;}
-  .nav-links a{ opacity:0.82; transition:opacity .15s; white-space:nowrap;}
+  .nav-links{ display:flex; align-items:center; gap:26px; font-size:14px; font-weight:600; text-transform:uppercase; letter-spacing:0.02em;}
+  .nav-links a{ opacity:0.8; transition:opacity .15s; white-space:nowrap;}
   .nav-links a:hover{ opacity:1; color:var(--olive-deep);}
   .nav-links a.active{ opacity:1; color:var(--olive-deep);}
-  .search-box{ display:flex; align-items:center; gap:8px; border:1px solid rgba(32,40,26,0.22); border-radius:24px; padding:9px 16px; flex:1; max-width:230px; background:var(--paper); transition:border-color .15s;}
-  .search-box:focus-within{ border-color:var(--olive-deep);}
-  .search-box input{ border:none; background:transparent; outline:none; font-size:13.5px; font-family:'Public Sans',sans-serif; width:100%; color:var(--ink);}
-  .search-box svg{ opacity:0.55; flex-shrink:0;}
-  .btn{ display:inline-flex; align-items:center; gap:8px; padding:11px 22px; border-radius:6px; font-size:13.5px; font-weight:600; letter-spacing:0.01em; cursor:pointer; border:1px solid transparent; transition:transform .15s, background .15s; white-space:nowrap;}
+  .nav-actions{ display:flex; align-items:center; justify-content:flex-end; gap:12px;}
+  .icon-link-btn{ width:38px; height:38px; border-radius:50%; border:1.5px solid var(--line); display:flex; align-items:center; justify-content:center; transition:border-color .15s; flex-shrink:0;}
+  .icon-link-btn:hover{ border-color:var(--olive-deep);}
+  .btn{ display:inline-flex; align-items:center; gap:8px; padding:11px 22px; border-radius:6px; font-size:13px; font-weight:700; letter-spacing:0.02em; text-transform:uppercase; cursor:pointer; border:1px solid transparent; transition:transform .15s, background .15s; white-space:nowrap;}
   .btn:hover{ transform:translateY(-1px); }
   .btn-primary{ background:var(--olive-deep); color:var(--paper); }
   .btn-primary:hover{ background:var(--ink); }
+  .btn-gold{ background:var(--gold); color:var(--ink); }
+  .btn-gold:hover{ background:var(--gold-deep); color:var(--paper);}
 
   /* ---------- page header ---------- */
   .page-hero{ padding:56px 0 36px; text-align:center;}
@@ -64,6 +66,10 @@
   .pill:hover{ border-color:var(--olive-light); opacity:1;}
   .pill.active{ background:var(--olive-deep); border-color:var(--olive-deep); color:var(--paper); opacity:1;}
   .filters-secondary{ display:flex; align-items:center; gap:12px;}
+  .search-box{ display:flex; align-items:center; gap:8px; border:1px solid rgba(32,40,26,0.22); border-radius:24px; padding:9px 16px; background:var(--paper); transition:border-color .15s;}
+  .search-box:focus-within{ border-color:var(--olive-deep);}
+  .search-box input{ border:none; background:transparent; outline:none; font-size:13.5px; font-family:'Public Sans',sans-serif; width:170px; color:var(--ink);}
+  .search-box svg{ opacity:0.55; flex-shrink:0;}
   select{ font-family:'Public Sans',sans-serif; font-size:13px; font-weight:500; padding:9px 14px; border-radius:20px; border:1.5px solid var(--line); background:var(--paper); color:var(--ink); cursor:pointer;}
 
   /* ---------- results ---------- */
@@ -104,7 +110,8 @@
 
   @media (max-width:960px){ .prod-grid{ grid-template-columns:repeat(2,1fr);} }
   @media (max-width:860px){
-    .nav-links, .search-box{ display:none;}
+    .nav{ grid-template-columns:auto 1fr auto;}
+    .nav-links{ display:none;}
     .foot-grid{ grid-template-columns:1fr;}
     .filters{ top:65px;}
   }
@@ -113,22 +120,28 @@
 </head>
 <body>
 
-<div class="topbar"><div class="wrap"><span>+56 9 8825 6980</span><span>proolivachile@gmail.com</span></div></div>
+<div class="topbar">
+  <div class="wrap">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 7h11v9H3z" stroke="#fbf9f2" stroke-width="1.6"/><path d="M14 10h4l3 3v3h-7v-6Z" stroke="#fbf9f2" stroke-width="1.6"/><circle cx="7" cy="18" r="1.6" fill="#fbf9f2"/><circle cx="17" cy="18" r="1.6" fill="#fbf9f2"/></svg>
+    <span>Despacho gratis en Viña del Mar, por ventas sobre $40.000</span>
+  </div>
+</div>
 
 <header>
   <div class="wrap nav">
-    <a class="logo" href="index.html"><img class="logo-mark" src="logo.png" alt="ProOlivas Chile"></a>
     <nav class="nav-links">
-      <a href="index.html">Home</a>
       <a href="productos.html" class="active">Productos</a>
-      <a href="index.html#nosotros">Quienes somos</a>
-      <a href="index.html#contacto">Contáctanos</a>
+      <a href="productos.html?cat=packs">Packs</a>
+      <a href="productos.html?cat=ofertas">Ofertas</a>
+      <a href="productos.html?cat=regalos">Regalos</a>
     </nav>
-    <div class="search-box">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-      <input type="text" id="searchInput" placeholder="Buscar productos...">
+    <a class="logo" href="index.html"><img class="logo-mark" src="logo.png" alt="ProOlivas Chile"></a>
+    <div class="nav-actions">
+      <a class="btn btn-gold" href="catalogo.pdf" download>Descargar catálogo</a>
+      <a class="icon-link-btn" href="#" id="searchToggle" aria-label="Buscar productos">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </a>
     </div>
-    <a class="btn btn-primary" href="productos.html">Catálogo de productos</a>
   </div>
 </header>
 
@@ -146,8 +159,15 @@
       <button class="pill" data-category="aceitunas-mesa">Aceitunas de mesa</button>
       <button class="pill" data-category="aceitunas-premium">Aceitunas premium</button>
       <button class="pill" data-category="aceitunas-especiales">Especiales</button>
+      <button class="pill" data-category="packs">Packs</button>
+      <button class="pill" data-category="ofertas">Ofertas</button>
+      <button class="pill" data-category="regalos">Regalos</button>
     </div>
     <div class="filters-secondary">
+      <div class="search-box">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <input type="text" id="searchInput" placeholder="Buscar productos...">
+      </div>
       <select id="originFilter">
         <option value="all">Todos los orígenes</option>
         <option value="Chile">Chile</option>
@@ -179,7 +199,7 @@
       </div>
       <div>
         <h4>Menú</h4>
-        <a href="index.html">Home</a><a href="productos.html">Productos</a><a href="index.html#nosotros">Quienes somos</a><a href="index.html#contacto">Contáctanos</a>
+        <a href="index.html">Home</a><a href="productos.html">Productos</a><a href="index.html#nosotros">Quienes somos</a><a href="index.html#contacto">Contáctanos</a><a href="politicas.html">Políticas y términos</a>
       </div>
       <div>
         <h4>Enlaces útiles</h4>
@@ -188,7 +208,7 @@
         <div class="row">@proolivachile</div>
       </div>
     </div>
-    <div class="foot-bottom"><span>Copyright © 2026 ProOliva. Todos los derechos reservados.</span><span>Propuesta de rediseño</span></div>
+    <div class="foot-bottom"><span>Copyright © 2026 ProOliva. Todos los derechos reservados.</span><a href="politicas.html" style="opacity:1;">Políticas y términos</a></div>
   </div>
 </footer>
 
@@ -203,7 +223,10 @@
     'aceites': 'Aceites de oliva',
     'aceitunas-mesa': 'Aceitunas de mesa',
     'aceitunas-premium': 'Aceitunas premium',
-    'aceitunas-especiales': 'Especiales'
+    'aceitunas-especiales': 'Especiales',
+    'packs': 'Packs',
+    'ofertas': 'Ofertas',
+    'regalos': 'Regalos'
   };
 
   let allProducts = [];
@@ -279,6 +302,16 @@
 
     allProducts = data || [];
     renderProducts();
+  }
+
+  // Si llegamos desde un link tipo productos.html?cat=packs, preseleccionamos ese filtro
+  const urlParams = new URLSearchParams(window.location.search);
+  const catParam = urlParams.get('cat');
+  if (catParam && CATEGORY_LABELS[catParam]){
+    activeCategory = catParam;
+    document.querySelectorAll('#categoryFilters .pill').forEach(p => {
+      p.classList.toggle('active', p.dataset.category === catParam);
+    });
   }
 
   document.getElementById('categoryFilters').addEventListener('click', (e) => {
