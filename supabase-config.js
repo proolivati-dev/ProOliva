@@ -12,7 +12,7 @@
 // hecho de que esta clave esté oculta.
 // ============================================================
 
-const SUPABASE_URL = 'https://TU-PROYECTO.supabase.co';
-const SUPABASE_ANON_KEY = 'TU-ANON-KEY-PUBLICA';
+const SUPABASE_URL = 'https://wunbwqzqhteblxabpkdn.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_prXCzf__xayLzRYUf86lWA_ONnrx3qx';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
