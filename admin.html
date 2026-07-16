@@ -264,7 +264,14 @@
     const password = document.getElementById('loginPassword').value;
     const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
     if (error){
-      loginError.textContent = 'Correo o contraseña incorrectos.';
+      const msg = (error.message || '').toLowerCase();
+      if (msg.includes('fetch') || msg.includes('network')){
+        loginError.textContent = 'No se pudo conectar con Supabase. Revisa que supabase-config.js tenga tu URL y tu key reales (no los valores de ejemplo "TU-PROYECTO"/"TU-PUBLISHABLE-KEY").';
+      } else if (msg.includes('invalid login credentials')){
+        loginError.textContent = 'Correo o contraseña incorrectos — o el usuario todavía no está confirmado en Supabase (Authentication → Users → columna "Confirmed").';
+      } else {
+        loginError.textContent = 'Error de Supabase: ' + error.message;
+      }
       loginError.style.display = 'block';
       return;
     }
