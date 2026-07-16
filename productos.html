@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Productos — ProOliva</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#20281a;
+    --olive:#55643b;
+    --olive-deep:#3a4527;
+    --olive-light:#8a9a66;
+    --gold:#c89b3c;
+    --gold-deep:#9c7326;
+    --aubergine:#3d2b2e;
+    --linen:#f3eee0;
+    --paper:#fbf9f2;
+    --line:rgba(32,40,26,0.14);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{ font-family:'Public Sans', sans-serif; background:var(--linen); color:var(--ink); line-height:1.6; -webkit-font-smoothing:antialiased;}
+  h1,h2,h3{ font-family:'Archivo', sans-serif; font-weight:700; color:var(--ink); line-height:1.15; letter-spacing:-0.01em;}
+  .eyebrow{ font-family:'IBM Plex Mono', monospace; font-size:12px; letter-spacing:0.12em; text-transform:uppercase; color:var(--gold-deep);}
+  a{ color:inherit; text-decoration:none; }
+  .wrap{ max-width:1120px; margin:0 auto; padding:0 32px; }
+  img,svg{ display:block; }
+
+  /* ---------- top utility bar ---------- */
+  .topbar{ background:var(--ink); color:var(--paper); font-size:12.5px;}
+  .topbar .wrap{ display:flex; justify-content:flex-end; gap:22px; padding:7px 32px; opacity:0.8;}
+
+  /* ---------- header ---------- */
+  header{ position:sticky; top:0; z-index:50; background:rgba(251,249,242,0.96); backdrop-filter:blur(6px); border-bottom:1px solid var(--line);}
+  .nav{ display:flex; align-items:center; justify-content:space-between; padding:16px 0; gap:28px;}
+  .logo{ display:flex; align-items:center; gap:10px; font-family:'Archivo', sans-serif; font-size:21px; font-weight:600;}
+  .logo-mark{ height:46px; width:auto; display:block; }
+  .nav-links{ display:flex; align-items:center; gap:30px; font-size:14.5px; font-weight:500;}
+  .nav-links a{ opacity:0.82; transition:opacity .15s; white-space:nowrap;}
+  .nav-links a:hover{ opacity:1; color:var(--olive-deep);}
+  .nav-links a.active{ opacity:1; color:var(--olive-deep);}
+  .search-box{ display:flex; align-items:center; gap:8px; border:1px solid rgba(32,40,26,0.22); border-radius:24px; padding:9px 16px; flex:1; max-width:230px; background:var(--paper); transition:border-color .15s;}
+  .search-box:focus-within{ border-color:var(--olive-deep);}
+  .search-box input{ border:none; background:transparent; outline:none; font-size:13.5px; font-family:'Public Sans',sans-serif; width:100%; color:var(--ink);}
+  .search-box svg{ opacity:0.55; flex-shrink:0;}
+  .btn{ display:inline-flex; align-items:center; gap:8px; padding:11px 22px; border-radius:6px; font-size:13.5px; font-weight:600; letter-spacing:0.01em; cursor:pointer; border:1px solid transparent; transition:transform .15s, background .15s; white-space:nowrap;}
+  .btn:hover{ transform:translateY(-1px); }
+  .btn-primary{ background:var(--olive-deep); color:var(--paper); }
+  .btn-primary:hover{ background:var(--ink); }
+
+  /* ---------- page header ---------- */
+  .page-hero{ padding:56px 0 36px; text-align:center;}
+  .page-hero .eyebrow{ margin-bottom:10px; display:block;}
+  .page-hero h1{ font-size:38px; margin-bottom:12px;}
+  .page-hero p{ opacity:0.72; max-width:480px; margin:0 auto;}
+
+  /* ---------- filters ---------- */
+  .filters{ position:sticky; top:79px; z-index:40; background:var(--linen); padding:18px 0; border-bottom:1px solid var(--line);}
+  .filters-row{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; justify-content:space-between;}
+  .pill-group{ display:flex; gap:8px; flex-wrap:wrap;}
+  .pill{ font-family:'Public Sans', sans-serif; font-size:13px; font-weight:600; padding:8px 16px; border-radius:20px; border:1.5px solid var(--line); background:var(--paper); cursor:pointer; transition:all .15s; color:var(--ink); opacity:0.75;}
+  .pill:hover{ border-color:var(--olive-light); opacity:1;}
+  .pill.active{ background:var(--olive-deep); border-color:var(--olive-deep); color:var(--paper); opacity:1;}
+  .filters-secondary{ display:flex; align-items:center; gap:12px;}
+  select{ font-family:'Public Sans',sans-serif; font-size:13px; font-weight:500; padding:9px 14px; border-radius:20px; border:1.5px solid var(--line); background:var(--paper); color:var(--ink); cursor:pointer;}
+
+  /* ---------- results ---------- */
+  .results-bar{ padding:24px 0 8px; font-family:'IBM Plex Mono', monospace; font-size:11.5px; letter-spacing:0.04em; text-transform:uppercase; color:var(--ink); opacity:0.55;}
+
+  .prod-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:22px; padding:24px 0 80px;}
+  .prod-card{ background:var(--paper); border:1px solid var(--line); border-radius:12px; overflow:hidden; transition:transform .15s, box-shadow .15s; display:flex; flex-direction:column;}
+  .prod-card:hover{ transform:translateY(-4px); box-shadow:0 18px 32px -18px rgba(32,40,26,0.4);}
+  .prod-visual{ height:190px; background:var(--linen); position:relative; overflow:hidden;}
+  .prod-visual img{ width:100%; height:100%; object-fit:cover;}
+  .prod-badge{ position:absolute; top:12px; left:12px; background:var(--gold); color:var(--ink); font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.06em; text-transform:uppercase; padding:5px 10px; border-radius:20px; font-weight:600;}
+  .prod-body{ padding:18px; display:flex; flex-direction:column; gap:8px; flex:1;}
+  .prod-cat{ font-family:'IBM Plex Mono', monospace; font-size:10px; letter-spacing:0.08em; text-transform:uppercase; color:var(--gold-deep);}
+  .prod-body h3{ font-size:16.5px; margin-bottom:2px;}
+  .prod-meta{ font-size:12.5px; opacity:0.6;}
+  .prod-price{ font-family:'Archivo', sans-serif; font-weight:700; font-size:19px; color:var(--olive-deep); margin-top:auto; padding-top:8px;}
+  .prod-actions{ display:flex; gap:8px; padding:0 18px 18px;}
+  .btn-wsp{ flex:1; background:#25D366; color:#fff; text-align:center; padding:10px; border-radius:6px; font-size:13px; font-weight:600; display:flex; align-items:center; justify-content:center; gap:6px;}
+  .btn-wsp:hover{ background:#1fb959;}
+
+  /* ---------- states ---------- */
+  .state-msg{ text-align:center; padding:80px 20px; opacity:0.6;}
+  .state-msg svg{ margin:0 auto 16px;}
+  .skeleton{ background:linear-gradient(90deg, var(--line) 25%, rgba(32,40,26,0.06) 37%, var(--line) 63%); background-size:400% 100%; animation:shimmer 1.4s ease infinite;}
+  @keyframes shimmer{ 0%{background-position:100% 0;} 100%{background-position:0 0;} }
+
+  /* ---------- footer ---------- */
+  footer{ background:var(--paper); border-top:1px solid var(--line); padding:56px 0 24px; margin-top:40px;}
+  .foot-grid{ display:grid; grid-template-columns:1.4fr 1fr 1fr; gap:40px; padding-bottom:32px;}
+  .foot-logo{ display:flex; align-items:center; margin-bottom:14px;}
+  .foot-logo img{ height:64px;}
+  .foot-grid h4{ font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--gold-deep); margin-bottom:14px;}
+  .foot-grid a, .foot-grid .row{ display:flex; align-items:center; gap:8px; font-size:14px; opacity:0.75; margin-bottom:10px;}
+  .foot-bottom{ display:flex; justify-content:space-between; padding-top:20px; border-top:1px solid var(--line); font-size:12px; opacity:0.55;}
+
+  .wsp-float{ position:fixed; bottom:26px; right:26px; z-index:80; width:58px; height:58px; border-radius:50%; background:#25D366; display:flex; align-items:center; justify-content:center; box-shadow:0 10px 24px rgba(37,211,102,0.4); transition:transform .15s;}
+  .wsp-float:hover{ transform:scale(1.07);}
+
+  @media (max-width:960px){ .prod-grid{ grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:860px){
+    .nav-links, .search-box{ display:none;}
+    .foot-grid{ grid-template-columns:1fr;}
+    .filters{ top:65px;}
+  }
+  @media (max-width:600px){ .prod-grid{ grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+
+<div class="topbar"><div class="wrap"><span>+56 9 8825 6980</span><span>proolivachile@gmail.com</span></div></div>
+
+<header>
+  <div class="wrap nav">
+    <a class="logo" href="index.html"><img class="logo-mark" src="logo.png" alt="ProOlivas Chile"></a>
+    <nav class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="productos.html" class="active">Productos</a>
+      <a href="index.html#nosotros">Quienes somos</a>
+      <a href="index.html#contacto">Contáctanos</a>
+    </nav>
+    <div class="search-box">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <input type="text" id="searchInput" placeholder="Buscar productos...">
+    </div>
+    <a class="btn btn-primary" href="productos.html">Catálogo de productos</a>
+  </div>
+</header>
+
+<div class="page-hero wrap">
+  <span class="eyebrow">Catálogo completo</span>
+  <h1>Nuestros productos</h1>
+  <p>Aceites de oliva y aceitunas de mesa con trazabilidad de origen. Filtra por categoría y origen, o cotiza cualquier producto directo por WhatsApp.</p>
+</div>
+
+<div class="filters">
+  <div class="wrap filters-row">
+    <div class="pill-group" id="categoryFilters">
+      <button class="pill active" data-category="all">Todos</button>
+      <button class="pill" data-category="aceites">Aceites de oliva</button>
+      <button class="pill" data-category="aceitunas-mesa">Aceitunas de mesa</button>
+      <button class="pill" data-category="aceitunas-premium">Aceitunas premium</button>
+      <button class="pill" data-category="aceitunas-especiales">Especiales</button>
+    </div>
+    <div class="filters-secondary">
+      <select id="originFilter">
+        <option value="all">Todos los orígenes</option>
+        <option value="Chile">Chile</option>
+        <option value="Perú">Perú</option>
+        <option value="España">España</option>
+        <option value="Argentina">Argentina</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="results-bar" id="resultsBar">Cargando productos...</div>
+  <div class="prod-grid" id="productGrid">
+    <!-- Skeletons mientras carga -->
+    <div class="prod-card"><div class="prod-visual skeleton"></div><div class="prod-body"><div style="height:12px;width:60%;background:var(--line);border-radius:4px;"></div></div></div>
+    <div class="prod-card"><div class="prod-visual skeleton"></div><div class="prod-body"><div style="height:12px;width:60%;background:var(--line);border-radius:4px;"></div></div></div>
+    <div class="prod-card"><div class="prod-visual skeleton"></div><div class="prod-body"><div style="height:12px;width:60%;background:var(--line);border-radius:4px;"></div></div></div>
+    <div class="prod-card"><div class="prod-visual skeleton"></div><div class="prod-body"><div style="height:12px;width:60%;background:var(--line);border-radius:4px;"></div></div></div>
+  </div>
+</div>
+
+<footer id="contacto">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-logo"><img src="logo.png" alt="ProOlivas Chile"></div>
+        <p style="opacity:0.7; font-size:13.5px; max-width:260px;">Aceite de oliva y aceitunas de mesa con tradición familiar desde 1998.</p>
+      </div>
+      <div>
+        <h4>Menú</h4>
+        <a href="index.html">Home</a><a href="productos.html">Productos</a><a href="index.html#nosotros">Quienes somos</a><a href="index.html#contacto">Contáctanos</a>
+      </div>
+      <div>
+        <h4>Enlaces útiles</h4>
+        <div class="row">+56 9 8825 6980</div>
+        <div class="row">proolivachile@gmail.com</div>
+        <div class="row">@proolivachile</div>
+      </div>
+    </div>
+    <div class="foot-bottom"><span>Copyright © 2026 ProOliva. Todos los derechos reservados.</span><span>Propuesta de rediseño</span></div>
+  </div>
+</footer>
+
+<a class="wsp-float" href="https://wa.me/56988256980?text=Hola%2C%20quiero%20cotizar%20productos%20ProOliva" target="_blank" rel="noopener" aria-label="Escríbenos por WhatsApp">
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5.1-1.3A10 10 0 1 0 12 2Z" fill="#ffffff"/><path d="M12 3.6A8.4 8.4 0 0 0 4.7 16.6l.3.5-.9 3.3 3.4-.9.5.3A8.4 8.4 0 1 0 12 3.6Z" fill="#25D366"/><path d="M9.1 7.4c-.2-.5-.4-.5-.6-.5h-.5c-.2 0-.5.1-.7.3-.2.3-.9 1-.9 2.3s1 2.6 1.1 2.8c.1.2 2 3.1 4.9 4.2 2.4.9 2.9.7 3.4.7.5-.1 1.6-.7 1.9-1.3.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.6-.4s-1.6-.8-1.9-.9c-.3-.1-.4-.1-.6.1-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.2-1.2-.5-2.3-1.5-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.2-.6-1.5-.8-2Z" fill="#ffffff"/></svg>
+</a>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script>
+  const CATEGORY_LABELS = {
+    'aceites': 'Aceites de oliva',
+    'aceitunas-mesa': 'Aceitunas de mesa',
+    'aceitunas-premium': 'Aceitunas premium',
+    'aceitunas-especiales': 'Especiales'
+  };
+
+  let allProducts = [];
+  let activeCategory = 'all';
+  let activeOrigin = 'all';
+  let searchTerm = '';
+
+  const grid = document.getElementById('productGrid');
+  const resultsBar = document.getElementById('resultsBar');
+
+  function formatCLP(value){
+    return new Intl.NumberFormat('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits:0 }).format(value || 0);
+  }
+
+  function waLink(productName){
+    const msg = encodeURIComponent(`Hola, quiero cotizar: ${productName}`);
+    return `https://wa.me/56988256980?text=${msg}`;
+  }
+
+  function renderProducts(){
+    const filtered = allProducts.filter(p => {
+      const matchCategory = activeCategory === 'all' || p.category === activeCategory;
+      const matchOrigin = activeOrigin === 'all' || p.origin === activeOrigin;
+      const matchSearch = !searchTerm || p.name.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchCategory && matchOrigin && matchSearch;
+    });
+
+    resultsBar.textContent = `${filtered.length} producto${filtered.length === 1 ? '' : 's'} encontrado${filtered.length === 1 ? '' : 's'}`;
+
+    if (filtered.length === 0){
+      grid.innerHTML = `<div class="state-msg" style="grid-column:1/-1;">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" style="margin:0 auto 14px;"><circle cx="11" cy="11" r="7" stroke="#20281a" stroke-width="1.6"/><path d="M21 21l-4.3-4.3" stroke="#20281a" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <p>No encontramos productos con estos filtros. Prueba con otra categoría u origen.</p>
+      </div>`;
+      return;
+    }
+
+    grid.innerHTML = filtered.map(p => `
+      <div class="prod-card">
+        <div class="prod-visual">
+          ${p.image_url ? `<img src="${p.image_url}" alt="${p.name}" loading="lazy">` : ''}
+          ${p.featured ? '<span class="prod-badge">Destacado</span>' : ''}
+        </div>
+        <div class="prod-body">
+          <span class="prod-cat">${CATEGORY_LABELS[p.category] || p.category}</span>
+          <h3>${p.name}</h3>
+          <span class="prod-meta">${[p.format, p.origin].filter(Boolean).join(' · ')}</span>
+          <div class="prod-price">${formatCLP(p.price)}</div>
+        </div>
+        <div class="prod-actions">
+          <a class="btn-wsp" href="${waLink(p.name)}" target="_blank" rel="noopener">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5.1-1.3A10 10 0 1 0 12 2Z" fill="#fff"/><path d="M9.1 7.4c-.2-.5-.4-.5-.6-.5h-.5c-.2 0-.5.1-.7.3-.2.3-.9 1-.9 2.3s1 2.6 1.1 2.8c.1.2 2 3.1 4.9 4.2 2.4.9 2.9.7 3.4.7.5-.1 1.6-.7 1.9-1.3.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.6-.4s-1.6-.8-1.9-.9c-.3-.1-.4-.1-.6.1-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.2-1.2-.5-2.3-1.5-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.2-.6-1.5-.8-2Z" fill="#25D366"/></svg>
+            Cotizar
+          </a>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async function loadProducts(){
+    const { data, error } = await supabaseClient
+      .from('products')
+      .select('*')
+      .eq('active', true)
+      .order('created_at', { ascending: false });
+
+    if (error){
+      resultsBar.textContent = 'No pudimos cargar los productos.';
+      grid.innerHTML = `<div class="state-msg" style="grid-column:1/-1;"><p>Hubo un problema conectando con la base de datos. Revisa la configuración en supabase-config.js.</p></div>`;
+      console.error(error);
+      return;
+    }
+
+    allProducts = data || [];
+    renderProducts();
+  }
+
+  document.getElementById('categoryFilters').addEventListener('click', (e) => {
+    const btn = e.target.closest('.pill');
+    if (!btn) return;
+    document.querySelectorAll('#categoryFilters .pill').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    activeCategory = btn.dataset.category;
+    renderProducts();
+  });
+
+  document.getElementById('originFilter').addEventListener('change', (e) => {
+    activeOrigin = e.target.value;
+    renderProducts();
+  });
+
+  document.getElementById('searchInput').addEventListener('input', (e) => {
+    searchTerm = e.target.value;
+    renderProducts();
+  });
+
+  loadProducts();
+</script>
+
+</body>
+</html>

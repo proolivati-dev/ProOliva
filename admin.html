@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel de administración — ProOliva</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#20281a; --olive:#55643b; --olive-deep:#3a4527; --olive-light:#8a9a66;
+    --gold:#c89b3c; --gold-deep:#9c7326; --linen:#f3eee0; --paper:#fbf9f2; --line:rgba(32,40,26,0.14);
+    --danger:#a3392f;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{ font-family:'Public Sans', sans-serif; background:var(--linen); color:var(--ink); line-height:1.5;}
+  h1,h2,h3{ font-family:'Archivo', sans-serif; font-weight:700; color:var(--ink);}
+  a{ color:inherit; }
+  input, select, textarea{ font-family:'Public Sans', sans-serif; }
+
+  /* ---------- login ---------- */
+  #loginView{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;}
+  .login-card{ background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:44px 40px; width:100%; max-width:380px; box-shadow:0 24px 50px -24px rgba(32,40,26,0.35);}
+  .login-card img{ height:52px; margin:0 auto 24px; display:block;}
+  .login-card h1{ font-size:21px; text-align:center; margin-bottom:6px;}
+  .login-card p.sub{ text-align:center; font-size:13.5px; opacity:0.65; margin-bottom:28px;}
+  .field{ margin-bottom:16px;}
+  .field label{ display:block; font-size:12.5px; font-weight:600; margin-bottom:6px; color:var(--olive-deep);}
+  .field input, .field select, .field textarea{
+    width:100%; border:1.5px solid var(--line); border-radius:6px; padding:11px 14px; font-size:14px; background:#fff; color:var(--ink); outline:none; transition:border-color .15s;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{ border-color:var(--olive-deep);}
+  .btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:12px 22px; border-radius:6px; font-size:14px; font-weight:600; cursor:pointer; border:1px solid transparent; transition:transform .15s, background .15s; width:100%;}
+  .btn:hover{ transform:translateY(-1px);}
+  .btn-primary{ background:var(--olive-deep); color:var(--paper);}
+  .btn-primary:hover{ background:var(--ink);}
+  .btn-outline{ background:transparent; border-color:var(--line); color:var(--ink); width:auto;}
+  .btn-outline:hover{ background:var(--linen);}
+  .btn-danger{ background:transparent; border-color:var(--danger); color:var(--danger); width:auto; padding:8px 14px; font-size:13px;}
+  .btn-danger:hover{ background:var(--danger); color:#fff;}
+  .error-msg{ background:#fbe9e7; border:1px solid var(--danger); color:var(--danger); font-size:13px; padding:10px 12px; border-radius:6px; margin-bottom:16px; display:none;}
+
+  /* ---------- dashboard ---------- */
+  #dashboardView{ display:none;}
+  .admin-header{ background:var(--ink); color:var(--paper); padding:16px 0;}
+  .admin-header .wrap{ max-width:1200px; margin:0 auto; padding:0 28px; display:flex; align-items:center; justify-content:space-between;}
+  .admin-header .brand{ display:flex; align-items:center; gap:10px; font-family:'Archivo',sans-serif; font-weight:700; font-size:16px;}
+  .admin-header .brand img{ height:30px;}
+  .admin-header .who{ font-size:12.5px; opacity:0.65; margin-right:14px;}
+
+  .admin-body{ max-width:1200px; margin:0 auto; padding:36px 28px 80px;}
+  .admin-toolbar{ display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:14px;}
+  .admin-toolbar h2{ font-size:24px;}
+  .admin-toolbar p{ font-size:13px; opacity:0.6; margin-top:4px;}
+
+  .table-wrap{ background:var(--paper); border:1px solid var(--line); border-radius:10px; overflow:hidden;}
+  table{ width:100%; border-collapse:collapse;}
+  th{ text-align:left; font-family:'IBM Plex Mono',monospace; font-size:10.5px; text-transform:uppercase; letter-spacing:0.06em; color:var(--gold-deep); padding:14px 16px; border-bottom:1px solid var(--line); background:rgba(32,40,26,0.03);}
+  td{ padding:12px 16px; border-bottom:1px solid var(--line); font-size:13.5px; vertical-align:middle;}
+  tr:last-child td{ border-bottom:none;}
+  .cell-img{ width:46px; height:46px; border-radius:6px; object-fit:cover; background:var(--linen);}
+  .cell-name{ font-weight:600;}
+  .badge{ display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600;}
+  .badge-on{ background:#e4ede0; color:var(--olive-deep);}
+  .badge-off{ background:var(--line); color:var(--ink); opacity:0.6;}
+  .row-actions{ display:flex; gap:8px;}
+  .icon-btn{ background:transparent; border:1px solid var(--line); border-radius:6px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:border-color .15s;}
+  .icon-btn:hover{ border-color:var(--olive-deep);}
+
+  /* ---------- modal / form ---------- */
+  .modal-backdrop{ display:none; position:fixed; inset:0; background:rgba(32,40,26,0.5); z-index:100; align-items:flex-start; justify-content:center; padding:40px 20px; overflow-y:auto;}
+  .modal-backdrop.open{ display:flex;}
+  .modal{ background:var(--paper); border-radius:12px; width:100%; max-width:560px; padding:32px; box-shadow:0 30px 60px -20px rgba(0,0,0,0.4);}
+  .modal h3{ font-size:19px; margin-bottom:20px;}
+  .field-row{ display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  .field-check{ display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:500;}
+  .field-check input{ width:auto;}
+  .modal-actions{ display:flex; gap:10px; margin-top:24px;}
+  .modal-actions .btn{ width:auto; flex:1;}
+  .image-preview{ width:100%; height:140px; border-radius:8px; background:var(--linen); border:1.5px dashed var(--line); display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:6px; position:relative;}
+  .image-preview img{ width:100%; height:100%; object-fit:cover;}
+  .image-preview span{ font-size:12.5px; opacity:0.5;}
+
+  .empty-state{ text-align:center; padding:60px 20px; opacity:0.6; font-size:14px;}
+</style>
+</head>
+<body>
+
+<!-- ===================== LOGIN ===================== -->
+<div id="loginView">
+  <div class="login-card">
+    <img src="logo.png" alt="ProOlivas Chile">
+    <h1>Panel de administración</h1>
+    <p class="sub">Inicia sesión para gestionar el catálogo</p>
+    <div class="error-msg" id="loginError"></div>
+    <form id="loginForm">
+      <div class="field">
+        <label>Correo</label>
+        <input type="email" id="loginEmail" required autocomplete="username">
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input type="password" id="loginPassword" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn btn-primary">Iniciar sesión</button>
+    </form>
+  </div>
+</div>
+
+<!-- ===================== DASHBOARD ===================== -->
+<div id="dashboardView">
+  <div class="admin-header">
+    <div class="wrap">
+      <div class="brand"><img src="logo.png" alt="ProOlivas Chile"> Panel de administración</div>
+      <div style="display:flex; align-items:center;">
+        <span class="who" id="whoLabel"></span>
+        <button class="btn btn-outline" id="logoutBtn">Cerrar sesión</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="admin-body">
+    <div class="admin-toolbar">
+      <div>
+        <h2>Productos</h2>
+        <p id="countLabel">Cargando...</p>
+      </div>
+      <button class="btn btn-primary" style="width:auto;" id="newProductBtn">+ Nuevo producto</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th></th>
+            <th>Nombre</th>
+            <th>Categoría</th>
+            <th>Precio</th>
+            <th>Destacado</th>
+            <th>Visible</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="productsTableBody">
+          <!-- filas generadas por JS -->
+        </tbody>
+      </table>
+      <div class="empty-state" id="emptyState" style="display:none;">Todavía no hay productos. Crea el primero con "+ Nuevo producto".</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL: crear/editar producto ===================== -->
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal">
+    <h3 id="modalTitle">Nuevo producto</h3>
+    <div class="error-msg" id="formError"></div>
+    <form id="productForm">
+      <input type="hidden" id="productId">
+
+      <div class="field">
+        <label>Foto del producto</label>
+        <div class="image-preview" id="imagePreview"><span>Sin imagen</span></div>
+        <input type="file" id="imageFile" accept="image/*">
+      </div>
+
+      <div class="field">
+        <label>Nombre</label>
+        <input type="text" id="fieldName" required placeholder="Ej: Aceite de oliva 1 L">
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Categoría</label>
+          <select id="fieldCategory" required>
+            <option value="aceites">Aceites de oliva</option>
+            <option value="aceitunas-mesa">Aceitunas de mesa</option>
+            <option value="aceitunas-premium">Aceitunas premium</option>
+            <option value="aceitunas-especiales">Especiales</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Origen</label>
+          <select id="fieldOrigin">
+            <option value="Chile">Chile</option>
+            <option value="Perú">Perú</option>
+            <option value="España">España</option>
+            <option value="Argentina">Argentina</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Formato</label>
+          <input type="text" id="fieldFormat" placeholder="Ej: 1 L, 500 ml, Granel 70 L">
+        </div>
+        <div class="field">
+          <label>Precio (CLP)</label>
+          <input type="number" id="fieldPrice" required min="0" step="1" placeholder="Ej: 8990">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Descripción</label>
+        <textarea id="fieldDescription" rows="3" placeholder="Detalle breve del producto"></textarea>
+      </div>
+
+      <div class="field-row">
+        <label class="field-check"><input type="checkbox" id="fieldFeatured"> Producto destacado</label>
+        <label class="field-check"><input type="checkbox" id="fieldActive" checked> Visible en la página</label>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" id="cancelModalBtn">Cancelar</button>
+        <button type="submit" class="btn btn-primary" id="saveProductBtn">Guardar producto</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script>
+  const CATEGORY_LABELS = {
+    'aceites': 'Aceites de oliva',
+    'aceitunas-mesa': 'Aceitunas de mesa',
+    'aceitunas-premium': 'Aceitunas premium',
+    'aceitunas-especiales': 'Especiales'
+  };
+
+  const loginView = document.getElementById('loginView');
+  const dashboardView = document.getElementById('dashboardView');
+  const loginForm = document.getElementById('loginForm');
+  const loginError = document.getElementById('loginError');
+  const whoLabel = document.getElementById('whoLabel');
+  let currentProducts = [];
+  let selectedFile = null;
+
+  // ---------- Sesión ----------
+  async function checkSession(){
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (session){
+      showDashboard(session);
+    } else {
+      loginView.style.display = 'flex';
+      dashboardView.style.display = 'none';
+    }
+  }
+
+  function showDashboard(session){
+    loginView.style.display = 'none';
+    dashboardView.style.display = 'block';
+    whoLabel.textContent = session.user.email;
+    loadProducts();
+  }
+
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    loginError.style.display = 'none';
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    if (error){
+      loginError.textContent = 'Correo o contraseña incorrectos.';
+      loginError.style.display = 'block';
+      return;
+    }
+    showDashboard(data.session);
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    await supabaseClient.auth.signOut();
+    loginView.style.display = 'flex';
+    dashboardView.style.display = 'none';
+  });
+
+  // ---------- Cargar productos ----------
+  async function loadProducts(){
+    const { data, error } = await supabaseClient.from('products').select('*').order('created_at', { ascending: false });
+    const tbody = document.getElementById('productsTableBody');
+    const emptyState = document.getElementById('emptyState');
+    const countLabel = document.getElementById('countLabel');
+
+    if (error){
+      countLabel.textContent = 'Error cargando productos.';
+      console.error(error);
+      return;
+    }
+
+    currentProducts = data || [];
+    countLabel.textContent = `${currentProducts.length} producto${currentProducts.length === 1 ? '' : 's'} en total`;
+
+    if (currentProducts.length === 0){
+      tbody.innerHTML = '';
+      emptyState.style.display = 'block';
+      return;
+    }
+    emptyState.style.display = 'none';
+
+    tbody.innerHTML = currentProducts.map(p => `
+      <tr>
+        <td>${p.image_url ? `<img class="cell-img" src="${p.image_url}" alt="">` : `<div class="cell-img"></div>`}</td>
+        <td class="cell-name">${p.name}</td>
+        <td>${CATEGORY_LABELS[p.category] || p.category}</td>
+        <td>${new Intl.NumberFormat('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits:0 }).format(p.price || 0)}</td>
+        <td>${p.featured ? '<span class="badge badge-on">Sí</span>' : '<span class="badge badge-off">No</span>'}</td>
+        <td>${p.active ? '<span class="badge badge-on">Visible</span>' : '<span class="badge badge-off">Oculto</span>'}</td>
+        <td>
+          <div class="row-actions">
+            <button class="icon-btn" title="Editar" onclick="openEditModal('${p.id}')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 20h4L18.5 9.5a2 2 0 0 0 0-2.8l-1.7-1.7a2 2 0 0 0-2.8 0L4 15v5Z" stroke="#20281a" stroke-width="1.6"/></svg>
+            </button>
+            <button class="icon-btn" title="Borrar" onclick="deleteProduct('${p.id}')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" stroke="#a3392f" stroke-width="1.6"/></svg>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  // ---------- Modal ----------
+  const modalBackdrop = document.getElementById('modalBackdrop');
+  const productForm = document.getElementById('productForm');
+  const formError = document.getElementById('formError');
+  const imagePreview = document.getElementById('imagePreview');
+  const imageFile = document.getElementById('imageFile');
+
+  function resetForm(){
+    productForm.reset();
+    document.getElementById('productId').value = '';
+    imagePreview.innerHTML = '<span>Sin imagen</span>';
+    selectedFile = null;
+    formError.style.display = 'none';
+    document.getElementById('fieldActive').checked = true;
+  }
+
+  document.getElementById('newProductBtn').addEventListener('click', () => {
+    resetForm();
+    document.getElementById('modalTitle').textContent = 'Nuevo producto';
+    modalBackdrop.classList.add('open');
+  });
+
+  document.getElementById('cancelModalBtn').addEventListener('click', () => {
+    modalBackdrop.classList.remove('open');
+  });
+
+  window.openEditModal = function(id){
+    const p = currentProducts.find(x => x.id === id);
+    if (!p) return;
+    resetForm();
+    document.getElementById('modalTitle').textContent = 'Editar producto';
+    document.getElementById('productId').value = p.id;
+    document.getElementById('fieldName').value = p.name || '';
+    document.getElementById('fieldCategory').value = p.category || 'aceites';
+    document.getElementById('fieldOrigin').value = p.origin || 'Chile';
+    document.getElementById('fieldFormat').value = p.format || '';
+    document.getElementById('fieldPrice').value = p.price || 0;
+    document.getElementById('fieldDescription').value = p.description || '';
+    document.getElementById('fieldFeatured').checked = !!p.featured;
+    document.getElementById('fieldActive').checked = !!p.active;
+    if (p.image_url){
+      imagePreview.innerHTML = `<img src="${p.image_url}" alt="">`;
+    }
+    modalBackdrop.classList.add('open');
+  };
+
+  window.deleteProduct = async function(id){
+    if (!confirm('¿Seguro que quieres borrar este producto? Esta acción no se puede deshacer.')) return;
+    const { error } = await supabaseClient.from('products').delete().eq('id', id);
+    if (error){
+      alert('No se pudo borrar el producto.');
+      console.error(error);
+      return;
+    }
+    loadProducts();
+  };
+
+  imageFile.addEventListener('change', () => {
+    const file = imageFile.files[0];
+    if (!file) return;
+    selectedFile = file;
+    const reader = new FileReader();
+    reader.onload = (e) => { imagePreview.innerHTML = `<img src="${e.target.result}" alt="">`; };
+    reader.readAsDataURL(file);
+  });
+
+  productForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    formError.style.display = 'none';
+    const saveBtn = document.getElementById('saveProductBtn');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Guardando...';
+
+    try {
+      const id = document.getElementById('productId').value;
+      let imageUrl = null;
+      const existing = id ? currentProducts.find(p => p.id === id) : null;
+      if (existing) imageUrl = existing.image_url;
+
+      // Si eligieron una foto nueva, subirla a Storage primero
+      if (selectedFile){
+        const fileName = `${Date.now()}-${selectedFile.name.replace(/\s+/g,'-')}`;
+        const { error: uploadError } = await supabaseClient.storage
+          .from('product-images')
+          .upload(fileName, selectedFile);
+        if (uploadError) throw uploadError;
+        const { data: publicData } = supabaseClient.storage.from('product-images').getPublicUrl(fileName);
+        imageUrl = publicData.publicUrl;
+      }
+
+      const payload = {
+        name: document.getElementById('fieldName').value,
+        category: document.getElementById('fieldCategory').value,
+        origin: document.getElementById('fieldOrigin').value,
+        format: document.getElementById('fieldFormat').value,
+        price: parseFloat(document.getElementById('fieldPrice').value) || 0,
+        description: document.getElementById('fieldDescription').value,
+        featured: document.getElementById('fieldFeatured').checked,
+        active: document.getElementById('fieldActive').checked,
+        image_url: imageUrl
+      };
+
+      let saveError;
+      if (id){
+        ({ error: saveError } = await supabaseClient.from('products').update(payload).eq('id', id));
+      } else {
+        ({ error: saveError } = await supabaseClient.from('products').insert(payload));
+      }
+      if (saveError) throw saveError;
+
+      modalBackdrop.classList.remove('open');
+      loadProducts();
+    } catch (err){
+      formError.textContent = 'No se pudo guardar el producto: ' + (err.message || 'error desconocido.');
+      formError.style.display = 'block';
+      console.error(err);
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Guardar producto';
+    }
+  });
+
+  checkSession();
+</script>
+
+</body>
+</html>
