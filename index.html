@@ -325,7 +325,7 @@
     }
 
     grid.innerHTML = data.map(p => `
-      <a class="prod-card" href="productos.html?cat=${p.category}" style="display:block;">
+      <a class="prod-card" href="producto.html?id=${p.id}" style="display:block;">
         <div class="prod-visual">${p.image_url ? `<img src="${p.image_url}" alt="${p.name}" loading="lazy">` : ''}</div>
         <div class="prod-body">
           <span class="prod-cat-label">${CATEGORY_LABELS[p.category] || p.category}</span>
@@ -352,13 +352,16 @@
     const showArrows = featuredProducts.length > 1;
 
     container.innerHTML = `
-      <div class="featured-visual">${p.image_url ? `<img src="${p.image_url}" alt="${p.name}">` : ''}</div>
+      <a class="featured-visual" href="producto.html?id=${p.id}">${p.image_url ? `<img src="${p.image_url}" alt="${p.name}">` : ''}</a>
       <div class="featured-body">
         <div class="featured-tag">${CATEGORY_LABELS[p.category] || p.category}</div>
         <h2>${p.name}</h2>
         <p>${p.description || ''}</p>
         <span class="featured-price">${formatCLP(p.price)}</span>
-        <a class="btn btn-primary" href="${waLink(p.name)}" target="_blank" rel="noopener">Cotizar por WhatsApp</a>
+        <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+          <a class="btn btn-primary" href="${waLink(p.name)}" target="_blank" rel="noopener">Cotizar por WhatsApp</a>
+          <a href="producto.html?id=${p.id}" style="font-size:13.5px; font-weight:600; text-decoration:underline; opacity:0.75;">Ver detalle</a>
+        </div>
         ${showArrows ? `
         <div class="featured-nav">
           <button class="featured-arrow" id="featuredPrev" aria-label="Anterior"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="#20281a" stroke-width="2" stroke-linecap="round"/></svg></button>
