@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PROOLIVA — Propuesta de rediseño</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#20281a;
+    --olive:#55643b;
+    --olive-deep:#3a4527;
+    --olive-light:#8a9a66;
+    --gold:#c89b3c;
+    --gold-deep:#9c7326;
+    --aubergine:#3d2b2e;
+    --linen:#f3eee0;
+    --paper:#fbf9f2;
+    --white:#ffffff;
+    --line:rgba(32,40,26,0.14);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{ font-family:'Public Sans', sans-serif; background:var(--linen); color:var(--ink); line-height:1.6; -webkit-font-smoothing:antialiased;}
+  h1,h2,h3{ font-family:'Archivo', sans-serif; font-weight:700; color:var(--ink); line-height:1.15; letter-spacing:-0.01em;}
+  .eyebrow{ font-family:'IBM Plex Mono', monospace; font-size:12px; letter-spacing:0.12em; text-transform:uppercase; color:var(--gold-deep);}
+  a{ color:inherit; text-decoration:none; }
+  .wrap{ max-width:1120px; margin:0 auto; padding:0 32px; }
+  img,svg{ display:block; }
+
+  /* ---------- top utility bar ---------- */
+  .topbar{ background:var(--ink); color:var(--paper); font-size:12.5px;}
+  .topbar .wrap{ display:flex; justify-content:flex-end; gap:22px; padding:7px 32px; opacity:0.8;}
+
+  /* ---------- header ---------- */
+  header{ position:sticky; top:0; z-index:50; background:rgba(251,249,242,0.96); backdrop-filter:blur(6px); border-bottom:1px solid var(--line);}
+  .nav{ display:flex; align-items:center; justify-content:space-between; padding:16px 0; gap:28px;}
+  .logo{ display:flex; align-items:center; gap:10px; font-family:'Archivo', sans-serif; font-size:21px; font-weight:600;}
+  .logo-mark{ height:46px; width:auto; display:block; }
+  .logo-mark.foot{ height:64px; }
+  .nav-links{ display:flex; align-items:center; gap:30px; font-size:14.5px; font-weight:500;}
+  .nav-links a{ opacity:0.82; transition:opacity .15s; white-space:nowrap;}
+  .nav-links a:hover{ opacity:1; color:var(--olive-deep);}
+  .search-box{ display:flex; align-items:center; gap:8px; border:1px solid rgba(32,40,26,0.22); border-radius:24px; padding:9px 16px; flex:1; max-width:230px; background:var(--paper); transition:border-color .15s;}
+  .search-box:focus-within{ border-color:var(--olive-deep);}
+  .search-box input{ border:none; background:transparent; outline:none; font-size:13.5px; font-family:'Inter',sans-serif; width:100%; color:var(--ink);}
+  .search-box svg{ opacity:0.55; flex-shrink:0;}
+  .btn{ display:inline-flex; align-items:center; gap:8px; padding:11px 22px; border-radius:6px; font-size:13.5px; font-weight:600; letter-spacing:0.01em; cursor:pointer; border:1px solid transparent; transition:transform .15s, background .15s; white-space:nowrap;}
+  .btn:hover{ transform:translateY(-1px); }
+  .btn-primary{ background:var(--olive-deep); color:var(--paper); }
+  .btn-primary:hover{ background:var(--ink); }
+
+  /* ---------- video banner ---------- */
+  .video-banner{ position:relative; margin:0; width:100%; padding:0;}
+  .video-frame{
+    position:relative; overflow:hidden; height:clamp(320px, 42vw, 560px); width:100%;
+    background:linear-gradient(155deg, var(--olive-deep) 0%, var(--olive) 46%, var(--gold-deep) 100%);
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 18px 40px -20px rgba(32,40,26,0.35);
+  }
+  .video-frame video{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover;}
+  .video-frame .fallback{ position:relative; z-index:2; text-align:center; color:var(--paper);}
+  .play-circle{ width:64px; height:64px; border-radius:50%; border:2px solid var(--paper); display:flex; align-items:center; justify-content:center; margin:0 auto 14px;}
+  .video-frame .fallback p{ font-family:'IBM Plex Mono', monospace; font-size:12px; letter-spacing:0.08em; opacity:0.85;}
+  .video-frame .fallback .headline{ font-family:'Archivo', sans-serif; font-size:28px; margin-bottom:10px; color:var(--paper);}
+
+  /* ---------- divider ---------- */
+  .branch-divider{ display:flex; align-items:center; justify-content:center; gap:14px; padding:44px 0; opacity:0.8;}
+  .branch-divider .line{ height:1px; width:120px; background:var(--line);}
+
+  section{ padding:64px 0; }
+  .section-head{ text-align:center; margin-bottom:40px;}
+  .section-head h2{ font-size:30px; margin-top:8px;}
+
+  /* ---------- 3 aceitunas category sections ---------- */
+  .cat-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:24px;}
+  .cat-card{ background:var(--paper); border:1.5px solid var(--olive-light); border-radius:10px; padding:0; overflow:hidden; transition:transform .15s, border-color .15s, box-shadow .15s;}
+  .cat-card:hover{ transform:translateY(-3px); border-color:var(--olive-deep); box-shadow:0 16px 30px -18px rgba(32,40,26,0.35);}
+  .cat-card-head{ padding:22px 22px 16px; border-bottom:1px solid var(--line);}
+  .cat-card-head h3{ font-size:17px; text-transform:uppercase; letter-spacing:0.04em;}
+  .cat-visual{ height:220px; background:var(--linen); display:flex; align-items:center; justify-content:center; overflow:hidden;}
+  .cat-visual img{ width:100%; height:100%; object-fit:cover; transition:transform .35s;}
+  .cat-card:hover .cat-visual img{ transform:scale(1.05);}
+  .cat-card-foot{ padding:16px 22px 22px;}
+  .cat-link{ font-size:13px; font-weight:600; color:var(--olive-deep);}
+
+  /* ---------- products banner ---------- */
+  .products-banner{ border-radius:10px; overflow:hidden; height:220px; margin-bottom:48px; box-shadow:0 14px 30px -18px rgba(32,40,26,0.4);}
+  .products-banner img{ width:100%; height:100%; object-fit:cover; display:block;}
+
+  /* ---------- products ---------- */
+  .prod-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:20px;}
+  .prod-card{ background:var(--paper); border:1px solid var(--line); border-radius:10px; overflow:hidden; transition:transform .15s, box-shadow .15s;}
+  .prod-card:hover{ transform:translateY(-3px); box-shadow:0 14px 26px -16px rgba(32,40,26,0.35);}
+  .prod-visual{ height:140px; display:flex; align-items:center; justify-content:center; background:var(--linen); border-bottom:1px solid var(--line);}
+  .prod-body{ padding:18px;}
+  .prod-body h4{ font-family:'Archivo', sans-serif; font-weight:500; font-size:15px; margin-bottom:8px;}
+  .prod-specs{ font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:var(--ink); opacity:0.68; line-height:1.85;}
+  .prod-specs b{ color:var(--olive-deep); opacity:1; }
+
+  /* ---------- destacado ---------- */
+  .featured{ display:grid; grid-template-columns:0.9fr 1fr; gap:52px; align-items:center;}
+  .featured-visual{ background:var(--aubergine); border-radius:10px; aspect-ratio:1/0.85; display:flex; align-items:center; justify-content:center; overflow:hidden;}
+  .featured-body .eyebrow{ color:var(--gold-deep);}
+  .featured-body h2{ font-size:32px; margin:14px 0 14px;}
+  .featured-body p{ opacity:0.75; margin-bottom:20px; font-size:15px; max-width:420px;}
+  .featured-tag{ display:inline-flex; align-items:center; gap:8px; font-family:'IBM Plex Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:var(--olive-deep); margin-bottom:24px;}
+
+  /* ---------- footer ---------- */
+  footer{ background:var(--paper); border-top:1px solid var(--line); padding:56px 0 24px;}
+  .foot-grid{ display:grid; grid-template-columns:1.4fr 1fr 1fr; gap:40px; padding-bottom:32px;}
+  .foot-logo{ display:flex; align-items:center; margin-bottom:14px;}
+  .foot-grid h4{ font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--gold-deep); margin-bottom:14px;}
+  .foot-grid a, .foot-grid .row{ display:flex; align-items:center; gap:8px; font-size:14px; opacity:0.75; margin-bottom:10px;}
+  .foot-bottom{ display:flex; justify-content:space-between; padding-top:20px; border-top:1px solid var(--line); font-size:12px; opacity:0.55;}
+
+  .wsp-float{
+    position:fixed; bottom:26px; right:26px; z-index:80;
+    width:58px; height:58px; border-radius:50%;
+    background:#25D366; display:flex; align-items:center; justify-content:center;
+    box-shadow:0 10px 24px rgba(37,211,102,0.4);
+    transition:transform .15s;
+  }
+  .wsp-float:hover{ transform:scale(1.07); }
+
+  @media (max-width:860px){
+    .cat-grid, .prod-grid, .featured, .foot-grid{ grid-template-columns:1fr; }
+    .nav-links, .search-box{ display:none;}
+    .video-frame{ aspect-ratio:4/5;}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar"><div class="wrap"><span>+56 9 8825 6980</span><span>proolivachile@gmail.com</span></div></div>
+
+<header>
+  <div class="wrap nav">
+    <div class="logo">
+      <img class="logo-mark" src="logo.png" alt="ProOlivas Chile">
+    </div>
+    <nav class="nav-links">
+      <a href="#">Home</a>
+      <a href="#productos">Productos</a>
+      <a href="#nosotros">Quienes somos</a>
+      <a href="#contacto">Contáctanos</a>
+    </nav>
+    <div class="search-box">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <input type="text" placeholder="Buscar productos...">
+    </div>
+    <a class="btn btn-primary" href="#">Catálogo de productos</a>
+  </div>
+</header>
+
+<div class="video-banner">
+  <div class="video-frame">
+    <video autoplay muted loop playsinline disablepictureinpicture disableRemotePlayback controlsList="nodownload nofullscreen noremoteplayback" style="pointer-events:none;">
+      <source src="banner.mp4" type="video/mp4">
+    </video>
+    <div class="fallback">
+      <div class="play-circle"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M8 5v14l11-7L8 5Z" fill="#fbf9f2"/></svg></div>
+      <p>banner.mp4 se reproduce aquí en bucle, sin sonido</p>
+    </div>
+  </div>
+</div>
+
+<div class="branch-divider">
+  <div class="line"></div>
+  <svg width="30" height="18" viewBox="0 0 30 18" fill="none"><path d="M1 9c6-6 22-6 28 0" stroke="#55643b" stroke-width="1.3"/><circle cx="8" cy="6.5" r="2.1" fill="#8a9a66"/><circle cx="15" cy="4.3" r="2.3" fill="#55643b"/><circle cx="22" cy="6.5" r="2.1" fill="#8a9a66"/></svg>
+  <div class="line"></div>
+</div>
+
+<section id="productos" style="padding-top:0;">
+  <div class="wrap">
+    <div class="cat-grid">
+      <div class="cat-card">
+        <div class="cat-card-head"><h3>Aceitunas de mesa</h3></div>
+        <div class="cat-visual"><img src="aceitunasmesa.jpg" alt="Aceitunas de mesa"></div>
+        <div class="cat-card-foot"><a class="cat-link" href="#">Ver colección →</a></div>
+      </div>
+      <div class="cat-card">
+        <div class="cat-card-head"><h3>Aceitunas premium</h3></div>
+        <div class="cat-visual"><img src="aceitunaspremium.jpg" alt="Aceitunas premium"></div>
+        <div class="cat-card-foot"><a class="cat-link" href="#">Ver colección →</a></div>
+      </div>
+      <div class="cat-card">
+        <div class="cat-card-head"><h3>Aceitunas especiales</h3></div>
+        <div class="cat-visual"><img src="especiales.jpg" alt="Aceitunas especiales"></div>
+        <div class="cat-card-foot"><a class="cat-link" href="#">Ver colección →</a></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="products-banner"><img src="bannerproductos.png" alt="Catálogo de productos ProOliva"></div>
+    <div class="section-head"><p class="eyebrow">Catálogo</p><h2>Nuestros productos</h2></div>
+    <div class="prod-grid">
+      <div class="prod-card">
+        <div class="prod-visual"><svg width="40" height="52" viewBox="0 0 46 60" fill="none"><path d="M18 2h10v9l6 6v37a4 4 0 0 1-4 4H16a4 4 0 0 1-4-4V17l6-6V2Z" stroke="#9c7326" stroke-width="1.6"/></svg></div>
+        <div class="prod-body"><h4>Aceite de oliva 1 L</h4><div class="prod-specs"><b>Categoría</b> Extra virgen<br><b>Origen</b> Chile<br><b>Formato</b> Vidrio · caja 12 un</div></div>
+      </div>
+      <div class="prod-card">
+        <div class="prod-visual"><svg width="40" height="52" viewBox="0 0 46 60" fill="none"><path d="M18 2h10v9l6 6v37a4 4 0 0 1-4 4H16a4 4 0 0 1-4-4V17l6-6V2Z" stroke="#9c7326" stroke-width="1.6"/></svg></div>
+        <div class="prod-body"><h4>Aceite de oliva 500 ml</h4><div class="prod-specs"><b>Categoría</b> Extra virgen<br><b>Origen</b> Chile<br><b>Formato</b> Vidrio · caja 12 un</div></div>
+      </div>
+      <div class="prod-card">
+        <div class="prod-visual"><svg width="44" height="50" viewBox="0 0 50 58" fill="none"><rect x="10" y="10" width="30" height="44" rx="4" stroke="#9c7326" stroke-width="1.6"/><rect x="18" y="2" width="14" height="10" rx="2" stroke="#9c7326" stroke-width="1.6"/></svg></div>
+        <div class="prod-body"><h4>Aceite de oliva 5 L</h4><div class="prod-specs"><b>Categoría</b> Extra virgen<br><b>Origen</b> Chile<br><b>Formato</b> Bidón · caja 4 un</div></div>
+      </div>
+      <div class="prod-card">
+        <div class="prod-visual"><svg width="46" height="46" viewBox="0 0 46 46" fill="none"><rect x="6" y="6" width="34" height="34" rx="6" stroke="#3d6b78" stroke-width="1.6"/></svg></div>
+        <div class="prod-body"><h4>Aceite granel 70 L</h4><div class="prod-specs"><b>Categoría</b> Extra virgen<br><b>Origen</b> Perú<br><b>Formato</b> Solo envases ret.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="destacado">
+  <div class="wrap">
+    <div class="section-head"><p class="eyebrow">Producto destacado</p><h2>Aceituna deshuesada</h2></div>
+    <div class="featured">
+      <div class="featured-visual">
+        <svg width="220" height="200" viewBox="0 0 220 200" fill="none">
+          <ellipse cx="70" cy="120" rx="34" ry="26" fill="#171012"/><ellipse cx="70" cy="120" rx="7" ry="9" fill="#3d2b2e"/>
+          <ellipse cx="120" cy="100" rx="34" ry="26" fill="#1c1416"/><ellipse cx="120" cy="100" rx="7" ry="9" fill="#3d2b2e"/>
+          <ellipse cx="150" cy="135" rx="32" ry="24" fill="#171012"/><ellipse cx="150" cy="135" rx="7" ry="8" fill="#3d2b2e"/>
+          <ellipse cx="95" cy="150" rx="32" ry="24" fill="#1c1416"/><ellipse cx="95" cy="150" rx="7" ry="8" fill="#3d2b2e"/>
+        </svg>
+      </div>
+      <div class="featured-body">
+        <div class="featured-tag"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#3a4527" stroke-width="2.4"/></svg>Aceitunas premium</div>
+        <p>Aceituna negra sin amargo, deshuesada, preparada solo con agua, sal y ácido acético — pensada para coctelería, ensaladas, platos gourmet, catering y food service.</p>
+        <a class="btn btn-primary" href="#">Ver en tienda</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer id="contacto">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-logo">
+          <img class="logo-mark foot" src="logo.png" alt="ProOlivas Chile">
+        </div>
+        <p style="opacity:0.7; font-size:13.5px; max-width:260px;">Aceite de oliva y aceitunas de mesa con tradición familiar desde 1998.</p>
+      </div>
+      <div>
+        <h4>Menú</h4>
+        <a href="#">Home</a><a href="#productos">Productos</a><a href="#nosotros">Quienes somos</a><a href="#contacto">Contáctanos</a>
+      </div>
+      <div>
+        <h4>Enlaces útiles</h4>
+        <div class="row">+56 9 8825 6980</div>
+        <div class="row">proolivachile@gmail.com</div>
+        <div class="row">@proolivachile</div>
+        <div class="row">ProOlivasChile</div>
+        <div class="row">ProOliva — LinkedIn</div>
+      </div>
+    </div>
+    <div class="foot-bottom"><span>Copyright © 2026 ProOliva. Todos los derechos reservados.</span><span>Propuesta de rediseño</span></div>
+  </div>
+</footer>
+
+<a class="wsp-float" href="https://wa.me/56982256980?text=Hola%2C%20quiero%20cotizar%20productos%20ProOliva" target="_blank" rel="noopener" aria-label="Escríbenos por WhatsApp">
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5.1-1.3A10 10 0 1 0 12 2Z" fill="#ffffff"/><path d="M12 3.6A8.4 8.4 0 0 0 4.7 16.6l.3.5-.9 3.3 3.4-.9.5.3A8.4 8.4 0 1 0 12 3.6Z" fill="#25D366"/><path d="M9.1 7.4c-.2-.5-.4-.5-.6-.5h-.5c-.2 0-.5.1-.7.3-.2.3-.9 1-.9 2.3s1 2.6 1.1 2.8c.1.2 2 3.1 4.9 4.2 2.4.9 2.9.7 3.4.7.5-.1 1.6-.7 1.9-1.3.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.6-.4s-1.6-.8-1.9-.9c-.3-.1-.4-.1-.6.1-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.2-1.2-.5-2.3-1.5-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.2-.6-1.5-.8-2Z" fill="#ffffff"/></svg>
+</a>
+
+</body>
+</html>
