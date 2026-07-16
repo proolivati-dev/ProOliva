@@ -166,7 +166,7 @@
     </nav>
     <a class="logo" href="index.html"><img class="logo-mark" src="logo.png" alt="ProOlivas Chile"></a>
     <div class="nav-actions">
-      <a class="btn btn-gold" href="catalogo.pdf" download>Descargar catálogo</a>
+      <a class="btn btn-gold" href="#" id="catalogBtn" target="_blank" rel="noopener">Descargar catálogo</a>
       <a class="icon-link-btn" href="productos.html" aria-label="Buscar productos">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
       </a>
@@ -407,6 +407,18 @@
 
   loadHomeProducts();
   loadFeatured();
+
+  // ---------- Botón "Descargar catálogo" → apunta al PDF subido desde admin.html ----------
+  (async () => {
+    const catalogBtn = document.getElementById('catalogBtn');
+    const { data } = await supabaseClient.storage.from('site-files').list('', { search: 'catalogo.pdf' });
+    if (data && data.length > 0){
+      const { data: urlData } = supabaseClient.storage.from('site-files').getPublicUrl('catalogo.pdf');
+      catalogBtn.href = urlData.publicUrl;
+    } else {
+      catalogBtn.style.display = 'none';
+    }
+  })();
 </script>
 
 </body>
