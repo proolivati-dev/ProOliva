@@ -173,6 +173,34 @@
       </table>
       <div class="empty-state" id="emptyState" style="display:none;">Todavía no hay productos. Crea el primero con "+ Nuevo producto".</div>
     </div>
+
+    <div class="admin-toolbar" style="margin-top:44px;">
+      <div>
+        <h2>Solicitudes de venta por mayor</h2>
+        <p id="wholesaleCountLabel">Cargando...</p>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Contacto</th>
+            <th>Empresa</th>
+            <th>Correo / Teléfono</th>
+            <th>Destino</th>
+            <th>Detalle</th>
+            <th>Contactado</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="wholesaleTableBody">
+          <!-- filas generadas por JS -->
+        </tbody>
+      </table>
+      <div class="empty-state" id="wholesaleEmptyState" style="display:none;">Todavía no han llegado solicitudes de venta por mayor.</div>
+    </div>
   </div>
 </div>
 
@@ -296,6 +324,7 @@
     whoLabel.textContent = session.user.email;
     loadProducts();
     checkCatalog();
+    loadWholesaleInquiries();
   }
 
   loginForm.addEventListener('submit', async (e) => {
@@ -453,7 +482,12 @@
 
       // Si eligieron una foto nueva, subirla a Storage primero
       if (selectedFile){
-        const fileName = `${Date.now()}-${selectedFile.name.replace(/\s+/g,'-')}`;
+        const cleanName = selectedFile.name
+          .normalize('NFD').replace(/[\u0300-\u036f]/g, '')  // quita tildes (á,é,í,ó,ú) y diéresis
+          .replace(/ñ/gi, 'n')                                // la ñ no se separa con NFD, hay que reemplazarla aparte
+          .replace(/[^a-zA-Z0-9.\-_]/g, '-')                  // cualquier otro caracter raro -> guion
+          .replace(/-+/g, '-');                               // colapsa guiones repetidos
+        const fileName = `${Date.now()}-${cleanName}`;
         const { error: uploadError } = await supabaseClient.storage
           .from('product-images')
           .upload(fileName, selectedFile);
@@ -542,6 +576,79 @@
     }
     checkCatalog();
   });
+
+  // ---------- Solicitudes de venta por mayor ----------
+  let currentWholesale = [];
+
+  async function loadWholesaleInquiries(){
+    const { data, error } = await supabaseClient
+      .from('wholesale_inquiries')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    const tbody = document.getElementById('wholesaleTableBody');
+    const emptyState = document.getElementById('wholesaleEmptyState');
+    const countLabel = document.getElementById('wholesaleCountLabel');
+
+    if (error){
+      countLabel.textContent = 'Error cargando solicitudes.';
+      console.error(error);
+      return;
+    }
+
+    currentWholesale = data || [];
+    const pending = currentWholesale.filter(w => !w.contacted).length;
+    countLabel.textContent = `${currentWholesale.length} solicitud${currentWholesale.length === 1 ? '' : 'es'} en total · ${pending} sin contactar`;
+
+    if (currentWholesale.length === 0){
+      tbody.innerHTML = '';
+      emptyState.style.display = 'block';
+      return;
+    }
+    emptyState.style.display = 'none';
+
+    tbody.innerHTML = currentWholesale.map(w => `
+      <tr>
+        <td>${new Date(w.created_at).toLocaleDateString('es-CL', { day:'numeric', month:'short' })}</td>
+        <td class="cell-name">${w.contact_name}</td>
+        <td>${w.company_name || '—'}</td>
+        <td>${w.email}<br><span style="opacity:0.6;">${w.phone}</span></td>
+        <td>${[w.comuna, w.region].filter(Boolean).join(', ')}</td>
+        <td style="max-width:220px; white-space:normal; font-size:12.5px; opacity:0.8;">${w.message || '—'}</td>
+        <td>
+          <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+            <input type="checkbox" ${w.contacted ? 'checked' : ''} onchange="toggleContacted('${w.id}', this.checked)">
+          </label>
+        </td>
+        <td>
+          <button class="icon-btn" title="Borrar" onclick="deleteWholesale('${w.id}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" stroke="#a3392f" stroke-width="1.6"/></svg>
+          </button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  window.toggleContacted = async function(id, checked){
+    const { error } = await supabaseClient.from('wholesale_inquiries').update({ contacted: checked }).eq('id', id);
+    if (error){
+      alert('No se pudo actualizar.');
+      console.error(error);
+      return;
+    }
+    loadWholesaleInquiries();
+  };
+
+  window.deleteWholesale = async function(id){
+    if (!confirm('¿Borrar esta solicitud?')) return;
+    const { error } = await supabaseClient.from('wholesale_inquiries').delete().eq('id', id);
+    if (error){
+      alert('No se pudo borrar.');
+      console.error(error);
+      return;
+    }
+    loadWholesaleInquiries();
+  };
 
   checkSession();
 </script>

@@ -10,39 +10,83 @@
 <style>
   :root{
     --ink:#20281a; --olive:#55643b; --olive-deep:#3a4527; --gold:#c89b3c; --gold-deep:#9c7326;
-    --coffee:#3f2e20; --linen:#f3eee0; --paper:#fbf9f2; --line:rgba(32,40,26,0.14);
+    --coffee:#3f2e20; --linen:#f3eee0; --paper:#fbf9f2; --line:rgba(32,40,26,0.14); --danger:#a3392f;
   }
   *{box-sizing:border-box; margin:0; padding:0;}
   body{ font-family:'Public Sans', sans-serif; background:var(--linen); color:var(--ink); line-height:1.65; -webkit-font-smoothing:antialiased;}
   h1,h2{ font-family:'Archivo', sans-serif; font-weight:700; color:var(--ink);}
   a{ color:inherit; text-decoration:none;}
-  .wrap{ max-width:820px; margin:0 auto; padding:0 32px;}
+  button, input, select, textarea{ font-family:'Public Sans', sans-serif;}
+  .wrap{ max-width:1080px; margin:0 auto; padding:0 32px;}
   img{ display:block;}
 
   .topbar{ background:var(--coffee); color:var(--paper); font-size:12.5px; padding:9px 0; text-align:center; text-transform:uppercase; letter-spacing:0.05em; font-weight:600;}
   header{ background:var(--paper); border-bottom:1px solid var(--line); padding:18px 0;}
-  header .wrap{ display:flex; align-items:center; justify-content:space-between; max-width:1120px;}
+  header .wrap{ display:flex; align-items:center; justify-content:space-between;}
   .logo-mark{ height:52px;}
   .back-link{ font-size:13.5px; font-weight:600; display:flex; align-items:center; gap:6px;}
+  .back-link:hover{ color:var(--olive-deep);}
 
   .hero{ padding:56px 0 8px; text-align:center;}
   .eyebrow{ font-family:'IBM Plex Mono', monospace; font-size:12px; letter-spacing:0.12em; text-transform:uppercase; color:var(--gold-deep); display:block; margin-bottom:10px;}
   .hero h1{ font-size:34px; margin-bottom:12px;}
-  .hero p{ opacity:0.72; font-size:15px;}
+  .hero p{ opacity:0.72; font-size:15px; max-width:560px; margin:0 auto;}
 
-  .draft-note{ background:#fff4d6; border:1px solid var(--gold); color:#6b4e00; font-size:12.5px; padding:12px 16px; border-radius:8px; margin:28px 0; display:flex; gap:10px; align-items:flex-start;}
+  .page-grid{ display:grid; grid-template-columns:1fr 1.05fr; gap:32px; padding:44px 0 80px; align-items:start;}
 
-  .content-card{ background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:36px 40px; margin-bottom:24px;}
-  .content-card h2{ font-size:19px; margin-bottom:12px;}
+  .content-card{ background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:32px 34px; margin-bottom:22px;}
+  .content-card h2{ font-size:17px; margin-bottom:12px; display:flex; align-items:center; gap:10px;}
   .content-card p{ font-size:14.5px; opacity:0.85; margin-bottom:12px;}
   .content-card ul{ margin:0 0 0 20px; font-size:14.5px; opacity:0.85;}
   .content-card li{ margin-bottom:6px;}
+  .icon-badge{ width:32px; height:32px; border-radius:8px; background:var(--linen); display:flex; align-items:center; justify-content:center; flex-shrink:0;}
 
-  .btn{ display:inline-flex; align-items:center; gap:8px; padding:13px 24px; border-radius:6px; font-size:13.5px; font-weight:700; letter-spacing:0.02em; text-transform:uppercase; background:#25D366; color:#fff; margin-top:10px;}
+  .trust-row{ display:flex; gap:14px; margin-top:18px; flex-wrap:wrap;}
+  .trust-chip{ font-size:12px; font-weight:600; background:var(--linen); padding:7px 13px; border-radius:20px; display:flex; align-items:center; gap:6px;}
 
-  footer{ text-align:center; padding:48px 0 60px; font-size:12.5px; opacity:0.55;}
+  /* ---------- form panel ---------- */
+  .form-panel{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:36px 38px; box-shadow:0 24px 50px -30px rgba(32,40,26,0.35); position:sticky; top:24px;}
+  .form-panel h2{ font-size:20px; margin-bottom:6px;}
+  .form-panel .sub{ font-size:13.5px; opacity:0.65; margin-bottom:24px;}
 
-  @media (max-width:640px){ .content-card{ padding:26px 22px;} }
+  .field{ margin-bottom:16px;}
+  .field label{ display:block; font-size:12.5px; font-weight:600; margin-bottom:6px; color:var(--olive-deep);}
+  .field input, .field select, .field textarea{
+    width:100%; border:1.5px solid var(--line); border-radius:6px; padding:11px 14px; font-size:14px; background:#fff; color:var(--ink); outline:none; transition:border-color .15s;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{ border-color:var(--olive-deep);}
+  .field textarea{ resize:vertical; min-height:90px;}
+  .field-row{ display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .field-error{ font-size:12px; color:var(--danger); margin-top:4px; display:none;}
+  .field.invalid input, .field.invalid select, .field.invalid textarea{ border-color:var(--danger);}
+  .field.invalid .field-error{ display:block;}
+
+  .btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:14px 24px; border-radius:6px; font-size:13.5px; font-weight:700; letter-spacing:0.02em; text-transform:uppercase; cursor:pointer; border:1px solid transparent; width:100%; transition:transform .15s, background .15s, opacity .15s;}
+  .btn:hover{ transform:translateY(-1px);}
+  .btn:disabled{ opacity:0.55; cursor:not-allowed; transform:none;}
+  .btn-primary{ background:var(--olive-deep); color:var(--paper);}
+  .btn-primary:hover{ background:var(--ink);}
+
+  .submit-error{ background:#fbe9e7; border:1px solid var(--danger); color:var(--danger); font-size:13px; padding:10px 12px; border-radius:6px; margin-top:14px; display:none;}
+
+  .form-footnote{ font-size:11.5px; opacity:0.5; margin-top:14px; text-align:center;}
+
+  /* ---------- success state ---------- */
+  .success-state{ display:none; text-align:center; padding:20px 0;}
+  .success-icon{ width:60px; height:60px; border-radius:50%; background:#e4ede0; display:flex; align-items:center; justify-content:center; margin:0 auto 18px;}
+  .success-state h2{ font-size:20px; margin-bottom:10px;}
+  .success-state p{ font-size:14px; opacity:0.75; margin-bottom:22px;}
+
+  footer{ text-align:center; padding:0 0 60px; font-size:12.5px; opacity:0.55;}
+
+  @media (max-width:900px){
+    .page-grid{ grid-template-columns:1fr;}
+    .form-panel{ position:static;}
+  }
+  @media (max-width:600px){
+    .field-row{ grid-template-columns:1fr;}
+    .content-card, .form-panel{ padding:26px 22px;}
+  }
 </style>
 </head>
 <body>
@@ -63,40 +107,214 @@
   <div class="hero">
     <span class="eyebrow">Para negocios</span>
     <h1>Ventas por mayor</h1>
-    <p>Aceites y aceitunas al por mayor para restaurantes, hoteles, almacenes y distribuidores.</p>
+    <p>Aceites y aceitunas al por mayor para restaurantes, hoteles, almacenes y distribuidores. Cuéntanos qué necesitas y te cotizamos a la brevedad.</p>
   </div>
 
-  <div class="draft-note">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="flex-shrink:0; margin-top:2px;"><path d="M12 9v4M12 17h.01" stroke="#6b4e00" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="9" stroke="#6b4e00" stroke-width="1.6"/></svg>
-    <span><b>Página en construcción:</b> esta es una versión borrador para que veas la estructura. El contenido, precios mínimos y condiciones reales los definimos juntos en la próxima ronda.</span>
-  </div>
+  <div class="page-grid">
+    <div>
+      <div class="content-card">
+        <h2><span class="icon-badge"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 12l2 2 4-4" stroke="#3a4527" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9" stroke="#3a4527" stroke-width="1.6"/></svg></span>Condiciones generales</h2>
+        <p>Trabajamos con negocios que compran en volumen, con condiciones comerciales distintas a la venta al detalle:</p>
+        <ul>
+          <li>Precios diferenciados según volumen de compra.</li>
+          <li>Formatos de mayor tamaño (granel, cajas cerradas).</li>
+          <li>Coordinación de despacho periódico o por pedido.</li>
+          <li>Facturación para empresas.</li>
+        </ul>
+        <div class="trust-row">
+          <span class="trust-chip">✓ 25+ años de experiencia</span>
+          <span class="trust-chip">✓ Envío a todo Chile</span>
+        </div>
+      </div>
 
-  <div class="content-card">
-    <h2>Condiciones generales (borrador)</h2>
-    <p>Trabajamos con negocios que compran en volumen, con condiciones comerciales distintas a la venta al detalle:</p>
-    <ul>
-      <li>Precios diferenciados según volumen de compra.</li>
-      <li>Formatos de mayor tamaño (granel, cajas cerradas).</li>
-      <li>Coordinación de despacho periódico o por pedido.</li>
-      <li>Facturación para empresas.</li>
-    </ul>
-  </div>
+      <div class="content-card">
+        <h2><span class="icon-badge"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 4h4l2 5-2.5 2a12 12 0 0 0 6.5 6.5l2-2.5 5 2v4a2 2 0 0 1-2 2C10.5 22 2 13.5 2 6a2 2 0 0 1 2-2Z" stroke="#3a4527" stroke-width="1.5"/></svg></span>¿A quién está dirigido?</h2>
+        <p>Restaurantes, hoteles, almacenes, distribuidores, food service y cualquier negocio que necesite abastecerse de forma regular.</p>
+        <p style="margin-bottom:0;">Completa el formulario y te contactamos por correo o WhatsApp con tu cotización — normalmente respondemos dentro de 24 horas hábiles.</p>
+      </div>
+    </div>
 
-  <div class="content-card">
-    <h2>¿A quién está dirigido?</h2>
-    <p>Restaurantes, hoteles, almacenes, distribuidores, food service y cualquier negocio que necesite abastecerse de forma regular.</p>
-  </div>
+    <div class="form-panel">
+      <div id="formState">
+        <h2>Solicita tu cotización</h2>
+        <p class="sub">Todos los campos marcados con * son obligatorios.</p>
 
-  <div class="content-card" style="text-align:center;">
-    <h2>Cotiza tu pedido por mayor</h2>
-    <p>Cuéntanos qué necesitas y coordinamos precio, formato y despacho.</p>
-    <a class="btn" href="https://wa.me/56988256980?text=Hola%2C%20quiero%20cotizar%20una%20compra%20por%20mayor" target="_blank" rel="noopener">
-      Escribir por WhatsApp
-    </a>
+        <form id="wholesaleForm" novalidate>
+          <div class="field" id="field-contactName">
+            <label>Nombre de contacto *</label>
+            <input type="text" id="contactName" placeholder="Ej: María Torres">
+            <div class="field-error">Escribe tu nombre.</div>
+          </div>
+
+          <div class="field" id="field-companyName">
+            <label>Empresa / Razón social <span style="opacity:0.5; font-weight:400;">(opcional)</span></label>
+            <input type="text" id="companyName" placeholder="Ej: Restaurante El Olivo Ltda.">
+          </div>
+
+          <div class="field-row">
+            <div class="field" id="field-email">
+              <label>Correo *</label>
+              <input type="email" id="email" placeholder="tucorreo@empresa.cl">
+              <div class="field-error">Escribe un correo válido.</div>
+            </div>
+            <div class="field" id="field-phone">
+              <label>Teléfono *</label>
+              <input type="tel" id="phone" placeholder="+56 9 ...">
+              <div class="field-error">Escribe un teléfono de contacto.</div>
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field" id="field-region">
+              <label>Región de destino *</label>
+              <select id="region">
+                <option value="">Selecciona...</option>
+                <option>Valparaíso</option>
+                <option>Metropolitana</option>
+                <option>Biobío</option>
+                <option>La Araucanía</option>
+                <option>Los Lagos</option>
+                <option>Coquimbo</option>
+                <option>O'Higgins</option>
+                <option>Maule</option>
+                <option>Ñuble</option>
+                <option>Antofagasta</option>
+                <option>Otra región</option>
+              </select>
+              <div class="field-error">Selecciona una región.</div>
+            </div>
+            <div class="field" id="field-comuna">
+              <label>Comuna / Ciudad *</label>
+              <input type="text" id="comuna" placeholder="Ej: Viña del Mar">
+              <div class="field-error">Escribe la comuna o ciudad.</div>
+            </div>
+          </div>
+
+          <div class="field" id="field-message">
+            <label>¿Qué productos te interesan y en qué volumen aproximado? *</label>
+            <textarea id="message" placeholder="Ej: Aceite de oliva 5L, 20 unidades mensuales, para restaurante."></textarea>
+            <div class="field-error">Cuéntanos qué necesitas.</div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" id="submitBtn">Enviar solicitud</button>
+          <div class="submit-error" id="submitError"></div>
+          <p class="form-footnote">Al enviar, también se abrirá WhatsApp con un resumen para que puedas confirmarnos directo.</p>
+        </form>
+      </div>
+
+      <div class="success-state" id="successState">
+        <div class="success-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#3a4527" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <h2>¡Recibimos tu solicitud!</h2>
+        <p>Te vamos a contactar por correo o WhatsApp dentro de 24 horas hábiles con tu cotización.</p>
+        <a class="btn btn-primary" id="successWspBtn" href="#" target="_blank" rel="noopener" style="width:auto; display:inline-flex; padding:12px 22px;">Escribirnos ahora por WhatsApp</a>
+      </div>
+    </div>
   </div>
 </div>
 
 <footer>Copyright © 2026 ProOliva. Todos los derechos reservados.</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script>
+  const form = document.getElementById('wholesaleForm');
+  const submitBtn = document.getElementById('submitBtn');
+  const submitError = document.getElementById('submitError');
+
+  const fields = {
+    contactName: { el: document.getElementById('contactName'), required: true },
+    email: { el: document.getElementById('email'), required: true, isEmail: true },
+    phone: { el: document.getElementById('phone'), required: true },
+    region: { el: document.getElementById('region'), required: true },
+    comuna: { el: document.getElementById('comuna'), required: true },
+    message: { el: document.getElementById('message'), required: true },
+  };
+
+  function clearErrors(){
+    Object.keys(fields).forEach(key => {
+      document.getElementById('field-' + key).classList.remove('invalid');
+    });
+    submitError.style.display = 'none';
+  }
+
+  function validate(){
+    let valid = true;
+    Object.entries(fields).forEach(([key, def]) => {
+      const value = def.el.value.trim();
+      let fieldValid = true;
+      if (def.required && !value) fieldValid = false;
+      if (def.isEmail && value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) fieldValid = false;
+      const fieldEl = document.getElementById('field-' + key);
+      if (!fieldValid){
+        fieldEl.classList.add('invalid');
+        valid = false;
+      } else {
+        fieldEl.classList.remove('invalid');
+      }
+    });
+    return valid;
+  }
+
+  function buildWhatsAppMessage(data){
+    const lines = [
+      'Hola, quiero cotizar una compra por mayor:',
+      '',
+      `Nombre: ${data.contact_name}`,
+      data.company_name ? `Empresa: ${data.company_name}` : null,
+      `Correo: ${data.email}`,
+      `Teléfono: ${data.phone}`,
+      `Destino: ${data.comuna}, ${data.region}`,
+      '',
+      `Detalle: ${data.message}`,
+    ].filter(Boolean);
+    return lines.join('\n');
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    clearErrors();
+
+    if (!validate()){
+      submitError.textContent = 'Revisa los campos marcados en rojo antes de continuar.';
+      submitError.style.display = 'block';
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Enviando...';
+
+    const data = {
+      contact_name: fields.contactName.el.value.trim(),
+      company_name: document.getElementById('companyName').value.trim() || null,
+      email: fields.email.el.value.trim(),
+      phone: fields.phone.el.value.trim(),
+      region: fields.region.el.value,
+      comuna: fields.comuna.el.value.trim(),
+      message: fields.message.el.value.trim(),
+    };
+
+    try {
+      const { error } = await supabaseClient.from('wholesale_inquiries').insert(data);
+      if (error) throw error;
+
+      const wspMsg = buildWhatsAppMessage(data);
+      const wspLink = `https://wa.me/56988256980?text=${encodeURIComponent(wspMsg)}`;
+      document.getElementById('successWspBtn').href = wspLink;
+
+      document.getElementById('formState').style.display = 'none';
+      document.getElementById('successState').style.display = 'block';
+
+      // Abre WhatsApp automáticamente con el resumen, en una pestaña nueva
+      window.open(wspLink, '_blank');
+
+    } catch (err) {
+      submitError.textContent = 'No se pudo enviar tu solicitud: ' + err.message + ' — revisa que hayas corrido supabase-migration-wholesale.sql en Supabase.';
+      submitError.style.display = 'block';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Enviar solicitud';
+    }
+  });
+</script>
 
 </body>
 </html>
