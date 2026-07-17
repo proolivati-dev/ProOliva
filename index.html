@@ -44,14 +44,49 @@
   .nav-links a{ opacity:0.8; transition:opacity .15s; white-space:nowrap;}
   .nav-links a:hover{ opacity:1; color:var(--olive-deep);}
   .nav-actions{ display:flex; align-items:center; justify-content:flex-end; gap:12px;}
-  .icon-link-btn{ width:38px; height:38px; border-radius:50%; border:1.5px solid var(--line); display:flex; align-items:center; justify-content:center; transition:border-color .15s; flex-shrink:0;}
+  .icon-link-btn{ position:relative; width:38px; height:38px; border-radius:50%; border:1.5px solid var(--line); display:flex; align-items:center; justify-content:center; transition:border-color .15s; flex-shrink:0; background:transparent; cursor:pointer;}
   .icon-link-btn:hover{ border-color:var(--olive-deep);}
+
+  /* ---------- cart ---------- */
+  .cart-badge{ position:absolute; top:-5px; right:-5px; background:var(--olive-deep); color:#fff; font-family:'IBM Plex Mono',monospace; font-size:10px; font-weight:700; min-width:18px; height:18px; border-radius:10px; display:flex; align-items:center; justify-content:center; padding:0 4px;}
+  .cart-backdrop{ position:fixed; inset:0; background:rgba(20,24,15,0.5); z-index:90; opacity:0; pointer-events:none; transition:opacity .25s;}
+  .cart-backdrop.open{ opacity:1; pointer-events:auto;}
+  .cart-drawer{ position:fixed; top:0; right:0; height:100vh; width:400px; max-width:92vw; background:var(--paper); z-index:95; box-shadow:-14px 0 40px rgba(0,0,0,0.25); transform:translateX(100%); transition:transform .32s cubic-bezier(.2,.8,.2,1); display:flex; flex-direction:column;}
+  .cart-drawer.open{ transform:translateX(0);}
+  .cart-drawer-header{ display:flex; align-items:center; justify-content:space-between; padding:22px 24px; border-bottom:1px solid var(--line);}
+  .cart-drawer-header h3{ font-size:18px;}
+  .cart-close-btn{ background:transparent; border:none; cursor:pointer; width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:50%; transition:background .15s;}
+  .cart-close-btn:hover{ background:var(--linen);}
+  .cart-items{ flex:1; overflow-y:auto; padding:8px 24px;}
+  .cart-item{ display:flex; gap:14px; padding:16px 0; border-bottom:1px solid var(--line);}
+  .cart-item-img{ width:60px; height:60px; border-radius:8px; overflow:hidden; background:var(--linen); flex-shrink:0;}
+  .cart-item-img img{ width:100%; height:100%; object-fit:cover;}
+  .cart-item-info{ flex:1; min-width:0;}
+  .cart-item-info h4{ font-family:'Archivo',sans-serif; font-weight:600; font-size:13.5px; margin-bottom:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .cart-item-price{ font-size:12px; opacity:0.6; margin-bottom:8px;}
+  .cart-item-controls{ display:flex; align-items:center; justify-content:space-between;}
+  .cart-item-remove{ background:transparent; border:none; cursor:pointer; opacity:0.4; transition:opacity .15s;}
+  .cart-item-remove:hover{ opacity:0.85;}
+  .cart-empty{ text-align:center; padding:70px 20px; opacity:0.55; font-size:14px;}
+  .cart-footer{ padding:20px 24px; border-top:1px solid var(--line);}
+  .cart-total-row{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:16px;}
+  .cart-total-row span:first-child{ font-size:14px; font-weight:600;}
+  .cart-total-row span:last-child{ font-family:'Archivo',sans-serif; font-weight:700; font-size:22px; color:var(--olive-deep);}
+  .cart-clear-btn{ width:100%; text-align:center; background:transparent; border:none; cursor:pointer; font-size:12.5px; opacity:0.5; margin-top:10px; padding:6px;}
+  .cart-clear-btn:hover{ opacity:0.85;}
+  .qty-stepper{ display:inline-flex; align-items:center; border:1.5px solid var(--line); border-radius:6px; overflow:hidden; flex-shrink:0; background:var(--paper);}
+  .qty-btn{ width:28px; height:32px; background:transparent; border:none; cursor:pointer; font-size:15px; font-weight:600; color:var(--ink); transition:background .15s;}
+  .qty-btn:hover{ background:var(--linen);}
+  .qty-value{ width:26px; text-align:center; font-size:13px; font-weight:600;}
   .btn{ display:inline-flex; align-items:center; gap:8px; padding:11px 22px; border-radius:6px; font-size:13px; font-weight:700; letter-spacing:0.02em; text-transform:uppercase; cursor:pointer; border:1px solid transparent; transition:transform .15s, background .15s; white-space:nowrap;}
   .btn:hover{ transform:translateY(-1px); }
   .btn-primary{ background:var(--olive-deep); color:var(--paper); }
   .btn-primary:hover{ background:var(--ink); }
   .btn-gold{ background:var(--gold); color:var(--ink); }
   .btn-gold:hover{ background:var(--gold-deep); color:var(--paper);}
+  .btn-wsp{ background:#25D366; color:#fff;}
+  .btn-wsp:hover{ background:#1fb959;}
+  .btn-block{ width:100%; justify-content:center; padding:14px;}
 
   /* ---------- video banner ---------- */
   .video-banner{ position:relative; margin:0; width:100%; padding:0;}
@@ -108,13 +143,16 @@
   /* ---------- destacado (carousel) ---------- */
   .featured{ display:grid; grid-template-columns:0.9fr 1fr; gap:52px; align-items:center;}
   .featured-visual{ background:var(--aubergine); border-radius:10px; aspect-ratio:1/0.85; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative;}
-  .featured-visual img{ width:100%; height:100%; object-fit:cover;}
+  .featured-visual img{ width:100%; height:100%; object-fit:cover; transition:transform .6s ease;}
   .featured-body .eyebrow{ color:var(--gold-deep);}
   .featured-body h2{ font-size:32px; margin:14px 0 14px;}
   .featured-body p{ opacity:0.75; margin-bottom:16px; font-size:15px; max-width:420px;}
   .featured-price{ font-family:'Archivo',sans-serif; font-weight:700; font-size:22px; color:var(--olive-deep); margin-bottom:20px; display:block;}
   .featured-tag{ display:inline-flex; align-items:center; gap:8px; font-family:'IBM Plex Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:var(--olive-deep); margin-bottom:16px;}
   .featured-nav{ display:flex; align-items:center; gap:18px; margin-top:26px;}
+  #featuredContainer{ transition:opacity .4s cubic-bezier(.4,0,.2,1), transform .4s cubic-bezier(.4,0,.2,1);}
+  #featuredContainer.fading{ opacity:0; transform:translateY(14px);}
+  .featured-visual:hover img{ transform:scale(1.04);}
   .featured-dots{ display:flex; gap:8px;}
   .featured-dot{ width:8px; height:8px; border-radius:50%; background:var(--line); cursor:pointer; transition:background .2s, transform .2s; border:none; padding:0;}
   .featured-dot.active{ background:var(--olive-deep); transform:scale(1.3);}
@@ -167,9 +205,10 @@
     <a class="logo" href="index.html"><img class="logo-mark" src="logo.png" alt="ProOlivas Chile"></a>
     <div class="nav-actions">
       <a class="btn btn-gold" href="#" id="catalogBtn" target="_blank" rel="noopener">Descargar catálogo</a>
-      <a class="icon-link-btn" href="productos.html" aria-label="Buscar productos">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-      </a>
+      <button class="icon-link-btn" id="cartOpenBtn" aria-label="Ver carrito">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M3 4h2l2.4 12.2a2 2 0 0 0 2 1.6h8.1a2 2 0 0 0 2-1.6L21 8H6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="21" r="1.4" fill="currentColor"/><circle cx="17" cy="21" r="1.4" fill="currentColor"/></svg>
+        <span class="cart-badge" id="cartBadge" style="display:none;">0</span>
+      </button>
     </div>
   </div>
 </header>
@@ -287,8 +326,25 @@
   <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5.1-1.3A10 10 0 1 0 12 2Z" fill="#ffffff"/><path d="M12 3.6A8.4 8.4 0 0 0 4.7 16.6l.3.5-.9 3.3 3.4-.9.5.3A8.4 8.4 0 1 0 12 3.6Z" fill="#25D366"/><path d="M9.1 7.4c-.2-.5-.4-.5-.6-.5h-.5c-.2 0-.5.1-.7.3-.2.3-.9 1-.9 2.3s1 2.6 1.1 2.8c.1.2 2 3.1 4.9 4.2 2.4.9 2.9.7 3.4.7.5-.1 1.6-.7 1.9-1.3.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.6-.4s-1.6-.8-1.9-.9c-.3-.1-.4-.1-.6.1-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.2-1.2-.5-2.3-1.5-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.2-.6-1.5-.8-2Z" fill="#ffffff"/></svg>
 </a>
 
+<div class="cart-backdrop" id="cartBackdrop"></div>
+<div class="cart-drawer" id="cartDrawer">
+  <div class="cart-drawer-header">
+    <h3>Tu carrito</h3>
+    <button class="cart-close-btn" id="cartCloseBtn" aria-label="Cerrar carrito">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#20281a" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+  <div class="cart-items" id="cartItems"></div>
+  <div class="cart-footer">
+    <div class="cart-total-row"><span>Total</span><span id="cartTotal">$0</span></div>
+    <a class="btn btn-wsp btn-block" id="cartCheckoutBtn" href="#" target="_blank" rel="noopener">Cotizar carrito por WhatsApp</a>
+    <button class="cart-clear-btn" id="cartClearBtn">Vaciar carrito</button>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
+<script src="cart.js"></script>
 <script>
   const CATEGORY_LABELS = {
     'aceites': 'Aceites de oliva',
@@ -299,10 +355,6 @@
     'ofertas': 'Ofertas',
     'regalos': 'Regalos'
   };
-
-  function formatCLP(value){
-    return new Intl.NumberFormat('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits:0 }).format(value || 0);
-  }
 
   function waLink(productName){
     const msg = encodeURIComponent(`Hola, quiero cotizar: ${productName}`);
@@ -380,9 +432,19 @@
     }
   }
 
+  // Transición suave (fundido + leve desplazamiento) al cambiar de producto destacado
+  function transitionFeatured(){
+    const container = document.getElementById('featuredContainer');
+    container.classList.add('fading');
+    setTimeout(() => {
+      renderFeatured();
+      container.classList.remove('fading');
+    }, 260);
+  }
+
   function goFeatured(i){
     featuredIndex = (i + featuredProducts.length) % featuredProducts.length;
-    renderFeatured();
+    transitionFeatured();
     resetFeaturedTimer();
   }
 
@@ -410,6 +472,7 @@
 
   loadHomeProducts();
   loadFeatured();
+  initCart();
 
   // ---------- Botón "Descargar catálogo" → apunta al PDF subido desde admin.html ----------
   (async () => {

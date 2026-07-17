@@ -195,6 +195,11 @@
         <input type="text" id="fieldName" required placeholder="Ej: Aceite de oliva 1 L">
       </div>
 
+      <div class="field">
+        <label>Código SKU <span style="opacity:0.5; font-weight:400;">(opcional)</span></label>
+        <input type="text" id="fieldSku" placeholder="Ej: ACE-1L-CL">
+      </div>
+
       <div class="field-row">
         <div class="field">
           <label>Categoría</label>
@@ -341,7 +346,7 @@
     tbody.innerHTML = currentProducts.map(p => `
       <tr>
         <td>${p.image_url ? `<img class="cell-img" src="${p.image_url}" alt="">` : `<div class="cell-img"></div>`}</td>
-        <td class="cell-name">${p.name}</td>
+        <td class="cell-name">${p.name}${p.sku ? `<div style="font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:400; opacity:0.5; margin-top:2px;">${p.sku}</div>` : ''}</td>
         <td>${CATEGORY_LABELS[p.category] || p.category}</td>
         <td>${new Intl.NumberFormat('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits:0 }).format(p.price || 0)}</td>
         <td>${p.featured ? '<span class="badge badge-on">Sí</span>' : '<span class="badge badge-off">No</span>'}</td>
@@ -393,6 +398,7 @@
     document.getElementById('modalTitle').textContent = 'Editar producto';
     document.getElementById('productId').value = p.id;
     document.getElementById('fieldName').value = p.name || '';
+    document.getElementById('fieldSku').value = p.sku || '';
     document.getElementById('fieldCategory').value = p.category || 'aceites';
     document.getElementById('fieldOrigin').value = p.origin || 'Chile';
     document.getElementById('fieldFormat').value = p.format || '';
@@ -452,6 +458,7 @@
 
       const payload = {
         name: document.getElementById('fieldName').value,
+        sku: document.getElementById('fieldSku').value || null,
         category: document.getElementById('fieldCategory').value,
         origin: document.getElementById('fieldOrigin').value,
         format: document.getElementById('fieldFormat').value,
