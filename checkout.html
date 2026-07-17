@@ -203,10 +203,12 @@
   }
 
   document.getElementById('quoteShippingBtn').addEventListener('click', async () => {
+    const region = document.getElementById('custRegion').value;
     const comuna = document.getElementById('custComuna').value.trim();
     const errorEl = document.getElementById('shippingError');
     const resultEl = document.getElementById('shippingQuoteResult');
     errorEl.style.display = 'none';
+    resultEl.classList.remove('show');
 
     if (!comuna){
       errorEl.textContent = 'Escribe la comuna de destino primero.';
@@ -219,33 +221,50 @@
     btn.textContent = 'Cotizando...';
 
     const totalWeight = cart.reduce((sum, i) => sum + ((i.weight_kg || 0.5) * i.qty), 0);
+    const subtotal = cartTotal(cart);
 
     try {
       const res = await fetch(`${SUPABASE_URL}/functions/v1/chilexpress-quote`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ comunaDestino: comuna, pesoKg: totalWeight || 1 })
+        body: JSON.stringify({ region, comuna, pesoKg: totalWeight || 1, valorDeclarado: subtotal })
       });
       const data = await res.json();
 
       if (!res.ok || data.error){
         throw new Error(data.error || 'No se pudo cotizar el envío.');
       }
+      if (!data.options || data.options.length === 0){
+        throw new Error('Chilexpress no devolvió opciones de envío para esta comuna.');
+      }
 
-      // NOTA: el formato exacto de "data" depende de cómo quede
-      // configurada la función chilexpress-quote con tus credenciales
-      // reales — puede que necesites ajustar estas líneas después.
-      shippingCost = data.price || data.amount || 0;
-      shippingQuoted = true;
-
-      resultEl.innerHTML = `<b>Envío cotizado:</b> ${formatCLP(shippingCost)}${data.estimatedDays ? ` · Llega en ${data.estimatedDays} días hábiles` : ''}`;
+      resultEl.innerHTML = '<b>Elige el servicio de envío:</b>' +
+        data.options.map((o, i) => `
+          <label style="display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--line); cursor:pointer;">
+            <input type="radio" name="shippingOption" value="${o.price}" ${i === 0 ? 'checked' : ''} style="width:auto;">
+            <span style="flex:1;">${o.service}</span>
+            <b>${formatCLP(o.price)}</b>
+          </label>
+        `).join('');
       resultEl.classList.add('show');
+
+      resultEl.querySelectorAll('input[name="shippingOption"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+          shippingCost = parseInt(e.target.value, 10);
+          document.getElementById('shippingValue').textContent = formatCLP(shippingCost);
+          updateTotals();
+        });
+      });
+
+      // Selecciona la primera opción por defecto
+      shippingCost = data.options[0].price;
+      shippingQuoted = true;
       document.getElementById('shippingValue').textContent = formatCLP(shippingCost);
       updateTotals();
       document.getElementById('payBtn').disabled = false;
 
     } catch (err) {
-      errorEl.textContent = 'No se pudo cotizar el envío automáticamente: ' + err.message + ' — revisa que chilexpress-quote esté desplegada y configurada con tus credenciales.';
+      errorEl.textContent = 'No se pudo cotizar el envío: ' + err.message;
       errorEl.style.display = 'block';
     } finally {
       btn.disabled = false;
