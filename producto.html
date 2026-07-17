@@ -32,7 +32,9 @@
   .nav-links{ display:flex; align-items:center; gap:26px; font-size:14px; font-weight:600; text-transform:uppercase; letter-spacing:0.02em;}
   .nav-links a{ opacity:0.8; transition:opacity .15s; white-space:nowrap;}
   .nav-links a:hover{ opacity:1; color:var(--olive-deep);}
-  .nav-actions{ display:flex; align-items:center; justify-content:flex-end; gap:12px;}
+  .nav-actions{ display:flex; align-items:center; justify-content:flex-end; gap:18px;}
+  .nav-actions-link{ font-size:13.5px; font-weight:600; text-transform:uppercase; letter-spacing:0.02em; opacity:0.8; transition:opacity .15s; white-space:nowrap;}
+  .nav-actions-link:hover{ opacity:1; color:var(--olive-deep);}
   .icon-link-btn{ position:relative; width:38px; height:38px; border-radius:50%; border:1.5px solid var(--line); display:flex; align-items:center; justify-content:center; transition:border-color .15s; flex-shrink:0; background:transparent; cursor:pointer;}
   .icon-link-btn:hover{ border-color:var(--olive-deep);}
   .btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:13px 24px; border-radius:6px; font-size:13.5px; font-weight:700; letter-spacing:0.02em; text-transform:uppercase; cursor:pointer; border:1px solid transparent; transition:transform .15s, background .15s; white-space:nowrap;}
@@ -184,7 +186,6 @@
 <header>
   <div class="wrap nav">
     <nav class="nav-links">
-      <a href="ventas-mayor.html">Ventas por mayor</a>
       <a href="productos.html">Productos</a>
       <a href="productos.html?cat=packs">Packs</a>
       <a href="productos.html?cat=ofertas">Ofertas</a>
@@ -192,6 +193,7 @@
     </nav>
     <a class="logo" href="index.html"><img class="logo-mark" src="logo.png" alt="ProOlivas Chile"></a>
     <div class="nav-actions">
+      <a href="ventas-mayor.html" class="nav-actions-link">Ventas por mayor</a>
       <a class="btn btn-gold" href="#" id="catalogBtn" target="_blank" rel="noopener">Descargar catálogo</a>
       <button class="icon-link-btn" id="cartOpenBtn" aria-label="Ver carrito">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M3 4h2l2.4 12.2a2 2 0 0 0 2 1.6h8.1a2 2 0 0 0 2-1.6L21 8H6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="21" r="1.4" fill="currentColor"/><circle cx="17" cy="21" r="1.4" fill="currentColor"/></svg>
