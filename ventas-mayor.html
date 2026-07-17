@@ -32,6 +32,15 @@
   .hero h1{ font-size:34px; margin-bottom:12px;}
   .hero p{ opacity:0.72; font-size:15px; max-width:560px; margin:0 auto;}
 
+  .quick-wsp-banner{ display:flex; align-items:center; gap:20px; background:#e8f8ee; border:1px solid #bfe8cf; border-radius:12px; padding:20px 28px; margin-top:32px; flex-wrap:wrap;}
+  .quick-wsp-icon{ width:48px; height:48px; border-radius:50%; background:#25D366; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .quick-wsp-text{ flex:1; min-width:220px;}
+  .quick-wsp-text h3{ font-family:'Archivo',sans-serif; font-weight:700; font-size:15.5px; margin-bottom:4px; color:var(--ink);}
+  .quick-wsp-text p{ font-size:13px; opacity:0.75; margin:0;}
+  .btn-wsp{ background:#25D366; color:#fff;}
+  .btn-wsp:hover{ background:#1fb959;}
+  .quick-wsp-banner .btn{ width:auto; flex-shrink:0; padding:12px 22px;}
+
   .page-grid{ display:grid; grid-template-columns:1fr 1.05fr; gap:32px; padding:44px 0 80px; align-items:start;}
 
   .content-card{ background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:32px 34px; margin-bottom:22px;}
@@ -110,16 +119,27 @@
     <p>Aceites y aceitunas al por mayor para restaurantes, hoteles, almacenes y distribuidores. Cuéntanos qué necesitas y te cotizamos a la brevedad.</p>
   </div>
 
+  <div class="quick-wsp-banner">
+    <div class="quick-wsp-icon">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5.1-1.3A10 10 0 1 0 12 2Z" fill="#ffffff"/><path d="M9.1 7.4c-.2-.5-.4-.5-.6-.5h-.5c-.2 0-.5.1-.7.3-.2.3-.9 1-.9 2.3s1 2.6 1.1 2.8c.1.2 2 3.1 4.9 4.2 2.4.9 2.9.7 3.4.7.5-.1 1.6-.7 1.9-1.3.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.6-.4s-1.6-.8-1.9-.9c-.3-.1-.4-.1-.6.1-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.2-1.2-.5-2.3-1.5-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.2-.6-1.5-.8-2Z" fill="#25D366"/></svg>
+    </div>
+    <div class="quick-wsp-text">
+      <h3>¿Quieres una respuesta más rápida?</h3>
+      <p>Tenemos un agente que responde rápido por WhatsApp — si prefieres saltarte el formulario, escríbenos directo y coordinamos ahí mismo.</p>
+    </div>
+    <a class="btn btn-wsp" href="https://wa.me/56988256980?text=Hola%2C%20quiero%20cotizar%20una%20compra%20por%20mayor" target="_blank" rel="noopener">Escribir por WhatsApp</a>
+  </div>
+
   <div class="page-grid">
     <div>
       <div class="content-card">
-        <h2><span class="icon-badge"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 12l2 2 4-4" stroke="#3a4527" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9" stroke="#3a4527" stroke-width="1.6"/></svg></span>Condiciones generales</h2>
-        <p>Trabajamos con negocios que compran en volumen, con condiciones comerciales distintas a la venta al detalle:</p>
+        <h2><span class="icon-badge"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 12l2 2 4-4" stroke="#3a4527" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9" stroke="#3a4527" stroke-width="1.6"/></svg></span>Cómo trabajamos contigo</h2>
+        <p>Nos adaptamos a tu negocio, no al revés — ya sea que recién estés partiendo o ya tengas un volumen grande, conversamos y armamos algo a tu medida:</p>
         <ul>
-          <li>Precios diferenciados según volumen de compra.</li>
-          <li>Formatos de mayor tamaño (granel, cajas cerradas).</li>
-          <li>Coordinación de despacho periódico o por pedido.</li>
-          <li>Facturación para empresas.</li>
+          <li>Precios especiales que mejoran mientras más pides.</li>
+          <li>Formatos flexibles: desde cajas cerradas hasta granel, según lo que necesites.</li>
+          <li>Despacho como te acomode — periódico o por pedido puntual.</li>
+          <li>Te ayudamos con la facturación para tu empresa, sin vueltas.</li>
         </ul>
         <div class="trust-row">
           <span class="trust-chip">✓ 25+ años de experiencia</span>
@@ -129,7 +149,7 @@
 
       <div class="content-card">
         <h2><span class="icon-badge"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 4h4l2 5-2.5 2a12 12 0 0 0 6.5 6.5l2-2.5 5 2v4a2 2 0 0 1-2 2C10.5 22 2 13.5 2 6a2 2 0 0 1 2-2Z" stroke="#3a4527" stroke-width="1.5"/></svg></span>¿A quién está dirigido?</h2>
-        <p>Restaurantes, hoteles, almacenes, distribuidores, food service y cualquier negocio que necesite abastecerse de forma regular.</p>
+        <p>A restaurantes, hoteles, almacenes, distribuidores y negocios de food service — grandes, chicos, o recién comenzando. Si crees que podríamos ayudarte, seguramente sí podemos.</p>
         <p style="margin-bottom:0;">Completa el formulario y te contactamos por correo o WhatsApp con tu cotización — normalmente respondemos dentro de 24 horas hábiles.</p>
       </div>
     </div>
