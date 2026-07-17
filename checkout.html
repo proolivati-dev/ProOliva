@@ -226,7 +226,11 @@
     try {
       const res = await fetch(`${SUPABASE_URL}/functions/v1/chilexpress-quote`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'apikey': SUPABASE_ANON_KEY
+        },
         body: JSON.stringify({ region, comuna, pesoKg: totalWeight || 1, valorDeclarado: subtotal })
       });
       const data = await res.json();
@@ -296,7 +300,11 @@
     try {
       const res = await fetch(`${SUPABASE_URL}/functions/v1/webpay-create`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'apikey': SUPABASE_ANON_KEY
+        },
         body: JSON.stringify({
           items: cart,
           subtotal,
