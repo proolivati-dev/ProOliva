@@ -18,7 +18,7 @@
   body{ font-family:'Public Sans', sans-serif; background:var(--linen); color:var(--ink); line-height:1.5;}
   h1,h2,h3{ font-family:'Archivo', sans-serif; font-weight:700; color:var(--ink);}
   a{ color:inherit; }
-  input, select, textarea{ font-family:'Public Sans', sans-serif; }
+  button, input, select, textarea{ font-family:'Public Sans', sans-serif; }
 
   /* ---------- login ---------- */
   #loginView{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;}
@@ -42,7 +42,7 @@
   .btn-danger:hover{ background:var(--danger); color:#fff;}
   .error-msg{ background:#fbe9e7; border:1px solid var(--danger); color:var(--danger); font-size:13px; padding:10px 12px; border-radius:6px; margin-bottom:16px; display:none;}
 
-  /* ---------- dashboard ---------- */
+  /* ---------- dashboard shell ---------- */
   #dashboardView{ display:none;}
   .admin-header{ background:var(--ink); color:var(--paper); padding:16px 0;}
   .admin-header .wrap{ max-width:1200px; margin:0 auto; padding:0 28px; display:flex; align-items:center; justify-content:space-between;}
@@ -50,12 +50,23 @@
   .admin-header .brand img{ height:30px;}
   .admin-header .who{ font-size:12.5px; opacity:0.65; margin-right:14px;}
 
-  .admin-body{ max-width:1200px; margin:0 auto; padding:36px 28px 80px;}
-  .admin-toolbar{ display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:14px;}
-  .admin-toolbar h2{ font-size:24px;}
+  .admin-body{ max-width:1200px; margin:0 auto; padding:0 28px 80px;}
+
+  /* ---------- tabs ---------- */
+  .admin-tabs{ display:flex; gap:6px; padding:22px 0; border-bottom:1px solid var(--line); margin-bottom:28px; position:sticky; top:0; background:var(--linen); z-index:20;}
+  .tab-btn{ position:relative; background:transparent; border:none; padding:10px 18px; border-radius:8px; font-size:14px; font-weight:600; color:var(--ink); opacity:0.6; cursor:pointer; transition:all .15s; display:flex; align-items:center; gap:8px;}
+  .tab-btn:hover{ opacity:0.9; background:rgba(32,40,26,0.05);}
+  .tab-btn.active{ opacity:1; background:var(--olive-deep); color:var(--paper);}
+  .tab-badge{ background:var(--gold); color:var(--ink); font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:700; padding:2px 7px; border-radius:20px;}
+  .tab-btn.active .tab-badge{ background:var(--paper); color:var(--olive-deep);}
+  .tab-panel{ display:none;}
+  .tab-panel.active{ display:block;}
+
+  .admin-toolbar{ display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:14px;}
+  .admin-toolbar h2{ font-size:22px;}
   .admin-toolbar p{ font-size:13px; opacity:0.6; margin-top:4px;}
 
-  .table-wrap{ background:var(--paper); border:1px solid var(--line); border-radius:10px; overflow:hidden;}
+  .table-wrap{ background:var(--paper); border:1px solid var(--line); border-radius:10px; overflow:hidden; overflow-x:auto;}
   .catalog-card{ background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:24px 26px; margin-bottom:28px; display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap;}
   .catalog-card h3{ font-size:16px; margin-bottom:4px;}
   .catalog-card p{ font-size:13px; opacity:0.65;}
@@ -65,9 +76,10 @@
   .file-input-label{ display:inline-flex; align-items:center; gap:8px; border:1.5px solid var(--line); border-radius:6px; padding:9px 16px; font-size:13px; font-weight:600; cursor:pointer; transition:border-color .15s;}
   .file-input-label:hover{ border-color:var(--olive-deep);}
   .file-input-label input{ display:none;}
+
   table{ width:100%; border-collapse:collapse;}
-  th{ text-align:left; font-family:'IBM Plex Mono',monospace; font-size:10.5px; text-transform:uppercase; letter-spacing:0.06em; color:var(--gold-deep); padding:14px 16px; border-bottom:1px solid var(--line); background:rgba(32,40,26,0.03);}
-  td{ padding:12px 16px; border-bottom:1px solid var(--line); font-size:13.5px; vertical-align:middle;}
+  th{ text-align:left; font-family:'IBM Plex Mono',monospace; font-size:10.5px; text-transform:uppercase; letter-spacing:0.06em; color:var(--gold-deep); padding:14px 16px; border-bottom:1px solid var(--line); background:rgba(32,40,26,0.03); white-space:nowrap;}
+  td{ padding:12px 16px; border-bottom:1px solid var(--line); font-size:13.5px; vertical-align:top;}
   tr:last-child td{ border-bottom:none;}
   .cell-img{ width:46px; height:46px; border-radius:6px; object-fit:cover; background:var(--linen);}
   .cell-name{ font-weight:600;}
@@ -75,8 +87,17 @@
   .badge-on{ background:#e4ede0; color:var(--olive-deep);}
   .badge-off{ background:var(--line); color:var(--ink); opacity:0.6;}
   .row-actions{ display:flex; gap:8px;}
-  .icon-btn{ background:transparent; border:1px solid var(--line); border-radius:6px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:border-color .15s;}
+  .icon-btn{ background:transparent; border:1px solid var(--line); border-radius:6px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:border-color .15s; flex-shrink:0;}
   .icon-btn:hover{ border-color:var(--olive-deep);}
+
+  /* Arregla el desborde de texto largo en celdas (bug reportado) */
+  .cell-clamp{ max-width:240px; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; font-size:12.5px; opacity:0.8; cursor:help;}
+
+  /* ---------- filtro por región ---------- */
+  .region-filter{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px;}
+  .region-pill{ font-size:12.5px; font-weight:600; padding:7px 14px; border-radius:20px; border:1.5px solid var(--line); background:var(--paper); cursor:pointer; transition:all .15s; color:var(--ink); opacity:0.75;}
+  .region-pill:hover{ opacity:1; border-color:var(--olive-light);}
+  .region-pill.active{ background:var(--olive-deep); border-color:var(--olive-deep); color:var(--paper); opacity:1;}
 
   /* ---------- modal / form ---------- */
   .modal-backdrop{ display:none; position:fixed; inset:0; background:rgba(32,40,26,0.5); z-index:100; align-items:flex-start; justify-content:center; padding:40px 20px; overflow-y:auto;}
@@ -102,7 +123,7 @@
   <div class="login-card">
     <img src="logo.png" alt="ProOlivas Chile">
     <h1>Panel de administración</h1>
-    <p class="sub">Inicia sesión para gestionar el catálogo</p>
+    <p class="sub">Inicia sesión para gestionar tu sitio</p>
     <div class="error-msg" id="loginError"></div>
     <form id="loginForm">
       <div class="field">
@@ -131,75 +152,115 @@
   </div>
 
   <div class="admin-body">
-    <div class="catalog-card">
-      <div>
-        <h3>Catálogo descargable (PDF)</h3>
-        <p id="catalogStatus">Revisando si hay un catálogo subido...</p>
+    <div class="admin-tabs">
+      <button class="tab-btn active" data-tab="productos">Productos</button>
+      <button class="tab-btn" data-tab="solicitudes">Solicitudes <span class="tab-badge" id="solicitudesBadge" style="display:none;">0</span></button>
+      <button class="tab-btn" data-tab="clientes">Mis Clientes</button>
+    </div>
+
+    <!-- ---------- TAB: PRODUCTOS ---------- -->
+    <div class="tab-panel active" id="tab-productos">
+      <div class="catalog-card">
+        <div>
+          <h3>Catálogo descargable (PDF)</h3>
+          <p id="catalogStatus">Revisando si hay un catálogo subido...</p>
+        </div>
+        <div class="row-actions" style="display:flex; gap:10px; align-items:center;">
+          <a id="catalogViewLink" href="#" target="_blank" rel="noopener" class="btn btn-outline" style="display:none;">Ver catálogo actual</a>
+          <label class="file-input-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 3v12M7 8l5-5 5 5M5 21h14" stroke="#20281a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span id="catalogUploadLabel">Subir catálogo (PDF)</span>
+            <input type="file" id="catalogFileInput" accept="application/pdf">
+          </label>
+        </div>
       </div>
-      <div class="row-actions" style="display:flex; gap:10px; align-items:center;">
-        <a id="catalogViewLink" href="#" target="_blank" rel="noopener" class="btn btn-outline" style="display:none;">Ver catálogo actual</a>
-        <label class="file-input-label">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 3v12M7 8l5-5 5 5M5 21h14" stroke="#20281a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          <span id="catalogUploadLabel">Subir catálogo (PDF)</span>
-          <input type="file" id="catalogFileInput" accept="application/pdf">
-        </label>
+
+      <div class="admin-toolbar">
+        <div>
+          <h2>Productos</h2>
+          <p id="countLabel">Cargando...</p>
+        </div>
+        <button class="btn btn-primary" style="width:auto;" id="newProductBtn">+ Nuevo producto</button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th></th>
+              <th>Nombre</th>
+              <th>Categoría</th>
+              <th>Precio</th>
+              <th>Destacado</th>
+              <th>Visible</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="productsTableBody"></tbody>
+        </table>
+        <div class="empty-state" id="emptyState" style="display:none;">Todavía no hay productos. Crea el primero con "+ Nuevo producto".</div>
       </div>
     </div>
 
-    <div class="admin-toolbar">
-      <div>
-        <h2>Productos</h2>
-        <p id="countLabel">Cargando...</p>
+    <!-- ---------- TAB: SOLICITUDES ---------- -->
+    <div class="tab-panel" id="tab-solicitudes">
+      <div class="admin-toolbar">
+        <div>
+          <h2>Solicitudes de venta por mayor</h2>
+          <p id="wholesaleCountLabel">Cargando...</p>
+        </div>
       </div>
-      <button class="btn btn-primary" style="width:auto;" id="newProductBtn">+ Nuevo producto</button>
-    </div>
 
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th></th>
-            <th>Nombre</th>
-            <th>Categoría</th>
-            <th>Precio</th>
-            <th>Destacado</th>
-            <th>Visible</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody id="productsTableBody">
-          <!-- filas generadas por JS -->
-        </tbody>
-      </table>
-      <div class="empty-state" id="emptyState" style="display:none;">Todavía no hay productos. Crea el primero con "+ Nuevo producto".</div>
-    </div>
+      <div class="region-filter" id="wholesaleRegionFilter"></div>
 
-    <div class="admin-toolbar" style="margin-top:44px;">
-      <div>
-        <h2>Solicitudes de venta por mayor</h2>
-        <p id="wholesaleCountLabel">Cargando...</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Contacto</th>
+              <th>Empresa</th>
+              <th>Correo / Teléfono</th>
+              <th>Destino</th>
+              <th>Detalle</th>
+              <th>Contactado</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="wholesaleTableBody"></tbody>
+        </table>
+        <div class="empty-state" id="wholesaleEmptyState" style="display:none;">Todavía no han llegado solicitudes de venta por mayor.</div>
       </div>
     </div>
 
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Fecha</th>
-            <th>Contacto</th>
-            <th>Empresa</th>
-            <th>Correo / Teléfono</th>
-            <th>Destino</th>
-            <th>Detalle</th>
-            <th>Contactado</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody id="wholesaleTableBody">
-          <!-- filas generadas por JS -->
-        </tbody>
-      </table>
-      <div class="empty-state" id="wholesaleEmptyState" style="display:none;">Todavía no han llegado solicitudes de venta por mayor.</div>
+    <!-- ---------- TAB: MIS CLIENTES ---------- -->
+    <div class="tab-panel" id="tab-clientes">
+      <div class="admin-toolbar">
+        <div>
+          <h2>Mis Clientes</h2>
+          <p id="customersCountLabel">Cargando...</p>
+        </div>
+        <button class="btn btn-primary" style="width:auto;" id="newCustomerBtn">+ Nuevo cliente</button>
+      </div>
+
+      <div class="region-filter" id="customersRegionFilter"></div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Empresa</th>
+              <th>Correo / Teléfono</th>
+              <th>Región / Comuna</th>
+              <th>Notas</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="customersTableBody"></tbody>
+        </table>
+        <div class="empty-state" id="customersEmptyState" style="display:none;">Todavía no has agregado clientes. Crea el primero con "+ Nuevo cliente", o agrega alguno directo desde una solicitud.</div>
+      </div>
     </div>
   </div>
 </div>
@@ -286,6 +347,72 @@
   </div>
 </div>
 
+<!-- ===================== MODAL: crear/editar cliente ===================== -->
+<div class="modal-backdrop" id="customerModalBackdrop">
+  <div class="modal">
+    <h3 id="customerModalTitle">Nuevo cliente</h3>
+    <div class="error-msg" id="customerFormError"></div>
+    <form id="customerForm">
+      <input type="hidden" id="customerId">
+
+      <div class="field">
+        <label>Nombre *</label>
+        <input type="text" id="custFieldName" required placeholder="Ej: María Torres">
+      </div>
+
+      <div class="field">
+        <label>Empresa <span style="opacity:0.5; font-weight:400;">(opcional)</span></label>
+        <input type="text" id="custFieldCompany" placeholder="Ej: Restaurante El Olivo Ltda.">
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Correo</label>
+          <input type="email" id="custFieldEmail" placeholder="correo@empresa.cl">
+        </div>
+        <div class="field">
+          <label>Teléfono</label>
+          <input type="tel" id="custFieldPhone" placeholder="+56 9 ...">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Región</label>
+          <select id="custFieldRegion">
+            <option value="">Selecciona...</option>
+            <option>Valparaíso</option>
+            <option>Metropolitana</option>
+            <option>Biobío</option>
+            <option>La Araucanía</option>
+            <option>Los Lagos</option>
+            <option>Coquimbo</option>
+            <option>O'Higgins</option>
+            <option>Maule</option>
+            <option>Ñuble</option>
+            <option>Antofagasta</option>
+            <option>Otra región</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Comuna</label>
+          <input type="text" id="custFieldComuna" placeholder="Ej: Viña del Mar">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Notas</label>
+        <textarea id="custFieldNotes" rows="3" placeholder="Preferencias, historial, lo que te sirva recordar"></textarea>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" id="cancelCustomerModalBtn">Cancelar</button>
+        <button type="submit" class="btn btn-primary" id="saveCustomerBtn">Guardar cliente</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
 <script>
@@ -298,6 +425,8 @@
     'ofertas': 'Ofertas',
     'regalos': 'Regalos'
   };
+
+  const REGIONS = ['Valparaíso','Metropolitana','Biobío','La Araucanía','Los Lagos','Coquimbo',"O'Higgins",'Maule','Ñuble','Antofagasta','Otra región'];
 
   const loginView = document.getElementById('loginView');
   const dashboardView = document.getElementById('dashboardView');
@@ -325,6 +454,7 @@
     loadProducts();
     checkCatalog();
     loadWholesaleInquiries();
+    loadCustomers();
   }
 
   loginForm.addEventListener('submit', async (e) => {
@@ -353,6 +483,20 @@
     loginView.style.display = 'flex';
     dashboardView.style.display = 'none';
   });
+
+  // ---------- Pestañas ----------
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  function escapeAttr(str){
+    return (str || '').replace(/"/g, '&quot;');
+  }
 
   // ---------- Cargar productos ----------
   async function loadProducts(){
@@ -399,7 +543,7 @@
     `).join('');
   }
 
-  // ---------- Modal ----------
+  // ---------- Modal de producto ----------
   const modalBackdrop = document.getElementById('modalBackdrop');
   const productForm = document.getElementById('productForm');
   const formError = document.getElementById('formError');
@@ -480,13 +624,12 @@
       const existing = id ? currentProducts.find(p => p.id === id) : null;
       if (existing) imageUrl = existing.image_url;
 
-      // Si eligieron una foto nueva, subirla a Storage primero
       if (selectedFile){
         const cleanName = selectedFile.name
-          .normalize('NFD').replace(/[\u0300-\u036f]/g, '')  // quita tildes (á,é,í,ó,ú) y diéresis
-          .replace(/ñ/gi, 'n')                                // la ñ no se separa con NFD, hay que reemplazarla aparte
-          .replace(/[^a-zA-Z0-9.\-_]/g, '-')                  // cualquier otro caracter raro -> guion
-          .replace(/-+/g, '-');                               // colapsa guiones repetidos
+          .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+          .replace(/ñ/gi, 'n')
+          .replace(/[^a-zA-Z0-9.\-_]/g, '-')
+          .replace(/-+/g, '-');
         const fileName = `${Date.now()}-${cleanName}`;
         const { error: uploadError } = await supabaseClient.storage
           .from('product-images')
@@ -579,6 +722,17 @@
 
   // ---------- Solicitudes de venta por mayor ----------
   let currentWholesale = [];
+  let wholesaleRegionActive = 'all';
+
+  function renderRegionFilterPills(containerId, activeValue, onSelect){
+    const container = document.getElementById(containerId);
+    const pills = ['<button class="region-pill ' + (activeValue === 'all' ? 'active' : '') + '" data-region="all">Todas las regiones</button>']
+      .concat(REGIONS.map(r => `<button class="region-pill ${activeValue === r ? 'active' : ''}" data-region="${r}">${r}</button>`));
+    container.innerHTML = pills.join('');
+    container.querySelectorAll('.region-pill').forEach(btn => {
+      btn.addEventListener('click', () => onSelect(btn.dataset.region));
+    });
+  }
 
   async function loadWholesaleInquiries(){
     const { data, error } = await supabaseClient
@@ -586,9 +740,9 @@
       .select('*')
       .order('created_at', { ascending: false });
 
-    const tbody = document.getElementById('wholesaleTableBody');
     const emptyState = document.getElementById('wholesaleEmptyState');
     const countLabel = document.getElementById('wholesaleCountLabel');
+    const badge = document.getElementById('solicitudesBadge');
 
     if (error){
       countLabel.textContent = 'Error cargando solicitudes.';
@@ -598,32 +752,64 @@
 
     currentWholesale = data || [];
     const pending = currentWholesale.filter(w => !w.contacted).length;
-    countLabel.textContent = `${currentWholesale.length} solicitud${currentWholesale.length === 1 ? '' : 'es'} en total · ${pending} sin contactar`;
+    if (pending > 0){
+      badge.textContent = pending;
+      badge.style.display = 'inline-block';
+    } else {
+      badge.style.display = 'none';
+    }
 
-    if (currentWholesale.length === 0){
+    renderRegionFilterPills('wholesaleRegionFilter', wholesaleRegionActive, (region) => {
+      wholesaleRegionActive = region;
+      renderWholesaleTable();
+    });
+    renderWholesaleTable();
+  }
+
+  function renderWholesaleTable(){
+    const tbody = document.getElementById('wholesaleTableBody');
+    const emptyState = document.getElementById('wholesaleEmptyState');
+    const countLabel = document.getElementById('wholesaleCountLabel');
+
+    const filtered = wholesaleRegionActive === 'all'
+      ? currentWholesale
+      : currentWholesale.filter(w => w.region === wholesaleRegionActive);
+
+    const pending = currentWholesale.filter(w => !w.contacted).length;
+    countLabel.textContent = `${filtered.length} de ${currentWholesale.length} solicitud${currentWholesale.length === 1 ? '' : 'es'} · ${pending} sin contactar en total`;
+
+    if (filtered.length === 0){
       tbody.innerHTML = '';
       emptyState.style.display = 'block';
+      emptyState.textContent = currentWholesale.length === 0
+        ? 'Todavía no han llegado solicitudes de venta por mayor.'
+        : 'No hay solicitudes para esta región.';
       return;
     }
     emptyState.style.display = 'none';
 
-    tbody.innerHTML = currentWholesale.map(w => `
+    tbody.innerHTML = filtered.map(w => `
       <tr>
         <td>${new Date(w.created_at).toLocaleDateString('es-CL', { day:'numeric', month:'short' })}</td>
         <td class="cell-name">${w.contact_name}</td>
         <td>${w.company_name || '—'}</td>
         <td>${w.email}<br><span style="opacity:0.6;">${w.phone}</span></td>
-        <td>${[w.comuna, w.region].filter(Boolean).join(', ')}</td>
-        <td style="max-width:220px; white-space:normal; font-size:12.5px; opacity:0.8;">${w.message || '—'}</td>
+        <td>${[w.comuna, w.region].filter(Boolean).join(', ') || '—'}</td>
+        <td><div class="cell-clamp" title="${escapeAttr(w.message)}">${w.message || '—'}</div></td>
         <td>
           <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
             <input type="checkbox" ${w.contacted ? 'checked' : ''} onchange="toggleContacted('${w.id}', this.checked)">
           </label>
         </td>
         <td>
-          <button class="icon-btn" title="Borrar" onclick="deleteWholesale('${w.id}')">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" stroke="#a3392f" stroke-width="1.6"/></svg>
-          </button>
+          <div class="row-actions">
+            <button class="icon-btn" title="Agregar como cliente" onclick="convertToCustomer('${w.id}')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke="#20281a" stroke-width="1.6"/><circle cx="9" cy="7" r="4" stroke="#20281a" stroke-width="1.6"/><path d="M19 8v6M22 11h-6" stroke="#20281a" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </button>
+            <button class="icon-btn" title="Borrar" onclick="deleteWholesale('${w.id}')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" stroke="#a3392f" stroke-width="1.6"/></svg>
+            </button>
+          </div>
         </td>
       </tr>
     `).join('');
@@ -649,6 +835,168 @@
     }
     loadWholesaleInquiries();
   };
+
+  // ---------- Mis Clientes ----------
+  let currentCustomers = [];
+  let customersRegionActive = 'all';
+  const customerModalBackdrop = document.getElementById('customerModalBackdrop');
+  const customerForm = document.getElementById('customerForm');
+  const customerFormError = document.getElementById('customerFormError');
+
+  async function loadCustomers(){
+    const { data, error } = await supabaseClient.from('customers').select('*').order('created_at', { ascending: false });
+    const countLabel = document.getElementById('customersCountLabel');
+
+    if (error){
+      countLabel.textContent = 'Error cargando clientes.';
+      console.error(error);
+      return;
+    }
+
+    currentCustomers = data || [];
+    renderRegionFilterPills('customersRegionFilter', customersRegionActive, (region) => {
+      customersRegionActive = region;
+      renderCustomersTable();
+    });
+    renderCustomersTable();
+  }
+
+  function renderCustomersTable(){
+    const tbody = document.getElementById('customersTableBody');
+    const emptyState = document.getElementById('customersEmptyState');
+    const countLabel = document.getElementById('customersCountLabel');
+
+    const filtered = customersRegionActive === 'all'
+      ? currentCustomers
+      : currentCustomers.filter(c => c.region === customersRegionActive);
+
+    countLabel.textContent = `${filtered.length} de ${currentCustomers.length} cliente${currentCustomers.length === 1 ? '' : 's'}`;
+
+    if (filtered.length === 0){
+      tbody.innerHTML = '';
+      emptyState.style.display = 'block';
+      return;
+    }
+    emptyState.style.display = 'none';
+
+    tbody.innerHTML = filtered.map(c => `
+      <tr>
+        <td class="cell-name">${c.name}</td>
+        <td>${c.company_name || '—'}</td>
+        <td>${c.email || '—'}<br><span style="opacity:0.6;">${c.phone || ''}</span></td>
+        <td>${[c.comuna, c.region].filter(Boolean).join(', ') || '—'}</td>
+        <td>${c.notes ? `<div class="cell-clamp" title="${escapeAttr(c.notes)}">${c.notes}</div>` : '—'}</td>
+        <td>
+          <div class="row-actions">
+            <button class="icon-btn" title="Editar" onclick="openEditCustomerModal('${c.id}')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 20h4L18.5 9.5a2 2 0 0 0 0-2.8l-1.7-1.7a2 2 0 0 0-2.8 0L4 15v5Z" stroke="#20281a" stroke-width="1.6"/></svg>
+            </button>
+            <button class="icon-btn" title="Borrar" onclick="deleteCustomer('${c.id}')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" stroke="#a3392f" stroke-width="1.6"/></svg>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function resetCustomerForm(){
+    customerForm.reset();
+    document.getElementById('customerId').value = '';
+    customerFormError.style.display = 'none';
+  }
+
+  document.getElementById('newCustomerBtn').addEventListener('click', () => {
+    resetCustomerForm();
+    document.getElementById('customerModalTitle').textContent = 'Nuevo cliente';
+    customerModalBackdrop.classList.add('open');
+  });
+
+  document.getElementById('cancelCustomerModalBtn').addEventListener('click', () => {
+    customerModalBackdrop.classList.remove('open');
+  });
+
+  window.openEditCustomerModal = function(id){
+    const c = currentCustomers.find(x => x.id === id);
+    if (!c) return;
+    resetCustomerForm();
+    document.getElementById('customerModalTitle').textContent = 'Editar cliente';
+    document.getElementById('customerId').value = c.id;
+    document.getElementById('custFieldName').value = c.name || '';
+    document.getElementById('custFieldCompany').value = c.company_name || '';
+    document.getElementById('custFieldEmail').value = c.email || '';
+    document.getElementById('custFieldPhone').value = c.phone || '';
+    document.getElementById('custFieldRegion').value = c.region || '';
+    document.getElementById('custFieldComuna').value = c.comuna || '';
+    document.getElementById('custFieldNotes').value = c.notes || '';
+    customerModalBackdrop.classList.add('open');
+  };
+
+  window.convertToCustomer = function(inquiryId){
+    const w = currentWholesale.find(x => x.id === inquiryId);
+    if (!w) return;
+    resetCustomerForm();
+    document.getElementById('customerModalTitle').textContent = 'Nuevo cliente (desde solicitud)';
+    document.getElementById('custFieldName').value = w.contact_name || '';
+    document.getElementById('custFieldCompany').value = w.company_name || '';
+    document.getElementById('custFieldEmail').value = w.email || '';
+    document.getElementById('custFieldPhone').value = w.phone || '';
+    document.getElementById('custFieldRegion').value = w.region || '';
+    document.getElementById('custFieldComuna').value = w.comuna || '';
+    document.getElementById('custFieldNotes').value = `Venía de una solicitud de venta por mayor (${new Date(w.created_at).toLocaleDateString('es-CL')}): ${w.message || ''}`;
+    customerModalBackdrop.classList.add('open');
+    document.querySelector('[data-tab="clientes"]').click();
+  };
+
+  window.deleteCustomer = async function(id){
+    if (!confirm('¿Borrar este cliente?')) return;
+    const { error } = await supabaseClient.from('customers').delete().eq('id', id);
+    if (error){
+      alert('No se pudo borrar.');
+      console.error(error);
+      return;
+    }
+    loadCustomers();
+  };
+
+  customerForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    customerFormError.style.display = 'none';
+    const saveBtn = document.getElementById('saveCustomerBtn');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Guardando...';
+
+    try {
+      const id = document.getElementById('customerId').value;
+      const payload = {
+        name: document.getElementById('custFieldName').value,
+        company_name: document.getElementById('custFieldCompany').value || null,
+        email: document.getElementById('custFieldEmail').value || null,
+        phone: document.getElementById('custFieldPhone').value || null,
+        region: document.getElementById('custFieldRegion').value || null,
+        comuna: document.getElementById('custFieldComuna').value || null,
+        notes: document.getElementById('custFieldNotes').value || null,
+      };
+
+      let saveError;
+      if (id){
+        ({ error: saveError } = await supabaseClient.from('customers').update(payload).eq('id', id));
+      } else {
+        ({ error: saveError } = await supabaseClient.from('customers').insert(payload));
+      }
+      if (saveError) throw saveError;
+
+      customerModalBackdrop.classList.remove('open');
+      loadCustomers();
+    } catch (err){
+      customerFormError.textContent = 'No se pudo guardar el cliente: ' + (err.message || 'error desconocido.');
+      customerFormError.style.display = 'block';
+      console.error(err);
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Guardar cliente';
+    }
+  });
 
   checkSession();
 </script>
