@@ -52,6 +52,7 @@ function addToCart(product, qty){
       price: product.price,
       image_url: product.image_url,
       format: product.format,
+      weight_kg: product.weight_kg || 0.5,
       qty
     });
   }
@@ -144,6 +145,9 @@ function renderCartDrawer(){
 
   totalEl.textContent = formatCLP(cartTotal(cart));
   checkoutBtn.href = `https://wa.me/${WSP_NUMBER}?text=${encodeURIComponent(buildCartMessage(cart))}`;
+
+  const payBtn = document.getElementById('cartPayBtn');
+  if (payBtn) payBtn.style.display = cart.length ? 'flex' : 'none';
 }
 
 function openCart(){

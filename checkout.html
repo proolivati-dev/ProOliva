@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finalizar compra — ProOliva</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#20281a; --olive:#55643b; --olive-deep:#3a4527; --gold:#c89b3c; --gold-deep:#9c7326;
+    --coffee:#3f2e20; --linen:#f3eee0; --paper:#fbf9f2; --line:rgba(32,40,26,0.14); --danger:#a3392f;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{ font-family:'Public Sans', sans-serif; background:var(--linen); color:var(--ink); line-height:1.6;}
+  h1,h2,h3{ font-family:'Archivo', sans-serif; font-weight:700; color:var(--ink);}
+  a{ color:inherit; text-decoration:none;}
+  button, input, select{ font-family:'Public Sans', sans-serif;}
+  .wrap{ max-width:1000px; margin:0 auto; padding:0 24px;}
+
+  .topbar{ background:var(--coffee); color:var(--paper); font-size:12.5px; padding:9px 0; text-align:center; text-transform:uppercase; letter-spacing:0.05em; font-weight:600;}
+  header{ background:var(--paper); border-bottom:1px solid var(--line); padding:18px 0;}
+  header .wrap{ display:flex; align-items:center; justify-content:space-between; max-width:1120px;}
+  .logo-mark{ height:40px;}
+  .back-link{ font-size:13.5px; font-weight:600; display:flex; align-items:center; gap:6px;}
+
+  .checkout-hero{ padding:36px 0 8px; text-align:center;}
+  .checkout-hero h1{ font-size:28px;}
+
+  .checkout-grid{ display:grid; grid-template-columns:1.2fr 1fr; gap:32px; padding:32px 0 80px; align-items:start;}
+  .panel{ background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:26px 28px; margin-bottom:20px;}
+  .panel h2{ font-size:16px; margin-bottom:16px;}
+
+  .field{ margin-bottom:14px;}
+  .field label{ display:block; font-size:12.5px; font-weight:600; margin-bottom:6px; color:var(--olive-deep);}
+  .field input, .field select{ width:100%; border:1.5px solid var(--line); border-radius:6px; padding:11px 14px; font-size:14px; background:#fff; color:var(--ink); outline:none;}
+  .field input:focus, .field select:focus{ border-color:var(--olive-deep);}
+  .field-row{ display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+
+  .btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:13px 22px; border-radius:6px; font-size:13.5px; font-weight:700; letter-spacing:0.02em; text-transform:uppercase; cursor:pointer; border:1px solid transparent; width:100%; transition:transform .15s, background .15s, opacity .15s;}
+  .btn:hover{ transform:translateY(-1px);}
+  .btn:disabled{ opacity:0.5; cursor:not-allowed; transform:none;}
+  .btn-outline{ background:transparent; border-color:var(--line); color:var(--ink);}
+  .btn-outline:hover{ border-color:var(--olive-deep);}
+  .btn-primary{ background:var(--olive-deep); color:var(--paper);}
+  .btn-primary:hover{ background:var(--ink);}
+
+  .cart-line{ display:flex; gap:12px; padding:12px 0; border-bottom:1px solid var(--line); align-items:center;}
+  .cart-line img{ width:52px; height:52px; border-radius:6px; object-fit:cover; background:var(--linen);}
+  .cart-line-info{ flex:1; min-width:0;}
+  .cart-line-info h4{ font-size:13.5px; font-weight:600; margin-bottom:2px;}
+  .cart-line-info span{ font-size:12px; opacity:0.6;}
+  .cart-line-price{ font-family:'Archivo',sans-serif; font-weight:700; font-size:13.5px; color:var(--olive-deep); white-space:nowrap;}
+
+  .totals-row{ display:flex; justify-content:space-between; font-size:13.5px; padding:8px 0;}
+  .totals-row.grand{ border-top:1px solid var(--line); margin-top:8px; padding-top:14px; font-size:17px; font-weight:700;}
+  .totals-row.grand span:last-child{ color:var(--olive-deep); font-family:'Archivo',sans-serif;}
+
+  .shipping-quote-result{ background:var(--linen); border-radius:8px; padding:14px 16px; margin-top:14px; font-size:13.5px; display:none;}
+  .shipping-quote-result.show{ display:block;}
+  .shipping-quote-result b{ color:var(--olive-deep);}
+
+  .error-msg{ background:#fbe9e7; border:1px solid var(--danger); color:var(--danger); font-size:13px; padding:10px 12px; border-radius:6px; margin-top:12px; display:none;}
+  .empty-cart-msg{ text-align:center; padding:60px 20px; opacity:0.6;}
+
+  .test-mode-banner{ background:#fff4d6; border:1px solid var(--gold); color:#6b4e00; font-size:12.5px; padding:12px 16px; border-radius:8px; margin-bottom:20px; display:flex; gap:10px; align-items:flex-start;}
+
+  @media (max-width:800px){ .checkout-grid{ grid-template-columns:1fr;} .field-row{ grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+
+<div class="topbar">Despacho gratis en Viña del Mar, por ventas sobre $40.000</div>
+
+<header>
+  <div class="wrap">
+    <img class="logo-mark" src="logo.png" alt="ProOlivas Chile">
+    <a class="back-link" href="productos.html">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="#3a4527" stroke-width="2" stroke-linecap="round"/></svg>
+      Volver al catálogo
+    </a>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="checkout-hero">
+    <h1>Finalizar compra</h1>
+  </div>
+
+  <div class="test-mode-banner">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="flex-shrink:0; margin-top:2px;"><path d="M12 9v4M12 17h.01" stroke="#6b4e00" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="9" stroke="#6b4e00" stroke-width="1.6"/></svg>
+    <span><b>Modo de prueba:</b> el pago corre en el ambiente de integración de Transbank — no se cobra dinero real. Usa la tarjeta de prueba <b>4051 8856 0044 6623</b>, cualquier fecha futura y CVV <b>123</b>.</span>
+  </div>
+
+  <div id="checkoutContent">
+    <div class="checkout-grid">
+      <div>
+        <div class="panel">
+          <h2>Datos de contacto y envío</h2>
+          <div class="field">
+            <label>Nombre completo</label>
+            <input type="text" id="custName" required>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Correo</label>
+              <input type="email" id="custEmail" required>
+            </div>
+            <div class="field">
+              <label>Teléfono</label>
+              <input type="tel" id="custPhone" placeholder="+56 9 ...">
+            </div>
+          </div>
+          <div class="field">
+            <label>Dirección</label>
+            <input type="text" id="custAddress" placeholder="Calle, número, depto/casa" required>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Región</label>
+              <select id="custRegion">
+                <option>Valparaíso</option>
+                <option>Metropolitana</option>
+                <option>Biobío</option>
+                <option>La Araucanía</option>
+                <option>Los Lagos</option>
+                <option>Coquimbo</option>
+                <option>O'Higgins</option>
+                <option>Maule</option>
+                <option>Ñuble</option>
+                <option>Antofagasta</option>
+                <option>Otra región</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Comuna</label>
+              <input type="text" id="custComuna" placeholder="Ej: Viña del Mar" required>
+            </div>
+          </div>
+
+          <button class="btn btn-outline" id="quoteShippingBtn" type="button">Cotizar envío con Chilexpress</button>
+          <div class="shipping-quote-result" id="shippingQuoteResult"></div>
+          <div class="error-msg" id="shippingError"></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="panel">
+          <h2>Tu pedido</h2>
+          <div id="cartLines"></div>
+          <div class="totals-row"><span>Subtotal</span><span id="subtotalValue">$0</span></div>
+          <div class="totals-row"><span>Envío</span><span id="shippingValue">Por cotizar</span></div>
+          <div class="totals-row grand"><span>Total</span><span id="totalValue">$0</span></div>
+        </div>
+
+        <button class="btn btn-primary" id="payBtn" disabled>Pagar con Webpay</button>
+        <div class="error-msg" id="payError"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="empty-cart-msg" id="emptyCartMsg" style="display:none;">
+    <h2>Tu carrito está vacío</h2>
+    <p style="margin:10px 0 20px; opacity:0.7;">Agrega productos antes de pagar.</p>
+    <a class="btn btn-primary" style="width:auto; display:inline-flex;" href="productos.html">Ver catálogo</a>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="cart.js"></script>
+<script>
+  const cart = getCart();
+  let shippingCost = 0;
+  let shippingQuoted = false;
+
+  if (cart.length === 0){
+    document.getElementById('checkoutContent').style.display = 'none';
+    document.getElementById('emptyCartMsg').style.display = 'block';
+  } else {
+    renderCheckout();
+  }
+
+  function renderCheckout(){
+    document.getElementById('cartLines').innerHTML = cart.map(i => `
+      <div class="cart-line">
+        <img src="${i.image_url || ''}" alt="${i.name}">
+        <div class="cart-line-info">
+          <h4>${i.name}</h4>
+          <span>${i.qty} × ${formatCLP(i.price)}</span>
+        </div>
+        <div class="cart-line-price">${formatCLP(i.price * i.qty)}</div>
+      </div>
+    `).join('');
+    updateTotals();
+  }
+
+  function updateTotals(){
+    const subtotal = cartTotal(cart);
+    document.getElementById('subtotalValue').textContent = formatCLP(subtotal);
+    document.getElementById('totalValue').textContent = formatCLP(subtotal + shippingCost);
+  }
+
+  document.getElementById('quoteShippingBtn').addEventListener('click', async () => {
+    const comuna = document.getElementById('custComuna').value.trim();
+    const errorEl = document.getElementById('shippingError');
+    const resultEl = document.getElementById('shippingQuoteResult');
+    errorEl.style.display = 'none';
+
+    if (!comuna){
+      errorEl.textContent = 'Escribe la comuna de destino primero.';
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    const btn = document.getElementById('quoteShippingBtn');
+    btn.disabled = true;
+    btn.textContent = 'Cotizando...';
+
+    const totalWeight = cart.reduce((sum, i) => sum + ((i.weight_kg || 0.5) * i.qty), 0);
+
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/chilexpress-quote`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ comunaDestino: comuna, pesoKg: totalWeight || 1 })
+      });
+      const data = await res.json();
+
+      if (!res.ok || data.error){
+        throw new Error(data.error || 'No se pudo cotizar el envío.');
+      }
+
+      // NOTA: el formato exacto de "data" depende de cómo quede
+      // configurada la función chilexpress-quote con tus credenciales
+      // reales — puede que necesites ajustar estas líneas después.
+      shippingCost = data.price || data.amount || 0;
+      shippingQuoted = true;
+
+      resultEl.innerHTML = `<b>Envío cotizado:</b> ${formatCLP(shippingCost)}${data.estimatedDays ? ` · Llega en ${data.estimatedDays} días hábiles` : ''}`;
+      resultEl.classList.add('show');
+      document.getElementById('shippingValue').textContent = formatCLP(shippingCost);
+      updateTotals();
+      document.getElementById('payBtn').disabled = false;
+
+    } catch (err) {
+      errorEl.textContent = 'No se pudo cotizar el envío automáticamente: ' + err.message + ' — revisa que chilexpress-quote esté desplegada y configurada con tus credenciales.';
+      errorEl.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Cotizar envío con Chilexpress';
+    }
+  });
+
+  document.getElementById('payBtn').addEventListener('click', async () => {
+    const name = document.getElementById('custName').value.trim();
+    const email = document.getElementById('custEmail').value.trim();
+    const address = document.getElementById('custAddress').value.trim();
+    const comuna = document.getElementById('custComuna').value.trim();
+    const errorEl = document.getElementById('payError');
+    errorEl.style.display = 'none';
+
+    if (!name || !email || !address || !comuna){
+      errorEl.textContent = 'Completa nombre, correo, dirección y comuna antes de pagar.';
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    const payBtn = document.getElementById('payBtn');
+    payBtn.disabled = true;
+    payBtn.textContent = 'Conectando con Webpay...';
+
+    const subtotal = cartTotal(cart);
+    const total = subtotal + shippingCost;
+
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/webpay-create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: cart,
+          subtotal,
+          shippingCost,
+          total,
+          shipping: {
+            name,
+            email,
+            phone: document.getElementById('custPhone').value.trim(),
+            address,
+            comuna,
+            region: document.getElementById('custRegion').value
+          }
+        })
+      });
+      const data = await res.json();
+
+      if (!res.ok || data.error){
+        throw new Error(data.error || 'No se pudo iniciar el pago.');
+      }
+
+      // Redirección estándar Webpay Plus: un form POST autoenviado con token_ws
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = data.url;
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'token_ws';
+      input.value = data.token;
+      form.appendChild(input);
+      document.body.appendChild(form);
+      form.submit();
+
+    } catch (err) {
+      errorEl.textContent = 'No se pudo conectar con Webpay: ' + err.message + ' — revisa que webpay-create esté desplegada en Supabase.';
+      errorEl.style.display = 'block';
+      payBtn.disabled = false;
+      payBtn.textContent = 'Pagar con Webpay';
+    }
+  });
+</script>
+
+</body>
+</html>

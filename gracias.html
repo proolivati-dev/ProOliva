@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Confirmación de compra — ProOliva</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#20281a; --olive:#55643b; --olive-deep:#3a4527; --gold:#c89b3c;
+    --coffee:#3f2e20; --linen:#f3eee0; --paper:#fbf9f2; --line:rgba(32,40,26,0.14); --danger:#a3392f;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{ font-family:'Public Sans', sans-serif; background:var(--linen); color:var(--ink); line-height:1.6; min-height:100vh; display:flex; flex-direction:column;}
+  h1{ font-family:'Archivo', sans-serif; font-weight:700;}
+  a{ color:inherit; text-decoration:none;}
+  .topbar{ background:var(--coffee); color:var(--paper); font-size:12.5px; padding:9px 0; text-align:center; text-transform:uppercase; letter-spacing:0.05em; font-weight:600;}
+  .wrap{ max-width:520px; margin:0 auto; padding:80px 24px; flex:1; display:flex; align-items:center;}
+  .card{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:44px 36px; text-align:center; width:100%; box-shadow:0 24px 50px -24px rgba(32,40,26,0.3);}
+  .icon-circle{ width:64px; height:64px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px;}
+  .icon-circle.ok{ background:#e4ede0;}
+  .icon-circle.fail{ background:#fbe9e7;}
+  h1{ font-size:22px; margin-bottom:10px;}
+  p.sub{ opacity:0.7; font-size:14.5px; margin-bottom:24px;}
+  .details{ background:var(--linen); border-radius:8px; padding:16px 20px; text-align:left; font-size:13px; margin-bottom:28px;}
+  .details div{ display:flex; justify-content:space-between; padding:5px 0;}
+  .details b{ font-family:'IBM Plex Mono',monospace; font-weight:600;}
+  .btn{ display:inline-flex; align-items:center; justify-content:center; padding:13px 24px; border-radius:6px; font-size:13.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.02em; background:var(--olive-deep); color:var(--paper); width:100%;}
+</style>
+</head>
+<body>
+
+<div class="topbar">Despacho gratis en Viña del Mar, por ventas sobre $40.000</div>
+
+<div class="wrap">
+  <div class="card" id="resultCard"></div>
+</div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const estado = params.get('estado');
+  const orden = params.get('orden');
+  const monto = params.get('monto');
+  const autorizacion = params.get('autorizacion');
+  const tarjeta = params.get('tarjeta');
+
+  function formatCLP(value){
+    if (!value) return '';
+    return new Intl.NumberFormat('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits:0 }).format(value);
+  }
+
+  const card = document.getElementById('resultCard');
+
+  if (estado === 'aprobado'){
+    card.innerHTML = `
+      <div class="icon-circle ok"><svg width="30" height="30" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#3a4527" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <h1>¡Tu pago fue aprobado!</h1>
+      <p class="sub">Te vamos a contactar por WhatsApp o correo para coordinar el despacho.</p>
+      <div class="details">
+        ${orden ? `<div><span>N° de orden</span><b>${orden}</b></div>` : ''}
+        ${monto ? `<div><span>Monto pagado</span><b>${formatCLP(monto)}</b></div>` : ''}
+        ${autorizacion ? `<div><span>Código de autorización</span><b>${autorizacion}</b></div>` : ''}
+        ${tarjeta ? `<div><span>Tarjeta</span><b>•••• ${tarjeta}</b></div>` : ''}
+      </div>
+      <a class="btn" href="index.html">Volver al inicio</a>
+    `;
+  } else if (estado === 'cancelado'){
+    card.innerHTML = `
+      <div class="icon-circle fail"><svg width="30" height="30" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#a3392f" stroke-width="2.2" stroke-linecap="round"/></svg></div>
+      <h1>Pago cancelado</h1>
+      <p class="sub">No se realizó ningún cobro. Puedes volver a intentarlo cuando quieras.</p>
+      <a class="btn" href="checkout.html">Volver a intentar</a>
+    `;
+  } else if (estado === 'rechazado'){
+    card.innerHTML = `
+      <div class="icon-circle fail"><svg width="30" height="30" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#a3392f" stroke-width="2.2" stroke-linecap="round"/></svg></div>
+      <h1>Pago rechazado</h1>
+      <p class="sub">Tu banco rechazó la transacción. Revisa los datos de tu tarjeta o prueba con otra.</p>
+      ${orden ? `<div class="details"><div><span>N° de orden</span><b>${orden}</b></div></div>` : ''}
+      <a class="btn" href="checkout.html">Volver a intentar</a>
+    `;
+  } else {
+    card.innerHTML = `
+      <div class="icon-circle fail"><svg width="30" height="30" viewBox="0 0 24 24" fill="none"><path d="M12 9v4M12 17h.01" stroke="#a3392f" stroke-width="2.2" stroke-linecap="round"/><circle cx="12" cy="12" r="9" stroke="#a3392f" stroke-width="1.8"/></svg></div>
+      <h1>Hubo un problema</h1>
+      <p class="sub">No pudimos confirmar el estado de tu pago. Si alcanzaste a pagar, escríbenos por WhatsApp con tu número de orden para confirmarlo.</p>
+      <a class="btn" href="index.html">Volver al inicio</a>
+    `;
+  }
+</script>
+
+</body>
+</html>

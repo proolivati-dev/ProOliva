@@ -236,6 +236,11 @@
       </div>
 
       <div class="field">
+        <label>Peso (kg) <span style="opacity:0.5; font-weight:400;">— usado para cotizar el envío</span></label>
+        <input type="number" id="fieldWeight" min="0" step="0.01" placeholder="Ej: 0.6" value="0.5">
+      </div>
+
+      <div class="field">
         <label>Descripción</label>
         <textarea id="fieldDescription" rows="3" placeholder="Detalle breve del producto"></textarea>
       </div>
@@ -403,6 +408,7 @@
     document.getElementById('fieldOrigin').value = p.origin || 'Chile';
     document.getElementById('fieldFormat').value = p.format || '';
     document.getElementById('fieldPrice').value = p.price || 0;
+    document.getElementById('fieldWeight').value = p.weight_kg || 0.5;
     document.getElementById('fieldDescription').value = p.description || '';
     document.getElementById('fieldFeatured').checked = !!p.featured;
     document.getElementById('fieldActive').checked = !!p.active;
@@ -462,6 +468,7 @@
         category: document.getElementById('fieldCategory').value,
         origin: document.getElementById('fieldOrigin').value,
         format: document.getElementById('fieldFormat').value,
+        weight_kg: parseFloat(document.getElementById('fieldWeight').value) || 0.5,
         price: parseFloat(document.getElementById('fieldPrice').value) || 0,
         description: document.getElementById('fieldDescription').value,
         featured: document.getElementById('fieldFeatured').checked,
