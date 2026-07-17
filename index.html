@@ -142,7 +142,7 @@
 
   /* ---------- destacado (carousel) ---------- */
   .featured{ display:grid; grid-template-columns:0.9fr 1fr; gap:52px; align-items:center;}
-  .featured-visual{ background:var(--aubergine); border-radius:10px; aspect-ratio:1/0.85; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative;}
+  .featured-visual{ background:var(--aubergine); border-radius:10px; aspect-ratio:1144/1200; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative;}
   .featured-visual img{ width:100%; height:100%; object-fit:cover; transition:transform .6s ease;}
   .featured-body .eyebrow{ color:var(--gold-deep);}
   .featured-body h2{ font-size:32px; margin:14px 0 14px;}
@@ -150,8 +150,9 @@
   .featured-price{ font-family:'Archivo',sans-serif; font-weight:700; font-size:22px; color:var(--olive-deep); margin-bottom:20px; display:block;}
   .featured-tag{ display:inline-flex; align-items:center; gap:8px; font-family:'IBM Plex Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:var(--olive-deep); margin-bottom:16px;}
   .featured-nav{ display:flex; align-items:center; gap:18px; margin-top:26px;}
-  #featuredContainer{ transition:opacity .4s cubic-bezier(.4,0,.2,1), transform .4s cubic-bezier(.4,0,.2,1);}
-  #featuredContainer.fading{ opacity:0; transform:translateY(14px);}
+  #featuredContainer{ transition:opacity .32s ease, transform .32s ease;}
+  #featuredContainer.slide-out{ opacity:0; transform:translateX(-28px);}
+  #featuredContainer.slide-in-prep{ opacity:0; transform:translateX(28px); transition:none;}
   .featured-visual:hover img{ transform:scale(1.04);}
   .featured-dots{ display:flex; gap:8px;}
   .featured-dot{ width:8px; height:8px; border-radius:50%; background:var(--line); cursor:pointer; transition:background .2s, transform .2s; border:none; padding:0;}
@@ -433,14 +434,18 @@
     }
   }
 
-  // Transición suave (fundido + leve desplazamiento) al cambiar de producto destacado
+  // Transición hacia la izquierda: el producto actual sale por la izquierda,
+  // el siguiente entra desde la derecha.
   function transitionFeatured(){
     const container = document.getElementById('featuredContainer');
-    container.classList.add('fading');
+    container.classList.add('slide-out');
     setTimeout(() => {
       renderFeatured();
-      container.classList.remove('fading');
-    }, 260);
+      container.classList.add('slide-in-prep');
+      void container.offsetWidth; // fuerza al navegador a aplicar el estado "sin transición" antes de animar
+      container.classList.remove('slide-out');
+      container.classList.remove('slide-in-prep');
+    }, 250);
   }
 
   function goFeatured(i){
