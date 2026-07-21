@@ -113,30 +113,17 @@
   }
   .video-overlay-text span.active{ opacity:1; transform:translateY(0);}
 
-  /* ---------- divider ---------- */
-  .branch-divider{ display:flex; align-items:center; justify-content:center; gap:14px; padding:44px 0; opacity:0.8;}
-  .branch-divider .line{ height:1px; width:120px; background:var(--line);}
-
-  /* ---------- videos promocionales (carrusel peek) ---------- */
-  .promo-videos{ position:relative; overflow:hidden; padding:52px 0 60px; background:var(--paper); border-top:1px solid var(--line); border-bottom:1px solid var(--line);}
-  .promo-video-track{ position:relative; height:clamp(240px, 32vw, 440px); max-width:1400px; margin:0 auto;}
-  .promo-video-slide{
-    position:absolute; top:0; left:50%; width:min(62vw, 760px); height:100%;
-    border-radius:16px; overflow:hidden; cursor:pointer;
-    box-shadow:0 24px 50px -24px rgba(32,40,26,0.45);
-    transition:transform .85s cubic-bezier(.19,1,.22,1), opacity .85s ease, filter .85s ease;
-  }
+  /* ---------- videos promocionales (carrusel, mismo tamaño, slide lateral) ---------- */
+  .promo-videos{ position:relative; padding:0 0 32px; background:var(--paper);}
+  .promo-video-viewport{ position:relative; overflow:hidden; border-radius:14px; box-shadow:0 20px 44px -22px rgba(32,40,26,0.4); height:clamp(260px, 40vw, 540px);}
+  .promo-video-track{ display:flex; width:100%; height:100%; transition:transform .7s cubic-bezier(.65,0,.35,1);}
+  .promo-video-slide{ flex:0 0 100%; width:100%; height:100%; position:relative;}
   .promo-video-slide video{ width:100%; height:100%; object-fit:cover; display:block; background:var(--ink);}
-  .promo-video-slide.pos-active{ transform:translateX(-50%) scale(1); opacity:1; filter:none; z-index:3; cursor:default;}
-  .promo-video-slide.pos-prev{ transform:translateX(-132%) scale(0.8); opacity:0.5; filter:brightness(0.55) saturate(0.7); z-index:2;}
-  .promo-video-slide.pos-next{ transform:translateX(32%) scale(0.8); opacity:0.5; filter:brightness(0.55) saturate(0.7); z-index:2;}
-  .promo-video-dots{ display:flex; justify-content:center; gap:8px; margin-top:26px;}
-  .promo-video-dot{ width:8px; height:8px; border-radius:50%; background:var(--line); cursor:pointer; transition:background .2s, transform .2s; border:none; padding:0;}
-  .promo-video-dot.active{ background:var(--olive-deep); transform:scale(1.3);}
+  .promo-video-nav{ position:absolute; left:0; right:0; bottom:20px; display:flex; justify-content:center; gap:8px; z-index:4;}
+  .promo-video-bar{ width:34px; height:4px; border-radius:2px; background:rgba(255,255,255,0.45); cursor:pointer; transition:background .25s, width .25s; border:none; padding:0;}
+  .promo-video-bar.active{ background:#fff; width:52px;}
   @media (max-width:860px){
-    .promo-videos{ padding:36px 0 44px;}
-    .promo-video-slide{ width:88vw;}
-    .promo-video-slide.pos-prev, .promo-video-slide.pos-next{ opacity:0; pointer-events:none;}
+    .promo-videos{ padding:0 0 24px;}
   }
 
   section{ padding:64px 0; }
@@ -289,32 +276,28 @@
 
 <section class="promo-videos" aria-label="Promociones en video">
   <div class="wrap">
-    <div class="promo-video-track" id="promoVideoTrack">
-      <div class="promo-video-slide" data-index="0">
-        <video muted loop playsinline preload="metadata">
-          <source src="promovideo1.mp4" type="video/mp4">
-        </video>
+    <div class="promo-video-viewport">
+      <div class="promo-video-track" id="promoVideoTrack">
+        <div class="promo-video-slide" data-index="0">
+          <video muted loop playsinline preload="metadata">
+            <source src="promovideo1.mp4" type="video/mp4">
+          </video>
+        </div>
+        <div class="promo-video-slide" data-index="1">
+          <video muted loop playsinline preload="metadata">
+            <source src="promovideo2.mp4" type="video/mp4">
+          </video>
+        </div>
+        <div class="promo-video-slide" data-index="2">
+          <video muted loop playsinline preload="metadata">
+            <source src="promovideo3.mp4" type="video/mp4">
+          </video>
+        </div>
       </div>
-      <div class="promo-video-slide" data-index="1">
-        <video muted loop playsinline preload="metadata">
-          <source src="promovideo2.mp4" type="video/mp4">
-        </video>
-      </div>
-      <div class="promo-video-slide" data-index="2">
-        <video muted loop playsinline preload="metadata">
-          <source src="promovideo3.mp4" type="video/mp4">
-        </video>
-      </div>
+      <div class="promo-video-nav" id="promoVideoDots"></div>
     </div>
-    <div class="promo-video-dots" id="promoVideoDots"></div>
   </div>
 </section>
-
-<div class="branch-divider">
-  <div class="line"></div>
-  <svg width="30" height="18" viewBox="0 0 30 18" fill="none"><path d="M1 9c6-6 22-6 28 0" stroke="#55643b" stroke-width="1.3"/><circle cx="8" cy="6.5" r="2.1" fill="#8a9a66"/><circle cx="15" cy="4.3" r="2.3" fill="#55643b"/><circle cx="22" cy="6.5" r="2.1" fill="#8a9a66"/></svg>
-  <div class="line"></div>
-</div>
 
 <section id="productos" style="padding-top:0;">
   <div class="wrap">
@@ -662,6 +645,7 @@
 
   // ---------- Carrusel de videos promocionales (peek, debajo del banner) ----------
   function initPromoVideos(){
+    const track = document.getElementById('promoVideoTrack');
     const slides = Array.from(document.querySelectorAll('.promo-video-slide'));
     if (slides.length === 0) return;
     const dotsContainer = document.getElementById('promoVideoDots');
@@ -670,29 +654,22 @@
     let timer = null;
 
     dotsContainer.innerHTML = slides.map((_, i) =>
-      `<button class="promo-video-dot ${i === 0 ? 'active' : ''}" data-i="${i}" aria-label="Ver promoción ${i + 1}"></button>`
+      `<button class="promo-video-bar ${i === 0 ? 'active' : ''}" data-i="${i}" aria-label="Ver promoción ${i + 1}"></button>`
     ).join('');
-    const dots = Array.from(dotsContainer.querySelectorAll('.promo-video-dot'));
+    const bars = Array.from(dotsContainer.querySelectorAll('.promo-video-bar'));
 
     function update(){
+      track.style.transform = `translateX(-${active * 100}%)`;
       slides.forEach((slide, i) => {
         const video = slide.querySelector('video');
-        slide.classList.remove('pos-active', 'pos-prev', 'pos-next');
-        const diff = (i - active + total) % total;
-
-        if (diff === 0){
-          slide.classList.add('pos-active');
+        if (i === active){
           const playPromise = video.play();
           if (playPromise) playPromise.catch(() => {});
-        } else if (diff === 1){
-          slide.classList.add('pos-next');
-          video.pause();
         } else {
-          slide.classList.add('pos-prev');
           video.pause();
         }
       });
-      dots.forEach((dot, i) => dot.classList.toggle('active', i === active));
+      bars.forEach((bar, i) => bar.classList.toggle('active', i === active));
     }
 
     function goTo(i){
@@ -706,16 +683,13 @@
       timer = setInterval(() => goTo(active + 1), 6500);
     }
 
-    slides.forEach((slide, i) => {
-      slide.addEventListener('click', () => { if (i !== active) goTo(i); });
-    });
-    dots.forEach((dot, i) => {
-      dot.addEventListener('click', () => goTo(i));
+    bars.forEach((bar, i) => {
+      bar.addEventListener('click', () => goTo(i));
     });
 
-    const track = document.getElementById('promoVideoTrack');
-    track.addEventListener('mouseenter', () => { if (timer) clearInterval(timer); });
-    track.addEventListener('mouseleave', resetTimer);
+    const viewport = track.parentElement;
+    viewport.addEventListener('mouseenter', () => { if (timer) clearInterval(timer); });
+    viewport.addEventListener('mouseleave', resetTimer);
 
     update();
     resetTimer();
