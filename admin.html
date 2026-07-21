@@ -224,12 +224,8 @@
               <th>Destino</th>
               <th>Pedido</th>
               <th>Total</th>
-              <th>Pagado</th>
-              <th>Preparado</th>
-              <th>Envío</th>
-              <th>N° seguimiento</th>
-              <th>Notificar</th>
-              <th>Entregado</th>
+              <th>Pago</th>
+              <th>Estado</th>
               <th></th>
             </tr>
           </thead>
@@ -560,6 +556,11 @@
     loadOrders();
     loadWholesaleInquiries();
     loadCustomers();
+
+    if (window.location.hash === '#pedidos'){
+      const pedidosTab = document.querySelector('[data-tab="pedidos"]');
+      if (pedidosTab) pedidosTab.click();
+    }
   }
 
   loginForm.addEventListener('submit', async (e) => {
@@ -828,7 +829,6 @@
   // ---------- Pedidos ----------
   // Reemplaza por la URL real de tu función una vez desplegada si el nombre difiere.
   const SEND_CONFIRMATION_FN = 'send-order-confirmation';
-  const NOTIFY_SHIPMENT_FN = 'notify-shipment';
 
   let currentOrders = [];
   let ordersSourceActive = 'all';
@@ -912,6 +912,13 @@
     return o.notes || '—';
   }
 
+  function estadoBadge(o){
+    if (o.delivered) return '<span class="badge badge-on">Entregado</span>';
+    if (o.shipped_notified_at) return '<span class="badge" style="background:#f3e6c9; color:#9c7326;">Despachado</span>';
+    if (o.ready) return '<span class="badge" style="background:#e0e6d6; color:#55643b;">Preparado</span>';
+    return '<span class="badge badge-off">Por preparar</span>';
+  }
+
   function renderOrdersTable(){
     const tbody = document.getElementById('ordersTableBody');
     const emptyState = document.getElementById('ordersEmptyState');
@@ -935,99 +942,29 @@
 
     tbody.innerHTML = filtered.map(o => {
       const itemsText = formatOrderItems(o);
-      const notifyDisabled = (!o.tracking_number || !o.shipping_method) ? 'disabled' : '';
-      const notifyLabel = o.shipped_notified_at ? 'Reenviar aviso' : 'Notificar envío';
       return `
-      <tr>
+      <tr class="order-row" onclick="if(event.target.closest('.icon-btn')) return; location.href='pedido.html?id=${o.id}'" style="cursor:pointer;">
         <td>${o.created_at ? new Date(o.created_at).toLocaleDateString('es-CL', { day:'numeric', month:'short' }) : '—'}</td>
         <td class="cell-name">${o.customer_name || '—'}<div style="font-weight:400; opacity:0.6; font-size:12px;">${o.customer_email || ''}${o.customer_phone ? ' · ' + o.customer_phone : ''}</div></td>
         <td>${[o.shipping_address, o.shipping_comuna, o.shipping_region].filter(Boolean).join(', ') || '—'}</td>
         <td><div class="cell-clamp" title="${escapeAttr(itemsText)}">${itemsText}</div></td>
         <td>${new Intl.NumberFormat('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits:0 }).format(o.total || 0)}</td>
-        <td><input type="checkbox" ${o.paid ? 'checked' : ''} onchange="toggleOrderField('${o.id}', 'paid', this.checked)"></td>
-        <td><input type="checkbox" ${o.ready ? 'checked' : ''} onchange="toggleOrderField('${o.id}', 'ready', this.checked)"></td>
+        <td>${o.paid ? '<span class="badge badge-on">Pagado</span>' : '<span class="badge badge-off">Pendiente</span>'}</td>
+        <td>${estadoBadge(o)}</td>
         <td>
-          <select onchange="updateOrderShippingMethod('${o.id}', this.value)" style="font-size:12.5px; padding:6px 8px; border:1.5px solid var(--line); border-radius:6px;">
-            <option value="" ${!o.shipping_method ? 'selected' : ''}>—</option>
-            <option value="chilexpress" ${o.shipping_method === 'chilexpress' ? 'selected' : ''}>Chilexpress</option>
-            <option value="local" ${o.shipping_method === 'local' ? 'selected' : ''}>Envío local</option>
-          </select>
-        </td>
-        <td>
-          <input type="text" value="${escapeAttr(o.tracking_number || '')}" placeholder="N° seguimiento"
-                 style="width:130px; font-size:12.5px; padding:6px 8px; border:1.5px solid var(--line); border-radius:6px;"
-                 onchange="updateOrderTracking('${o.id}', this.value)">
-        </td>
-        <td>
-          <button class="btn btn-outline" style="width:auto; padding:7px 12px; font-size:11.5px;" ${notifyDisabled} onclick="notifyShipment('${o.id}')">${notifyLabel}</button>
-          ${o.shipped_notified_at ? `<div style="font-size:10.5px; opacity:0.55; margin-top:4px;">Enviado ${new Date(o.shipped_notified_at).toLocaleDateString('es-CL')}</div>` : ''}
-        </td>
-        <td><input type="checkbox" ${o.delivered ? 'checked' : ''} onchange="toggleOrderField('${o.id}', 'delivered', this.checked)"></td>
-        <td>
-          <button class="icon-btn" title="Borrar" onclick="deleteOrder('${o.id}')">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" stroke="#a3392f" stroke-width="1.6"/></svg>
-          </button>
+          <div class="row-actions">
+            <button class="icon-btn" title="Ver pedido" onclick="location.href='pedido.html?id=${o.id}'">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z" stroke="#20281a" stroke-width="1.6"/><circle cx="12" cy="12" r="3" stroke="#20281a" stroke-width="1.6"/></svg>
+            </button>
+            <button class="icon-btn" title="Borrar" onclick="deleteOrder('${o.id}')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" stroke="#a3392f" stroke-width="1.6"/></svg>
+            </button>
+          </div>
         </td>
       </tr>
     `;
     }).join('');
   }
-
-  window.toggleOrderField = async function(id, field, value){
-    const payload = { [field]: value };
-    if (field === 'delivered'){
-      payload.delivered_at = value ? new Date().toISOString() : null;
-    }
-    const { error } = await supabaseClient.from('orders').update(payload).eq('id', id);
-    if (error){
-      alert('No se pudo actualizar el pedido.');
-      console.error(error);
-      return;
-    }
-    loadOrders();
-  };
-
-  window.updateOrderShippingMethod = async function(id, value){
-    const { error } = await supabaseClient.from('orders').update({ shipping_method: value || null }).eq('id', id);
-    if (error){
-      alert('No se pudo actualizar el método de envío.');
-      console.error(error);
-      return;
-    }
-    loadOrders();
-  };
-
-  window.updateOrderTracking = async function(id, value){
-    const { error } = await supabaseClient.from('orders').update({ tracking_number: value.trim() || null }).eq('id', id);
-    if (error){
-      alert('No se pudo guardar el número de seguimiento.');
-      console.error(error);
-      return;
-    }
-    loadOrders();
-  };
-
-  window.notifyShipment = async function(id){
-    const o = currentOrders.find(x => x.id === id);
-    if (!o) return;
-    if (!o.tracking_number || !o.shipping_method){
-      alert('Primero elige el método de envío y escribe el número de seguimiento.');
-      return;
-    }
-    if (!o.customer_email){
-      alert('Este pedido no tiene correo de cliente, no se puede notificar por email.');
-      return;
-    }
-    if (!confirm(`¿Enviar a ${o.customer_email} el aviso de envío con el N° ${o.tracking_number}?`)) return;
-
-    try {
-      await callEdgeFunction(NOTIFY_SHIPMENT_FN, { orderId: id });
-      loadOrders();
-    } catch (err){
-      alert('No se pudo enviar la notificación: ' + err.message + ' — revisa que la función "' + NOTIFY_SHIPMENT_FN + '" esté desplegada en Supabase.');
-      console.error(err);
-    }
-  };
 
   window.deleteOrder = async function(id){
     if (!confirm('¿Borrar este pedido? Esta acción no se puede deshacer.')) return;
