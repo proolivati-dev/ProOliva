@@ -147,6 +147,8 @@
     .admin-tabs{ margin-left:-16px; margin-right:-16px; padding-left:16px; padding-right:16px;}
     .admin-toolbar{ align-items:stretch;}
     .admin-toolbar > button, .admin-toolbar .btn{ width:100%;}
+    .admin-toolbar > div[style*="display:flex"]{ flex-direction:column; width:100%;}
+    .admin-toolbar select{ width:100%;}
 
     .modal-backdrop{ padding:0; align-items:stretch;}
     .modal{ max-width:none; width:100%; min-height:100%; border-radius:0; padding:24px 18px calc(24px + env(safe-area-inset-bottom));}
@@ -241,7 +243,10 @@
           <h2>Productos</h2>
           <p id="countLabel">Cargando...</p>
         </div>
-        <button class="btn btn-primary" style="width:auto;" id="newProductBtn">+ Nuevo producto</button>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="btn btn-outline" id="pdfProductsBtn">Descargar PDF</button>
+          <button class="btn btn-primary" style="width:auto;" id="newProductBtn">+ Nuevo producto</button>
+        </div>
       </div>
 
       <div class="table-wrap">
@@ -270,7 +275,16 @@
           <h2>Pedidos</h2>
           <p id="ordersCountLabel">Cargando...</p>
         </div>
-        <button class="btn btn-primary" style="width:auto;" id="newOrderBtn">+ Agregar pedido manual</button>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <select id="ordersDateRangeSelect" style="width:auto; border:1.5px solid var(--line); border-radius:6px; padding:10px 14px; font-size:14px; background:#fff; color:var(--ink);">
+            <option value="today">Hoy</option>
+            <option value="week">Esta semana</option>
+            <option value="month">Este mes</option>
+            <option value="all" selected>Todas las fechas</option>
+          </select>
+          <button class="btn btn-outline" id="pdfOrdersBtn">Descargar PDF</button>
+          <button class="btn btn-primary" style="width:auto;" id="newOrderBtn">+ Agregar pedido manual</button>
+        </div>
       </div>
 
       <div class="region-filter" id="ordersSourceFilter"></div>
@@ -302,6 +316,7 @@
           <h2>Solicitudes de venta por mayor</h2>
           <p id="wholesaleCountLabel">Cargando...</p>
         </div>
+        <button class="btn btn-outline" id="pdfWholesaleBtn" style="width:auto;">Descargar PDF</button>
       </div>
 
       <div class="region-filter" id="wholesaleRegionFilter"></div>
@@ -333,7 +348,10 @@
           <h2>Mis Clientes</h2>
           <p id="customersCountLabel">Cargando...</p>
         </div>
-        <button class="btn btn-primary" style="width:auto;" id="newCustomerBtn">+ Nuevo cliente</button>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="btn btn-outline" id="pdfCustomersBtn">Descargar PDF</button>
+          <button class="btn btn-primary" style="width:auto;" id="newCustomerBtn">+ Nuevo cliente</button>
+        </div>
       </div>
 
       <div class="region-filter" id="customersRegionFilter"></div>
@@ -414,9 +432,12 @@
           <h2>Destinatarios</h2>
           <p id="subscribersCountLabel">Cargando...</p>
         </div>
-        <label class="field-check" style="width:auto;">
-          <input type="checkbox" id="selectAllSubscribers" checked> Seleccionar todos
-        </label>
+        <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+          <button class="btn btn-outline" id="pdfAudienceBtn" style="width:auto;">Descargar PDF</button>
+          <label class="field-check" style="width:auto;">
+            <input type="checkbox" id="selectAllSubscribers" checked> Seleccionar todos
+          </label>
+        </div>
       </div>
 
       <div class="region-filter" id="audienceSourceFilter"></div>
@@ -446,13 +467,16 @@
           <h2>Analítica de ventas</h2>
           <p id="analyticsRangeLabel">Cargando...</p>
         </div>
-        <select id="analyticsRangeSelect" style="width:auto; border:1.5px solid var(--line); border-radius:6px; padding:10px 14px; font-size:14px; background:#fff; color:var(--ink);">
-          <option value="7">Últimos 7 días</option>
-          <option value="30" selected>Últimos 30 días</option>
-          <option value="90">Últimos 90 días</option>
-          <option value="year">Este año</option>
-          <option value="all">Todo el tiempo</option>
-        </select>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <select id="analyticsRangeSelect" style="width:auto; border:1.5px solid var(--line); border-radius:6px; padding:10px 14px; font-size:14px; background:#fff; color:var(--ink);">
+            <option value="7">Últimos 7 días</option>
+            <option value="30" selected>Últimos 30 días</option>
+            <option value="90">Últimos 90 días</option>
+            <option value="year">Este año</option>
+            <option value="all">Todo el tiempo</option>
+          </select>
+          <button class="btn btn-outline" id="pdfAnalyticsBtn">Descargar PDF</button>
+        </div>
       </div>
 
       <div class="kpi-grid">
@@ -735,6 +759,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script src="supabase-config.js"></script>
 <script>
   const CATEGORY_LABELS = {
@@ -1055,6 +1081,37 @@
 
   let currentOrders = [];
   let ordersSourceActive = 'all';
+  let ordersDateRangeActive = 'all';
+
+  function isInDateRange(dateStr, rangeValue){
+    if (rangeValue === 'all' || !dateStr) return true;
+    const d = new Date(dateStr);
+    const now = new Date();
+    if (rangeValue === 'today'){
+      return d.toDateString() === now.toDateString();
+    }
+    if (rangeValue === 'week'){
+      const weekStart = new Date(now);
+      weekStart.setDate(now.getDate() - now.getDay());
+      weekStart.setHours(0, 0, 0, 0);
+      return d >= weekStart;
+    }
+    if (rangeValue === 'month'){
+      return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+    }
+    return true;
+  }
+
+  function getFilteredOrders(){
+    return currentOrders
+      .filter(o => ordersSourceActive === 'all' || (o.source || 'web') === ordersSourceActive)
+      .filter(o => isInDateRange(o.created_at, ordersDateRangeActive));
+  }
+
+  document.getElementById('ordersDateRangeSelect').addEventListener('change', (e) => {
+    ordersDateRangeActive = e.target.value;
+    renderOrdersTable();
+  });
   const orderModalBackdrop = document.getElementById('orderModalBackdrop');
   const orderForm = document.getElementById('orderForm');
   const orderFormError = document.getElementById('orderFormError');
@@ -1148,9 +1205,7 @@
     const emptyState = document.getElementById('ordersEmptyState');
     const countLabel = document.getElementById('ordersCountLabel');
 
-    const filtered = ordersSourceActive === 'all'
-      ? currentOrders
-      : currentOrders.filter(o => (o.source || 'web') === ordersSourceActive);
+    const filtered = getFilteredOrders();
 
     countLabel.textContent = `${filtered.length} de ${currentOrders.length} pedido${currentOrders.length === 1 ? '' : 's'}`;
 
@@ -2020,6 +2075,142 @@
       options: { responsive: true, maintainAspectRatio: false }
     });
   }
+
+  // ---------- Exportar PDF ----------
+  function pdfHeader(doc, title, subtitle){
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.setTextColor(58, 69, 39);
+    doc.text('ProOliva', 40, 46);
+    doc.setFontSize(13);
+    doc.setTextColor(20, 24, 18);
+    doc.text(title, 40, 68);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(110, 110, 100);
+    doc.text(subtitle || '', 40, 84);
+    const generatedAt = new Date().toLocaleString('es-CL', { dateStyle: 'long', timeStyle: 'short' });
+    doc.text(`Generado el ${generatedAt}`, 40, 98);
+    doc.setDrawColor(220, 214, 196);
+    doc.line(40, 108, doc.internal.pageSize.getWidth() - 40, 108);
+    return 122;
+  }
+
+  function pdfFilename(prefix){
+    return `prooliva-${prefix}-${new Date().toISOString().slice(0, 10)}.pdf`;
+  }
+
+  function pdfTable(doc, startY, head, body, extra){
+    doc.autoTable(Object.assign({
+      startY,
+      head: [head],
+      body,
+      margin: { left: 40, right: 40 },
+      styles: { font: 'helvetica', fontSize: 9, cellPadding: 6, textColor: [32, 40, 26] },
+      headStyles: { fillColor: [58, 69, 39], textColor: [251, 249, 242], fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [247, 244, 234] }
+    }, extra || {}));
+  }
+
+  document.getElementById('pdfProductsBtn').addEventListener('click', () => {
+    const doc = new jspdf.jsPDF({ unit: 'pt', format: 'a4' });
+    const y = pdfHeader(doc, 'Catálogo de productos', `${currentProducts.length} productos`);
+    pdfTable(doc, y, ['Nombre', 'SKU', 'Categoría', 'Precio', 'Destacado', 'Visible'],
+      currentProducts.map(p => [
+        p.name, p.sku || '—', CATEGORY_LABELS[p.category] || p.category,
+        formatCLPShort(p.price), p.featured ? 'Sí' : 'No', p.active ? 'Sí' : 'No'
+      ])
+    );
+    doc.save(pdfFilename('productos'));
+  });
+
+  document.getElementById('pdfOrdersBtn').addEventListener('click', () => {
+    const filtered = getFilteredOrders();
+    const rangeLabels = { today: 'Hoy', week: 'Esta semana', month: 'Este mes', all: 'Todas las fechas' };
+    const sourceLabels = { all: 'Todos los canales', web: 'Solo web', manual: 'Solo manuales' };
+    const total = filtered.reduce((s, o) => s + (o.total || 0), 0);
+
+    const doc = new jspdf.jsPDF({ unit: 'pt', format: 'a4' });
+    const y = pdfHeader(doc, 'Pedidos', `${rangeLabels[ordersDateRangeActive]} · ${sourceLabels[ordersSourceActive]} · ${filtered.length} pedidos`);
+    pdfTable(doc, y, ['Fecha', 'Cliente', 'Total', 'Pagado', 'Estado'],
+      filtered.map(o => [
+        o.created_at ? new Date(o.created_at).toLocaleDateString('es-CL') : '—',
+        o.customer_name || '—',
+        formatCLPShort(o.total),
+        o.paid ? 'Sí' : 'No',
+        o.delivered ? 'Entregado' : (o.shipped_notified_at ? 'Despachado' : (o.ready ? 'Preparado' : 'Por preparar'))
+      ]),
+      { foot: [['', '', formatCLPShort(total), '', '']], footStyles: { fillColor: [232, 227, 209], textColor: [32, 40, 26], fontStyle: 'bold' } }
+    );
+    doc.save(pdfFilename('pedidos'));
+  });
+
+  document.getElementById('pdfWholesaleBtn').addEventListener('click', () => {
+    const filtered = wholesaleRegionActive === 'all' ? currentWholesale : currentWholesale.filter(w => w.region === wholesaleRegionActive);
+    const doc = new jspdf.jsPDF({ unit: 'pt', format: 'a4' });
+    const y = pdfHeader(doc, 'Solicitudes de venta por mayor', `${filtered.length} solicitudes`);
+    pdfTable(doc, y, ['Fecha', 'Contacto', 'Empresa', 'Correo', 'Teléfono', 'Contactado'],
+      filtered.map(w => [
+        new Date(w.created_at).toLocaleDateString('es-CL'), w.contact_name, w.company_name || '—',
+        w.email, w.phone, w.contacted ? 'Sí' : 'No'
+      ])
+    );
+    doc.save(pdfFilename('solicitudes'));
+  });
+
+  document.getElementById('pdfCustomersBtn').addEventListener('click', () => {
+    const filtered = customersRegionActive === 'all' ? currentCustomers : currentCustomers.filter(c => c.region === customersRegionActive);
+    const doc = new jspdf.jsPDF({ unit: 'pt', format: 'a4' });
+    const y = pdfHeader(doc, 'Mis Clientes', `${filtered.length} clientes`);
+    pdfTable(doc, y, ['Nombre', 'Empresa', 'Correo', 'Teléfono', 'Región / Comuna'],
+      filtered.map(c => [
+        c.name, c.company_name || '—', c.email || '—', c.phone || '—',
+        [c.comuna, c.region].filter(Boolean).join(' / ') || '—'
+      ])
+    );
+    doc.save(pdfFilename('clientes'));
+  });
+
+  document.getElementById('pdfAudienceBtn').addEventListener('click', () => {
+    const sourceLabel = { all: null, suscriptores: 'Suscriptor', clientes: 'Cliente' }[audienceFilterActive];
+    const filtered = sourceLabel ? audienceList.filter(a => a.sources.has(sourceLabel)) : audienceList;
+    const doc = new jspdf.jsPDF({ unit: 'pt', format: 'a4' });
+    const y = pdfHeader(doc, 'Destinatarios', `${filtered.length} destinatarios`);
+    pdfTable(doc, y, ['Correo', 'Nombre', 'RUT', 'Origen'],
+      filtered.map(a => [a.email, a.name || '—', a.rut || '—', [...a.sources].join(' + ')])
+    );
+    doc.save(pdfFilename('destinatarios'));
+  });
+
+  document.getElementById('pdfAnalyticsBtn').addEventListener('click', () => {
+    const doc = new jspdf.jsPDF({ unit: 'pt', format: 'a4' });
+    const rangeLabels = { '7': 'Últimos 7 días', '30': 'Últimos 30 días', '90': 'Últimos 90 días', year: 'Este año', all: 'Todo el tiempo' };
+    let y = pdfHeader(doc, 'Analítica de ventas', rangeLabels[analyticsRangeActive]);
+
+    pdfTable(doc, y, ['Indicador', 'Valor'], [
+      ['Ingresos totales', document.getElementById('kpiRevenue').textContent],
+      ['Ingresos por productos', document.getElementById('kpiRevenueProducts').textContent],
+      ['Ingresos por envío', document.getElementById('kpiRevenueShipping').textContent],
+      ['Pedidos entregados', document.getElementById('kpiOrders').textContent],
+      ['Ticket promedio', document.getElementById('kpiAov').textContent],
+      ['Por gestionar ahora', document.getElementById('kpiPending').textContent]
+    ]);
+    y = doc.lastAutoTable.finalY + 24;
+
+    Object.entries(analyticsCharts).forEach(([id, chart]) => {
+      if (!chart) return;
+      const imgWidth = 515;
+      const imgHeight = imgWidth * (chart.height / chart.width);
+      if (y + imgHeight > doc.internal.pageSize.getHeight() - 40){
+        doc.addPage();
+        y = 40;
+      }
+      doc.addImage(chart.toBase64Image(), 'PNG', 40, y, imgWidth, imgHeight);
+      y += imgHeight + 20;
+    });
+
+    doc.save(pdfFilename('analitica'));
+  });
 
   checkSession();
 </script>
