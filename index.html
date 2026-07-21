@@ -112,6 +112,7 @@
     transition:opacity .6s ease, transform .6s ease;
   }
   .video-overlay-text span.active{ opacity:1; transform:translateY(0);}
+  .hero-logo-inline{ height:1.3em; width:auto; vertical-align:middle; margin-left:0.15em; position:relative; top:-0.05em;}
 
   /* ---------- videos promocionales (carrusel, mismo tamaño, slide lateral) ---------- */
   .promo-videos{ position:relative; padding:32px 0; background:var(--paper);}
@@ -607,23 +608,27 @@
 
   // ---------- Frases alternando sobre el video ----------
   const heroPhrases = [
-    'Bienvenido a ProOliva',
+    'Bienvenido a {logo}',
     'Más de 25 años de experiencia al servicio de su negocio',
     'Tradición de calidad familiar desde 1998'
   ];
   let heroPhraseIndex = 0;
   const heroPhraseEl = document.getElementById('heroPhraseText');
 
+  function renderHeroPhrase(phrase){
+    return phrase.replace('{logo}', '<img src="whitelogo.png" alt="ProOliva" class="hero-logo-inline">');
+  }
+
   function rotateHeroPhrase(){
     heroPhraseEl.classList.remove('active');
     setTimeout(() => {
       heroPhraseIndex = (heroPhraseIndex + 1) % heroPhrases.length;
-      heroPhraseEl.textContent = heroPhrases[heroPhraseIndex];
+      heroPhraseEl.innerHTML = renderHeroPhrase(heroPhrases[heroPhraseIndex]);
       heroPhraseEl.classList.add('active');
     }, 550);
   }
 
-  heroPhraseEl.textContent = heroPhrases[0];
+  heroPhraseEl.innerHTML = renderHeroPhrase(heroPhrases[0]);
   requestAnimationFrame(() => requestAnimationFrame(() => heroPhraseEl.classList.add('active')));
   setInterval(rotateHeroPhrase, 4200);
 
