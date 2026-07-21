@@ -114,6 +114,10 @@
   .image-preview span{ font-size:12.5px; opacity:0.5;}
 
   .empty-state{ text-align:center; padding:60px 20px; opacity:0.6; font-size:14px;}
+
+  /* ---------- Difusión / campañas ---------- */
+  .campaign-grid{ display:grid; grid-template-columns:1.2fr 1fr; gap:24px; align-items:start; margin-bottom:32px;}
+  @media (max-width:900px){ .campaign-grid{ grid-template-columns:1fr;} }
 </style>
 </head>
 <body>
@@ -157,6 +161,7 @@
       <button class="tab-btn" data-tab="pedidos">Pedidos <span class="tab-badge" id="pedidosBadge" style="display:none;">0</span></button>
       <button class="tab-btn" data-tab="solicitudes">Solicitudes <span class="tab-badge" id="solicitudesBadge" style="display:none;">0</span></button>
       <button class="tab-btn" data-tab="clientes">Mis Clientes</button>
+      <button class="tab-btn" data-tab="difusion">Difusión</button>
     </div>
 
     <!-- ---------- TAB: PRODUCTOS ---------- -->
@@ -293,6 +298,87 @@
           <tbody id="customersTableBody"></tbody>
         </table>
         <div class="empty-state" id="customersEmptyState" style="display:none;">Todavía no has agregado clientes. Crea el primero con "+ Nuevo cliente", o agrega alguno directo desde una solicitud.</div>
+      </div>
+    </div>
+
+    <!-- ---------- TAB: DIFUSIÓN ---------- -->
+    <div class="tab-panel" id="tab-difusion">
+      <div class="admin-toolbar">
+        <div>
+          <h2>Nueva campaña</h2>
+          <p>Sube una foto de la promoción, escribe el mensaje y elige a quién enviárselo.</p>
+        </div>
+      </div>
+
+      <div class="campaign-grid">
+        <div class="panel">
+          <div class="field">
+            <label>Foto de la promoción <span style="opacity:0.5; font-weight:400;">(opcional)</span></label>
+            <div class="image-preview" id="campaignImagePreview" style="height:160px;"><span>Sin imagen</span></div>
+            <input type="file" id="campaignImageFile" accept="image/*">
+          </div>
+          <div class="field">
+            <label>Asunto del correo</label>
+            <input type="text" id="campaignSubject" placeholder="Ej: 20% de descuento esta semana en ProOliva">
+          </div>
+          <div class="field">
+            <label>Título dentro del correo</label>
+            <input type="text" id="campaignHeadline" placeholder="Ej: ¡Aceitunas premium con 20% off!">
+          </div>
+          <div class="field">
+            <label>Mensaje</label>
+            <textarea id="campaignBody" rows="5" placeholder="Escribe el mensaje de la promoción. Cada línea nueva es un párrafo distinto en el correo."></textarea>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Texto del botón <span style="opacity:0.5; font-weight:400;">(opcional)</span></label>
+              <input type="text" id="campaignCtaText" placeholder="Ej: Ver productos">
+            </div>
+            <div class="field">
+              <label>Link del botón <span style="opacity:0.5; font-weight:400;">(opcional)</span></label>
+              <input type="text" id="campaignCtaLink" placeholder="https://proolivachile.github.io/ProOliva/productos.html">
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" style="position:sticky; top:100px;">
+          <h3 style="font-size:13px; text-transform:uppercase; letter-spacing:0.05em; color:var(--gold-deep); font-family:'IBM Plex Mono',monospace; margin-bottom:14px;">Previsualización</h3>
+          <div style="border:1px solid var(--line); border-radius:10px; overflow:hidden; background:#fff;">
+            <div id="campaignPreview"></div>
+          </div>
+          <div style="margin-top:18px;">
+            <p style="font-size:12.5px; opacity:0.65; margin-bottom:10px;" id="recipientsCountLabel">0 destinatarios seleccionados</p>
+            <button class="btn btn-primary" id="sendCampaignBtn">Enviar campaña</button>
+            <div class="error-msg" id="campaignError"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-toolbar" style="margin-top:8px;">
+        <div>
+          <h2>Suscriptores</h2>
+          <p id="subscribersCountLabel">Cargando...</p>
+        </div>
+        <label class="field-check" style="width:auto;">
+          <input type="checkbox" id="selectAllSubscribers" checked> Seleccionar todos
+        </label>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th></th>
+              <th>Correo</th>
+              <th>RUT</th>
+              <th>Origen</th>
+              <th>Fecha</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="subscribersTableBody"></tbody>
+        </table>
+        <div class="empty-state" id="subscribersEmptyState" style="display:none;">Todavía no hay suscriptores. Van a ir apareciendo cuando alguien se suscriba desde index.html o productos.html.</div>
       </div>
     </div>
   </div>
@@ -556,6 +642,7 @@
     loadOrders();
     loadWholesaleInquiries();
     loadCustomers();
+    loadSubscribers();
 
     if (window.location.hash === '#pedidos'){
       const pedidosTab = document.querySelector('[data-tab="pedidos"]');
@@ -1322,6 +1409,195 @@
     } finally {
       saveBtn.disabled = false;
       saveBtn.textContent = 'Guardar cliente';
+    }
+  });
+
+  // ---------- Difusión (campañas de correo) ----------
+  const SEND_CAMPAIGN_FN = 'send-campaign';
+
+  let currentSubscribers = [];
+  let selectedSubscriberIds = new Set();
+  let campaignImageUrl = null;
+
+  function escapeHtmlText(str){
+    return (str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  function buildCampaignHtml(){
+    const headline = document.getElementById('campaignHeadline').value.trim();
+    const body = document.getElementById('campaignBody').value.trim();
+    const ctaText = document.getElementById('campaignCtaText').value.trim();
+    const ctaLink = document.getElementById('campaignCtaLink').value.trim();
+
+    const paragraphs = body.split('\n').filter(p => p.trim()).map(p =>
+      `<p style="margin:0 0 14px; font-size:15px; line-height:1.6; color:#20281a;">${escapeHtmlText(p)}</p>`
+    ).join('');
+
+    return `
+      <div style="font-family:Arial, sans-serif; max-width:560px; margin:0 auto; background:#fbf9f2;">
+        ${campaignImageUrl ? `<img src="${campaignImageUrl}" alt="" style="width:100%; display:block;">` : ''}
+        <div style="padding:28px 30px;">
+          ${headline ? `<h1 style="font-family:Arial, sans-serif; font-size:23px; color:#3a4527; margin:0 0 16px;">${escapeHtmlText(headline)}</h1>` : ''}
+          ${paragraphs || '<p style="opacity:0.5; font-size:14px;">Escribe el mensaje de tu campaña...</p>'}
+          ${ctaText && ctaLink ? `<a href="${ctaLink}" style="display:inline-block; margin-top:6px; background:#3a4527; color:#fbf9f2; padding:13px 26px; border-radius:6px; text-decoration:none; font-weight:700; font-size:13px; text-transform:uppercase; letter-spacing:0.02em;">${escapeHtmlText(ctaText)}</a>` : ''}
+          <p style="opacity:0.5; font-size:11px; margin-top:32px;">Recibiste este correo porque te suscribiste en ProOliva. Si no quieres seguir recibiendo novedades, respóndenos y te sacamos de la lista.</p>
+        </div>
+      </div>
+    `;
+  }
+
+  function updateCampaignPreview(){
+    document.getElementById('campaignPreview').innerHTML = buildCampaignHtml();
+  }
+
+  ['campaignHeadline','campaignBody','campaignCtaText','campaignCtaLink'].forEach(id => {
+    document.getElementById(id).addEventListener('input', updateCampaignPreview);
+  });
+
+  document.getElementById('campaignImageFile').addEventListener('change', async () => {
+    const file = document.getElementById('campaignImageFile').files[0];
+    if (!file) return;
+    const preview = document.getElementById('campaignImagePreview');
+    preview.innerHTML = '<span>Subiendo...</span>';
+
+    const cleanName = file.name
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/ñ/gi, 'n')
+      .replace(/[^a-zA-Z0-9.\-_]/g, '-')
+      .replace(/-+/g, '-');
+    const fileName = `campanas/${Date.now()}-${cleanName}`;
+
+    const { error } = await supabaseClient.storage.from('product-images').upload(fileName, file);
+    if (error){
+      preview.innerHTML = '<span>Error al subir</span>';
+      alert('No se pudo subir la imagen: ' + error.message);
+      console.error(error);
+      return;
+    }
+    const { data: publicData } = supabaseClient.storage.from('product-images').getPublicUrl(fileName);
+    campaignImageUrl = publicData.publicUrl;
+    preview.innerHTML = `<img src="${campaignImageUrl}" alt="" style="width:100%; height:100%; object-fit:cover;">`;
+    updateCampaignPreview();
+  });
+
+  updateCampaignPreview();
+
+  // ---------- Suscriptores ----------
+  async function loadSubscribers(){
+    const { data, error } = await supabaseClient.from('subscribers').select('*').order('created_at', { ascending: false });
+    const countLabel = document.getElementById('subscribersCountLabel');
+    if (error){
+      countLabel.textContent = 'Error cargando suscriptores.';
+      console.error(error);
+      return;
+    }
+    currentSubscribers = data || [];
+    if (document.getElementById('selectAllSubscribers').checked){
+      selectedSubscriberIds = new Set(currentSubscribers.map(s => s.id));
+    } else {
+      selectedSubscriberIds = new Set([...selectedSubscriberIds].filter(id => currentSubscribers.some(s => s.id === id)));
+    }
+    renderSubscribersTable();
+  }
+
+  function renderSubscribersTable(){
+    const tbody = document.getElementById('subscribersTableBody');
+    const emptyState = document.getElementById('subscribersEmptyState');
+    const countLabel = document.getElementById('subscribersCountLabel');
+
+    countLabel.textContent = `${currentSubscribers.length} suscriptor${currentSubscribers.length === 1 ? '' : 'es'}`;
+    updateRecipientsCount();
+
+    if (currentSubscribers.length === 0){
+      tbody.innerHTML = '';
+      emptyState.style.display = 'block';
+      return;
+    }
+    emptyState.style.display = 'none';
+
+    tbody.innerHTML = currentSubscribers.map(s => `
+      <tr>
+        <td><input type="checkbox" ${selectedSubscriberIds.has(s.id) ? 'checked' : ''} onchange="toggleSubscriberSelected('${s.id}', this.checked)"></td>
+        <td class="cell-name">${s.email}</td>
+        <td>${s.rut || '—'}</td>
+        <td>${s.source || '—'}</td>
+        <td>${s.created_at ? new Date(s.created_at).toLocaleDateString('es-CL', { day:'numeric', month:'short', year:'numeric' }) : '—'}</td>
+        <td>
+          <button class="icon-btn" title="Borrar" onclick="deleteSubscriber('${s.id}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" stroke="#a3392f" stroke-width="1.6"/></svg>
+          </button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function updateRecipientsCount(){
+    document.getElementById('recipientsCountLabel').textContent = `${selectedSubscriberIds.size} destinatario${selectedSubscriberIds.size === 1 ? '' : 's'} seleccionado${selectedSubscriberIds.size === 1 ? '' : 's'}`;
+  }
+
+  window.toggleSubscriberSelected = function(id, checked){
+    if (checked) selectedSubscriberIds.add(id); else selectedSubscriberIds.delete(id);
+    updateRecipientsCount();
+  };
+
+  document.getElementById('selectAllSubscribers').addEventListener('change', (e) => {
+    selectedSubscriberIds = e.target.checked ? new Set(currentSubscribers.map(s => s.id)) : new Set();
+    renderSubscribersTable();
+  });
+
+  window.deleteSubscriber = async function(id){
+    if (!confirm('¿Borrar este suscriptor?')) return;
+    const { error } = await supabaseClient.from('subscribers').delete().eq('id', id);
+    if (error){
+      alert('No se pudo borrar.');
+      console.error(error);
+      return;
+    }
+    loadSubscribers();
+  };
+
+  // ---------- Enviar campaña ----------
+  document.getElementById('sendCampaignBtn').addEventListener('click', async () => {
+    const errorEl = document.getElementById('campaignError');
+    errorEl.style.display = 'none';
+
+    const subject = document.getElementById('campaignSubject').value.trim();
+    const recipients = currentSubscribers.filter(s => selectedSubscriberIds.has(s.id)).map(s => s.email);
+
+    if (!subject){
+      errorEl.textContent = 'Escribe un asunto para el correo.';
+      errorEl.style.display = 'block';
+      return;
+    }
+    if (recipients.length === 0){
+      errorEl.textContent = 'Selecciona al menos un destinatario.';
+      errorEl.style.display = 'block';
+      return;
+    }
+    if (!confirm(`¿Enviar esta campaña a ${recipients.length} suscriptor${recipients.length === 1 ? '' : 'es'}?`)) return;
+
+    const btn = document.getElementById('sendCampaignBtn');
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+
+    try {
+      const data = await callEdgeFunction(SEND_CAMPAIGN_FN, {
+        subject,
+        html: buildCampaignHtml(),
+        recipients
+      });
+      alert(`Campaña enviada: ${data.sent || recipients.length} correos.` + (data.failed ? ` ${data.failed} fallaron, revisa la consola.` : ''));
+      console.log('Resultado del envío:', data);
+    } catch (err){
+      errorEl.textContent = 'No se pudo enviar la campaña: ' + err.message + ' — revisa que la función "' + SEND_CAMPAIGN_FN + '" esté desplegada en Supabase.';
+      errorEl.style.display = 'block';
+      console.error(err);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Enviar campaña';
     }
   });
 

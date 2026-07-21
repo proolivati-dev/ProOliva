@@ -183,6 +183,22 @@
   .foot-grid a, .foot-grid .row{ display:flex; align-items:center; gap:8px; font-size:14px; opacity:0.75; margin-bottom:10px;}
   .foot-bottom{ display:flex; justify-content:space-between; padding-top:20px; border-top:1px solid var(--line); font-size:12px; opacity:0.55;}
 
+  /* ---------- barra de suscripción ---------- */
+  .subscribe-bar{ background:var(--olive-deep); padding:32px 0;}
+  .subscribe-bar-inner{ display:flex; flex-wrap:wrap; align-items:center; gap:16px 24px;}
+  .subscribe-bar h3{ font-size:16px; color:var(--paper); flex:1 1 240px; min-width:200px;}
+  .subscribe-form{ display:flex; gap:10px; flex:2 1 420px; flex-wrap:wrap;}
+  .subscribe-form input{ flex:1; min-width:140px; border:1.5px solid transparent; border-radius:6px; padding:12px 14px; font-size:13.5px; background:var(--paper); color:var(--ink); outline:none;}
+  .subscribe-form input:focus{ border-color:var(--gold);}
+  .subscribe-form button{ flex-shrink:0;}
+  .subscribe-terms{ flex-basis:100%; display:flex; align-items:flex-start; gap:8px; font-size:12.5px; color:var(--paper); opacity:0.85; margin-top:2px;}
+  .subscribe-terms input{ margin-top:2px; width:auto; accent-color:var(--gold);}
+  .subscribe-terms a{ text-decoration:underline; color:var(--gold);}
+  .subscribe-msg{ flex-basis:100%; font-size:12.5px; font-weight:600; margin-top:2px; display:none;}
+  .subscribe-msg.ok{ color:var(--gold); display:block;}
+  .subscribe-msg.error{ color:#f2a99e; display:block;}
+  @media (max-width:640px){ .subscribe-form{ flex-direction:column; align-items:stretch;} }
+
   .wsp-float{
     position:fixed; bottom:26px; right:26px; z-index:80;
     width:58px; height:58px; border-radius:50%;
@@ -198,6 +214,7 @@
     .prod-grid, .featured, .foot-grid, .confidence-grid{ grid-template-columns:1fr;}
     .nav{ grid-template-columns:auto 1fr auto;}
     .nav-links{ display:none;}
+    .subscribe-bar-inner{ flex-direction:column; align-items:stretch;}
   }
 </style>
 </head>
@@ -314,6 +331,22 @@
   </div>
 </section>
 
+<div class="subscribe-bar">
+  <div class="wrap subscribe-bar-inner">
+    <h3>Suscríbete a nuestras ofertas y novedades</h3>
+    <form id="subscribeForm" class="subscribe-form">
+      <input type="email" id="subEmail" placeholder="Correo" required>
+      <input type="text" id="subRut" placeholder="RUT (opcional)">
+      <button type="submit" class="btn btn-gold" id="subSubmitBtn">Enviar</button>
+    </form>
+    <label class="subscribe-terms">
+      <input type="checkbox" required>
+      Acepto los <a href="politicas.html">Términos y condiciones</a> y la Política de privacidad y de tratamiento de datos personales
+    </label>
+    <div class="subscribe-msg" id="subscribeMsg"></div>
+  </div>
+</div>
+
 <footer id="contacto">
   <div class="wrap">
     <div class="foot-grid">
@@ -364,6 +397,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
 <script src="cart.js"></script>
+<script src="subscribe.js"></script>
 <script>
   const CATEGORY_LABELS = {
     'aceites': 'Aceites de oliva',
