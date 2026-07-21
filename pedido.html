@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Pedido — ProOliva Admin</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,13 +14,14 @@
     --gold:#c89b3c; --gold-deep:#9c7326; --linen:#f3eee0; --paper:#fbf9f2; --line:rgba(32,40,26,0.14);
     --danger:#a3392f;
   }
-  *{box-sizing:border-box; margin:0; padding:0;}
-  body{ font-family:'Public Sans', sans-serif; background:var(--linen); color:var(--ink); line-height:1.5;}
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html{ background:var(--linen); -webkit-text-size-adjust:100%; text-size-adjust:100%;}
+  body{ font-family:'Public Sans', sans-serif; background:var(--linen); color:var(--ink); line-height:1.5; -webkit-font-smoothing:antialiased;}
   h1,h2,h3{ font-family:'Archivo', sans-serif; font-weight:700; color:var(--ink);}
   a{ color:inherit; }
   button, input, select, textarea{ font-family:'Public Sans', sans-serif; }
 
-  .admin-header{ background:var(--ink); color:var(--paper); padding:16px 0;}
+  .admin-header{ background:var(--ink); color:var(--paper); padding:16px 0; padding-top:calc(16px + env(safe-area-inset-top));}
   .admin-header .wrap{ max-width:1000px; margin:0 auto; padding:0 28px; display:flex; align-items:center; justify-content:space-between;}
   .admin-header .brand{ display:flex; align-items:center; gap:10px; font-family:'Archivo',sans-serif; font-weight:700; font-size:16px;}
   .admin-header .brand img{ height:30px;}
@@ -55,7 +56,7 @@
   .field{ margin-bottom:16px;}
   .field:last-child{ margin-bottom:0;}
   .field label{ display:block; font-size:12.5px; font-weight:600; margin-bottom:6px; color:var(--olive-deep);}
-  .field input, .field select{ width:100%; border:1.5px solid var(--line); border-radius:6px; padding:10px 12px; font-size:14px; background:#fff; color:var(--ink); outline:none;}
+  .field input, .field select{ width:100%; border:1.5px solid var(--line); border-radius:6px; padding:10px 12px; font-size:16px; background:#fff; color:var(--ink); outline:none;}
   .field input:focus, .field select:focus{ border-color:var(--olive-deep);}
   .field-check{ display:flex; align-items:center; gap:10px; font-size:14px; font-weight:600; padding:11px 0;}
   .field-check input{ width:18px; height:18px;}
@@ -76,7 +77,11 @@
 
   .loading-state, .error-state{ text-align:center; padding:80px 20px; opacity:0.65;}
 
-  @media (max-width:800px){ .grid{ grid-template-columns:1fr;} }
+  @media (max-width:800px){
+    .grid{ grid-template-columns:1fr;}
+    .admin-header .wrap, .admin-body{ padding-left:16px; padding-right:16px;}
+    .order-hero{ flex-direction:column; align-items:flex-start;}
+  }
 </style>
 </head>
 <body>

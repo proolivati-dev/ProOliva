@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Panel de administración — ProOliva</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,8 +14,9 @@
     --gold:#c89b3c; --gold-deep:#9c7326; --linen:#f3eee0; --paper:#fbf9f2; --line:rgba(32,40,26,0.14);
     --danger:#a3392f;
   }
-  *{box-sizing:border-box; margin:0; padding:0;}
-  body{ font-family:'Public Sans', sans-serif; background:var(--linen); color:var(--ink); line-height:1.5;}
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html{ background:var(--linen); -webkit-text-size-adjust:100%; text-size-adjust:100%;}
+  body{ font-family:'Public Sans', sans-serif; background:var(--linen); color:var(--ink); line-height:1.5; -webkit-font-smoothing:antialiased;}
   h1,h2,h3{ font-family:'Archivo', sans-serif; font-weight:700; color:var(--ink);}
   a{ color:inherit; }
   button, input, select, textarea{ font-family:'Public Sans', sans-serif; }
@@ -29,7 +30,7 @@
   .field{ margin-bottom:16px;}
   .field label{ display:block; font-size:12.5px; font-weight:600; margin-bottom:6px; color:var(--olive-deep);}
   .field input, .field select, .field textarea{
-    width:100%; border:1.5px solid var(--line); border-radius:6px; padding:11px 14px; font-size:14px; background:#fff; color:var(--ink); outline:none; transition:border-color .15s;
+    width:100%; border:1.5px solid var(--line); border-radius:6px; padding:11px 14px; font-size:16px; background:#fff; color:var(--ink); outline:none; transition:border-color .15s;
   }
   .field input:focus, .field select:focus, .field textarea:focus{ border-color:var(--olive-deep);}
   .btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:12px 22px; border-radius:6px; font-size:14px; font-weight:600; cursor:pointer; border:1px solid transparent; transition:transform .15s, background .15s; width:100%;}
@@ -44,17 +45,18 @@
 
   /* ---------- dashboard shell ---------- */
   #dashboardView{ display:none;}
-  .admin-header{ background:var(--ink); color:var(--paper); padding:16px 0;}
-  .admin-header .wrap{ max-width:1200px; margin:0 auto; padding:0 28px; display:flex; align-items:center; justify-content:space-between;}
-  .admin-header .brand{ display:flex; align-items:center; gap:10px; font-family:'Archivo',sans-serif; font-weight:700; font-size:16px;}
-  .admin-header .brand img{ height:30px;}
-  .admin-header .who{ font-size:12.5px; opacity:0.65; margin-right:14px;}
+  .admin-header{ background:var(--ink); color:var(--paper); padding:16px 0; padding-top:calc(16px + env(safe-area-inset-top));}
+  .admin-header .wrap{ max-width:1200px; margin:0 auto; padding:0 28px; display:flex; align-items:center; justify-content:space-between; gap:10px;}
+  .admin-header .brand{ display:flex; align-items:center; gap:10px; font-family:'Archivo',sans-serif; font-weight:700; font-size:16px; min-width:0;}
+  .admin-header .brand img{ height:30px; flex-shrink:0;}
+  .admin-header .who{ font-size:12.5px; opacity:0.65; margin-right:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:160px;}
 
   .admin-body{ max-width:1200px; margin:0 auto; padding:0 28px 80px;}
 
   /* ---------- tabs ---------- */
-  .admin-tabs{ display:flex; gap:6px; padding:22px 0; border-bottom:1px solid var(--line); margin-bottom:28px; position:sticky; top:0; background:var(--linen); z-index:20;}
-  .tab-btn{ position:relative; background:transparent; border:none; padding:10px 18px; border-radius:8px; font-size:14px; font-weight:600; color:var(--ink); opacity:0.6; cursor:pointer; transition:all .15s; display:flex; align-items:center; gap:8px;}
+  .admin-tabs{ display:flex; gap:6px; padding:22px 0; border-bottom:1px solid var(--line); margin-bottom:28px; position:sticky; top:0; background:var(--linen); z-index:20; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none;}
+  .admin-tabs::-webkit-scrollbar{ display:none;}
+  .tab-btn{ position:relative; background:transparent; border:none; padding:10px 18px; border-radius:8px; font-size:14px; font-weight:600; color:var(--ink); opacity:0.6; cursor:pointer; transition:all .15s; display:flex; align-items:center; gap:8px; flex-shrink:0; white-space:nowrap;}
   .tab-btn:hover{ opacity:0.9; background:rgba(32,40,26,0.05);}
   .tab-btn.active{ opacity:1; background:var(--olive-deep); color:var(--paper);}
   .tab-badge{ background:var(--gold); color:var(--ink); font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:700; padding:2px 7px; border-radius:20px;}
@@ -118,6 +120,39 @@
   /* ---------- Difusión / campañas ---------- */
   .campaign-grid{ display:grid; grid-template-columns:1.2fr 1fr; gap:24px; align-items:start; margin-bottom:32px;}
   @media (max-width:900px){ .campaign-grid{ grid-template-columns:1fr;} }
+
+  /* ---------- Mobile ---------- */
+  @media (max-width:760px){
+    .admin-header .wrap, .admin-body{ padding-left:16px; padding-right:16px;}
+    .admin-header .who{ display:none;}
+    .admin-tabs{ margin-left:-16px; margin-right:-16px; padding-left:16px; padding-right:16px;}
+    .admin-toolbar{ align-items:stretch;}
+    .admin-toolbar > button, .admin-toolbar .btn{ width:100%;}
+
+    .modal-backdrop{ padding:0; align-items:stretch;}
+    .modal{ max-width:none; width:100%; min-height:100%; border-radius:0; padding:24px 18px calc(24px + env(safe-area-inset-bottom));}
+    .field-row{ grid-template-columns:1fr;}
+    .modal-actions{ flex-direction:column;}
+    .modal-actions .btn{ width:100%;}
+
+    /* Tablas → tarjetas apiladas */
+    .table-wrap table, .table-wrap thead, .table-wrap tbody, .table-wrap th{ display:block;}
+    .table-wrap thead{ position:absolute; left:-9999px;}
+    .table-wrap tr{ display:block; padding:14px 16px; border-bottom:1px solid var(--line);}
+    .table-wrap tr:last-child{ border-bottom:none;}
+    .table-wrap td{ display:flex; align-items:center; justify-content:space-between; gap:14px; padding:6px 0; border:none; text-align:right; font-size:13.5px;}
+    .table-wrap td::before{ content:attr(data-label); font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; opacity:0.5; text-align:left; flex-shrink:0;}
+    .table-wrap td.td-plain{ justify-content:flex-end;}
+    .table-wrap td.td-plain::before{ content:none;}
+    .table-wrap td.td-stack{ flex-direction:column; align-items:flex-start; text-align:left; gap:3px;}
+    .table-wrap td.td-media{ display:block; text-align:left; margin-bottom:2px;}
+    .table-wrap td.td-media::before{ content:none;}
+    .table-wrap td.td-media .cell-img{ width:52px; height:52px;}
+    .table-wrap td .cell-clamp{ max-width:none; text-align:right; -webkit-line-clamp:2;}
+    .table-wrap .row-actions{ justify-content:flex-end;}
+    #tab-pedidos .table-wrap tr.order-row{ background:var(--paper); border-radius:10px; margin:10px; padding:16px; border:1px solid var(--line); box-shadow:0 2px 8px rgba(32,40,26,0.06);}
+    #tab-pedidos .table-wrap tr.order-row:active{ background:var(--linen);}
+  }
 </style>
 </head>
 <body>
@@ -718,13 +753,13 @@
 
     tbody.innerHTML = currentProducts.map(p => `
       <tr>
-        <td>${p.image_url ? `<img class="cell-img" src="${p.image_url}" alt="">` : `<div class="cell-img"></div>`}</td>
-        <td class="cell-name">${p.name}${p.sku ? `<div style="font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:400; opacity:0.5; margin-top:2px;">${p.sku}</div>` : ''}</td>
-        <td>${CATEGORY_LABELS[p.category] || p.category}</td>
-        <td>${new Intl.NumberFormat('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits:0 }).format(p.price || 0)}</td>
-        <td>${p.featured ? '<span class="badge badge-on">Sí</span>' : '<span class="badge badge-off">No</span>'}</td>
-        <td>${p.active ? '<span class="badge badge-on">Visible</span>' : '<span class="badge badge-off">Oculto</span>'}</td>
-        <td>
+        <td class="td-media">${p.image_url ? `<img class="cell-img" src="${p.image_url}" alt="">` : `<div class="cell-img"></div>`}</td>
+        <td class="cell-name" data-label="Nombre">${p.name}${p.sku ? `<div style="font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:400; opacity:0.5; margin-top:2px;">${p.sku}</div>` : ''}</td>
+        <td data-label="Categoría">${CATEGORY_LABELS[p.category] || p.category}</td>
+        <td data-label="Precio">${new Intl.NumberFormat('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits:0 }).format(p.price || 0)}</td>
+        <td data-label="Destacado">${p.featured ? '<span class="badge badge-on">Sí</span>' : '<span class="badge badge-off">No</span>'}</td>
+        <td data-label="Estado">${p.active ? '<span class="badge badge-on">Visible</span>' : '<span class="badge badge-off">Oculto</span>'}</td>
+        <td class="td-plain">
           <div class="row-actions">
             <button class="icon-btn" title="Editar" onclick="openEditModal('${p.id}')">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 20h4L18.5 9.5a2 2 0 0 0 0-2.8l-1.7-1.7a2 2 0 0 0-2.8 0L4 15v5Z" stroke="#20281a" stroke-width="1.6"/></svg>
@@ -1033,14 +1068,14 @@
       const itemsText = formatOrderItems(o);
       return `
       <tr class="order-row" onclick="if(event.target.closest('.icon-btn')) return; location.href='pedido.html?id=${o.id}'" style="cursor:pointer;">
-        <td>${o.created_at ? new Date(o.created_at).toLocaleDateString('es-CL', { day:'numeric', month:'short' }) : '—'}</td>
-        <td class="cell-name">${o.customer_name || '—'}<div style="font-weight:400; opacity:0.6; font-size:12px;">${o.customer_email || ''}${o.customer_phone ? ' · ' + o.customer_phone : ''}</div></td>
-        <td>${[o.shipping_address, o.shipping_comuna, o.shipping_region].filter(Boolean).join(', ') || '—'}</td>
-        <td><div class="cell-clamp" title="${escapeAttr(itemsText)}">${itemsText}</div></td>
-        <td>${new Intl.NumberFormat('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits:0 }).format(o.total || 0)}</td>
-        <td>${o.paid ? '<span class="badge badge-on">Pagado</span>' : '<span class="badge badge-off">Pendiente</span>'}</td>
-        <td>${estadoBadge(o)}</td>
-        <td>
+        <td data-label="Fecha">${o.created_at ? new Date(o.created_at).toLocaleDateString('es-CL', { day:'numeric', month:'short' }) : '—'}</td>
+        <td class="cell-name td-stack" data-label="Cliente">${o.customer_name || '—'}<div style="font-weight:400; opacity:0.6; font-size:12px;">${o.customer_email || ''}${o.customer_phone ? ' · ' + o.customer_phone : ''}</div></td>
+        <td class="td-stack" data-label="Destino">${[o.shipping_address, o.shipping_comuna, o.shipping_region].filter(Boolean).join(', ') || '—'}</td>
+        <td class="td-stack" data-label="Pedido"><div class="cell-clamp" title="${escapeAttr(itemsText)}">${itemsText}</div></td>
+        <td data-label="Total">${new Intl.NumberFormat('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits:0 }).format(o.total || 0)}</td>
+        <td data-label="Pago">${o.paid ? '<span class="badge badge-on">Pagado</span>' : '<span class="badge badge-off">Pendiente</span>'}</td>
+        <td data-label="Estado">${estadoBadge(o)}</td>
+        <td class="td-plain">
           <div class="row-actions">
             <button class="icon-btn" title="Ver pedido" onclick="location.href='pedido.html?id=${o.id}'">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z" stroke="#20281a" stroke-width="1.6"/><circle cx="12" cy="12" r="3" stroke="#20281a" stroke-width="1.6"/></svg>
@@ -1206,18 +1241,18 @@
 
     tbody.innerHTML = filtered.map(w => `
       <tr>
-        <td>${new Date(w.created_at).toLocaleDateString('es-CL', { day:'numeric', month:'short' })}</td>
-        <td class="cell-name">${w.contact_name}</td>
-        <td>${w.company_name || '—'}</td>
-        <td>${w.email}<br><span style="opacity:0.6;">${w.phone}</span></td>
-        <td>${[w.comuna, w.region].filter(Boolean).join(', ') || '—'}</td>
-        <td><div class="cell-clamp" title="${escapeAttr(w.message)}">${w.message || '—'}</div></td>
-        <td>
+        <td data-label="Fecha">${new Date(w.created_at).toLocaleDateString('es-CL', { day:'numeric', month:'short' })}</td>
+        <td class="cell-name" data-label="Contacto">${w.contact_name}</td>
+        <td data-label="Empresa">${w.company_name || '—'}</td>
+        <td class="td-stack" data-label="Datos">${w.email}<br><span style="opacity:0.6;">${w.phone}</span></td>
+        <td data-label="Ubicación">${[w.comuna, w.region].filter(Boolean).join(', ') || '—'}</td>
+        <td class="td-stack" data-label="Mensaje"><div class="cell-clamp" title="${escapeAttr(w.message)}">${w.message || '—'}</div></td>
+        <td data-label="Contactado">
           <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
             <input type="checkbox" ${w.contacted ? 'checked' : ''} onchange="toggleContacted('${w.id}', this.checked)">
           </label>
         </td>
-        <td>
+        <td class="td-plain">
           <div class="row-actions">
             <button class="icon-btn" title="Agregar como cliente" onclick="convertToCustomer('${w.id}')">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke="#20281a" stroke-width="1.6"/><circle cx="9" cy="7" r="4" stroke="#20281a" stroke-width="1.6"/><path d="M19 8v6M22 11h-6" stroke="#20281a" stroke-width="1.6" stroke-linecap="round"/></svg>
@@ -1298,12 +1333,12 @@
 
     tbody.innerHTML = filtered.map(c => `
       <tr>
-        <td class="cell-name">${c.name}</td>
-        <td>${c.company_name || '—'}</td>
-        <td>${c.email || '—'}<br><span style="opacity:0.6;">${c.phone || ''}</span></td>
-        <td>${[c.comuna, c.region].filter(Boolean).join(', ') || '—'}</td>
-        <td>${c.notes ? `<div class="cell-clamp" title="${escapeAttr(c.notes)}">${c.notes}</div>` : '—'}</td>
-        <td>
+        <td class="cell-name" data-label="Nombre">${c.name}</td>
+        <td data-label="Empresa">${c.company_name || '—'}</td>
+        <td class="td-stack" data-label="Contacto">${c.email || '—'}<br><span style="opacity:0.6;">${c.phone || ''}</span></td>
+        <td data-label="Ubicación">${[c.comuna, c.region].filter(Boolean).join(', ') || '—'}</td>
+        <td class="td-stack" data-label="Notas">${c.notes ? `<div class="cell-clamp" title="${escapeAttr(c.notes)}">${c.notes}</div>` : '—'}</td>
+        <td class="td-plain">
           <div class="row-actions">
             <button class="icon-btn" title="Editar" onclick="openEditCustomerModal('${c.id}')">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 20h4L18.5 9.5a2 2 0 0 0 0-2.8l-1.7-1.7a2 2 0 0 0-2.8 0L4 15v5Z" stroke="#20281a" stroke-width="1.6"/></svg>
@@ -1575,12 +1610,12 @@
 
     tbody.innerHTML = filtered.map(a => `
       <tr>
-        <td><input type="checkbox" ${selectedAudienceEmails.has(a.email) ? 'checked' : ''} onchange="toggleAudienceSelected('${escapeAttr(a.email)}', this.checked)"></td>
-        <td class="cell-name">${a.email}</td>
-        <td>${a.name || '—'}</td>
-        <td>${a.rut || '—'}</td>
-        <td>${[...a.sources].map(s => `<span class="badge ${s === 'Suscriptor' ? 'badge-on' : 'badge-off'}" style="margin-right:4px;">${s}</span>`).join('')}</td>
-        <td>
+        <td data-label="Seleccionar"><input type="checkbox" ${selectedAudienceEmails.has(a.email) ? 'checked' : ''} onchange="toggleAudienceSelected('${escapeAttr(a.email)}', this.checked)"></td>
+        <td class="cell-name" data-label="Correo">${a.email}</td>
+        <td data-label="Nombre">${a.name || '—'}</td>
+        <td data-label="RUT">${a.rut || '—'}</td>
+        <td data-label="Origen">${[...a.sources].map(s => `<span class="badge ${s === 'Suscriptor' ? 'badge-on' : 'badge-off'}" style="margin-right:4px;">${s}</span>`).join('')}</td>
+        <td class="td-plain">
           ${a.subscriberId
             ? `<button class="icon-btn" title="Quitar de suscriptores" onclick="deleteSubscriber('${a.subscriberId}')">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" stroke="#a3392f" stroke-width="1.6"/></svg>
