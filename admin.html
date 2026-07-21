@@ -356,7 +356,7 @@
 
       <div class="admin-toolbar" style="margin-top:8px;">
         <div>
-          <h2>Suscriptores</h2>
+          <h2>Destinatarios</h2>
           <p id="subscribersCountLabel">Cargando...</p>
         </div>
         <label class="field-check" style="width:auto;">
@@ -364,21 +364,23 @@
         </label>
       </div>
 
+      <div class="region-filter" id="audienceSourceFilter"></div>
+
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
               <th></th>
               <th>Correo</th>
+              <th>Nombre</th>
               <th>RUT</th>
               <th>Origen</th>
-              <th>Fecha</th>
               <th></th>
             </tr>
           </thead>
           <tbody id="subscribersTableBody"></tbody>
         </table>
-        <div class="empty-state" id="subscribersEmptyState" style="display:none;">Todavía no hay suscriptores. Van a ir apareciendo cuando alguien se suscriba desde index.html o productos.html.</div>
+        <div class="empty-state" id="subscribersEmptyState" style="display:none;">Todavía no hay destinatarios. Van a ir apareciendo cuando alguien se suscriba desde el sitio, o cuando agregues clientes con correo en "Mis Clientes".</div>
       </div>
     </div>
   </div>
@@ -1273,6 +1275,7 @@
       renderCustomersTable();
     });
     renderCustomersTable();
+    buildAudience();
   }
 
   function renderCustomersTable(){
@@ -1416,7 +1419,7 @@
   const SEND_CAMPAIGN_FN = 'send-campaign';
 
   let currentSubscribers = [];
-  let selectedSubscriberIds = new Set();
+  let selectedAudienceEmails = new Set();
   let campaignImageUrl = null;
 
   function escapeHtmlText(str){
@@ -1485,22 +1488,71 @@
 
   updateCampaignPreview();
 
-  // ---------- Suscriptores ----------
+  // ---------- Destinatarios (suscriptores + clientes con correo, fusionados) ----------
+  let audienceList = []; // [{ email, name, rut, sources:Set, subscriberId }]
+  let audienceFilterActive = 'all'; // all | suscriptores | clientes
+
   async function loadSubscribers(){
     const { data, error } = await supabaseClient.from('subscribers').select('*').order('created_at', { ascending: false });
-    const countLabel = document.getElementById('subscribersCountLabel');
     if (error){
-      countLabel.textContent = 'Error cargando suscriptores.';
+      document.getElementById('subscribersCountLabel').textContent = 'Error cargando suscriptores.';
       console.error(error);
       return;
     }
     currentSubscribers = data || [];
+    buildAudience();
+  }
+
+  function buildAudience(){
+    const map = new Map();
+
+    (currentSubscribers || []).forEach(s => {
+      const key = (s.email || '').trim().toLowerCase();
+      if (!key) return;
+      if (!map.has(key)) map.set(key, { email: s.email, name: null, rut: null, sources: new Set(), subscriberId: null });
+      const row = map.get(key);
+      row.sources.add('Suscriptor');
+      row.rut = s.rut || row.rut;
+      row.subscriberId = s.id;
+    });
+
+    (currentCustomers || []).forEach(c => {
+      const key = (c.email || '').trim().toLowerCase();
+      if (!key) return;
+      if (!map.has(key)) map.set(key, { email: c.email, name: null, rut: null, sources: new Set(), subscriberId: null });
+      const row = map.get(key);
+      row.sources.add('Cliente');
+      row.name = c.name || row.name;
+    });
+
+    audienceList = [...map.values()].sort((a, b) => a.email.localeCompare(b.email));
+
     if (document.getElementById('selectAllSubscribers').checked){
-      selectedSubscriberIds = new Set(currentSubscribers.map(s => s.id));
+      selectedAudienceEmails = new Set(audienceList.map(a => a.email));
     } else {
-      selectedSubscriberIds = new Set([...selectedSubscriberIds].filter(id => currentSubscribers.some(s => s.id === id)));
+      selectedAudienceEmails = new Set([...selectedAudienceEmails].filter(e => audienceList.some(a => a.email === e)));
     }
+
+    renderAudienceSourceFilter();
     renderSubscribersTable();
+  }
+
+  function renderAudienceSourceFilter(){
+    const container = document.getElementById('audienceSourceFilter');
+    const options = [
+      { value: 'all', label: 'Todos' },
+      { value: 'suscriptores', label: 'Suscriptores' },
+      { value: 'clientes', label: 'Clientes' }
+    ];
+    container.innerHTML = options.map(o =>
+      `<button class="region-pill ${audienceFilterActive === o.value ? 'active' : ''}" data-source="${o.value}">${o.label}</button>`
+    ).join('');
+    container.querySelectorAll('.region-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        audienceFilterActive = btn.dataset.source;
+        renderSubscribersTable();
+      });
+    });
   }
 
   function renderSubscribersTable(){
@@ -1508,43 +1560,48 @@
     const emptyState = document.getElementById('subscribersEmptyState');
     const countLabel = document.getElementById('subscribersCountLabel');
 
-    countLabel.textContent = `${currentSubscribers.length} suscriptor${currentSubscribers.length === 1 ? '' : 'es'}`;
+    const sourceLabel = { all: null, suscriptores: 'Suscriptor', clientes: 'Cliente' }[audienceFilterActive];
+    const filtered = sourceLabel ? audienceList.filter(a => a.sources.has(sourceLabel)) : audienceList;
+
+    countLabel.textContent = `${filtered.length} de ${audienceList.length} destinatario${audienceList.length === 1 ? '' : 's'}`;
     updateRecipientsCount();
 
-    if (currentSubscribers.length === 0){
+    if (filtered.length === 0){
       tbody.innerHTML = '';
       emptyState.style.display = 'block';
       return;
     }
     emptyState.style.display = 'none';
 
-    tbody.innerHTML = currentSubscribers.map(s => `
+    tbody.innerHTML = filtered.map(a => `
       <tr>
-        <td><input type="checkbox" ${selectedSubscriberIds.has(s.id) ? 'checked' : ''} onchange="toggleSubscriberSelected('${s.id}', this.checked)"></td>
-        <td class="cell-name">${s.email}</td>
-        <td>${s.rut || '—'}</td>
-        <td>${s.source || '—'}</td>
-        <td>${s.created_at ? new Date(s.created_at).toLocaleDateString('es-CL', { day:'numeric', month:'short', year:'numeric' }) : '—'}</td>
+        <td><input type="checkbox" ${selectedAudienceEmails.has(a.email) ? 'checked' : ''} onchange="toggleAudienceSelected('${escapeAttr(a.email)}', this.checked)"></td>
+        <td class="cell-name">${a.email}</td>
+        <td>${a.name || '—'}</td>
+        <td>${a.rut || '—'}</td>
+        <td>${[...a.sources].map(s => `<span class="badge ${s === 'Suscriptor' ? 'badge-on' : 'badge-off'}" style="margin-right:4px;">${s}</span>`).join('')}</td>
         <td>
-          <button class="icon-btn" title="Borrar" onclick="deleteSubscriber('${s.id}')">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" stroke="#a3392f" stroke-width="1.6"/></svg>
-          </button>
+          ${a.subscriberId
+            ? `<button class="icon-btn" title="Quitar de suscriptores" onclick="deleteSubscriber('${a.subscriberId}')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" stroke="#a3392f" stroke-width="1.6"/></svg>
+              </button>`
+            : `<span style="font-size:10.5px; opacity:0.5;">Editar en Mis Clientes</span>`}
         </td>
       </tr>
     `).join('');
   }
 
   function updateRecipientsCount(){
-    document.getElementById('recipientsCountLabel').textContent = `${selectedSubscriberIds.size} destinatario${selectedSubscriberIds.size === 1 ? '' : 's'} seleccionado${selectedSubscriberIds.size === 1 ? '' : 's'}`;
+    document.getElementById('recipientsCountLabel').textContent = `${selectedAudienceEmails.size} destinatario${selectedAudienceEmails.size === 1 ? '' : 's'} seleccionado${selectedAudienceEmails.size === 1 ? '' : 's'}`;
   }
 
-  window.toggleSubscriberSelected = function(id, checked){
-    if (checked) selectedSubscriberIds.add(id); else selectedSubscriberIds.delete(id);
+  window.toggleAudienceSelected = function(email, checked){
+    if (checked) selectedAudienceEmails.add(email); else selectedAudienceEmails.delete(email);
     updateRecipientsCount();
   };
 
   document.getElementById('selectAllSubscribers').addEventListener('change', (e) => {
-    selectedSubscriberIds = e.target.checked ? new Set(currentSubscribers.map(s => s.id)) : new Set();
+    selectedAudienceEmails = e.target.checked ? new Set(audienceList.map(a => a.email)) : new Set();
     renderSubscribersTable();
   });
 
@@ -1565,7 +1622,7 @@
     errorEl.style.display = 'none';
 
     const subject = document.getElementById('campaignSubject').value.trim();
-    const recipients = currentSubscribers.filter(s => selectedSubscriberIds.has(s.id)).map(s => s.email);
+    const recipients = audienceList.filter(a => selectedAudienceEmails.has(a.email)).map(a => a.email);
 
     if (!subject){
       errorEl.textContent = 'Escribe un asunto para el correo.';
