@@ -121,6 +121,25 @@
   .campaign-grid{ display:grid; grid-template-columns:1.2fr 1fr; gap:24px; align-items:start; margin-bottom:32px;}
   @media (max-width:900px){ .campaign-grid{ grid-template-columns:1fr;} }
 
+  /* ---------- Analítica ---------- */
+  .kpi-grid{ display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; margin-bottom:24px;}
+  .kpi-card{ background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:20px 22px; display:flex; flex-direction:column; gap:6px;}
+  .kpi-label{ font-family:'IBM Plex Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:0.05em; opacity:0.55;}
+  .kpi-value{ font-family:'Archivo',sans-serif; font-weight:700; font-size:26px; color:var(--ink);}
+  .kpi-delta{ font-size:12px; font-weight:600;}
+  .kpi-delta.up{ color:var(--olive-deep);}
+  .kpi-delta.down{ color:var(--danger);}
+  .chart-grid{ display:grid; grid-template-columns:1fr 1fr; gap:20px;}
+  .chart-panel{ margin-bottom:0;}
+  .chart-panel.span-2{ grid-column:span 2;}
+  .chart-panel h3{ font-size:14px; margin-bottom:16px;}
+  .chart-box{ position:relative; height:260px;}
+  @media (max-width:900px){
+    .kpi-grid{ grid-template-columns:1fr 1fr;}
+    .chart-grid{ grid-template-columns:1fr;}
+    .chart-panel.span-2{ grid-column:span 1;}
+  }
+
   /* ---------- Mobile ---------- */
   @media (max-width:760px){
     .admin-header .wrap, .admin-body{ padding-left:16px; padding-right:16px;}
@@ -197,6 +216,7 @@
       <button class="tab-btn" data-tab="solicitudes">Solicitudes <span class="tab-badge" id="solicitudesBadge" style="display:none;">0</span></button>
       <button class="tab-btn" data-tab="clientes">Mis Clientes</button>
       <button class="tab-btn" data-tab="difusion">Difusión</button>
+      <button class="tab-btn" data-tab="analitica">Analítica</button>
     </div>
 
     <!-- ---------- TAB: PRODUCTOS ---------- -->
@@ -418,6 +438,73 @@
         <div class="empty-state" id="subscribersEmptyState" style="display:none;">Todavía no hay destinatarios. Van a ir apareciendo cuando alguien se suscriba desde el sitio, o cuando agregues clientes con correo en "Mis Clientes".</div>
       </div>
     </div>
+
+    <!-- ---------- TAB: ANALÍTICA ---------- -->
+    <div class="tab-panel" id="tab-analitica">
+      <div class="admin-toolbar">
+        <div>
+          <h2>Analítica de ventas</h2>
+          <p id="analyticsRangeLabel">Cargando...</p>
+        </div>
+        <select id="analyticsRangeSelect" style="width:auto; border:1.5px solid var(--line); border-radius:6px; padding:10px 14px; font-size:14px; background:#fff; color:var(--ink);">
+          <option value="7">Últimos 7 días</option>
+          <option value="30" selected>Últimos 30 días</option>
+          <option value="90">Últimos 90 días</option>
+          <option value="year">Este año</option>
+          <option value="all">Todo el tiempo</option>
+        </select>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <span class="kpi-label">Ingresos</span>
+          <span class="kpi-value" id="kpiRevenue">—</span>
+          <span class="kpi-delta" id="kpiRevenueDelta"></span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Pedidos entregados</span>
+          <span class="kpi-value" id="kpiOrders">—</span>
+          <span class="kpi-delta" id="kpiOrdersDelta"></span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Ticket promedio</span>
+          <span class="kpi-value" id="kpiAov">—</span>
+          <span class="kpi-delta" id="kpiAovDelta"></span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Por gestionar ahora</span>
+          <span class="kpi-value" id="kpiPending">—</span>
+          <span class="kpi-delta" style="opacity:0.55;">pagados sin entregar · no depende del rango</span>
+        </div>
+      </div>
+
+      <div class="chart-grid">
+        <div class="panel chart-panel span-2">
+          <h3>Ingresos en el tiempo</h3>
+          <div class="chart-box"><canvas id="chartRevenue"></canvas></div>
+        </div>
+        <div class="panel chart-panel span-2">
+          <h3>Productos más vendidos</h3>
+          <div class="chart-box"><canvas id="chartProducts"></canvas></div>
+        </div>
+        <div class="panel chart-panel">
+          <h3>Pedidos por región</h3>
+          <div class="chart-box"><canvas id="chartRegions"></canvas></div>
+        </div>
+        <div class="panel chart-panel">
+          <h3>Estado de cumplimiento</h3>
+          <div class="chart-box"><canvas id="chartFulfillment"></canvas></div>
+        </div>
+        <div class="panel chart-panel">
+          <h3>Canal de venta</h3>
+          <div class="chart-box"><canvas id="chartChannel"></canvas></div>
+        </div>
+        <div class="panel chart-panel">
+          <h3>Método de envío</h3>
+          <div class="chart-box"><canvas id="chartShipping"></canvas></div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -637,6 +724,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="supabase-config.js"></script>
 <script>
   const CATEGORY_LABELS = {
@@ -721,6 +809,7 @@
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
       btn.classList.add('active');
       document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      if (btn.dataset.tab === 'analitica') renderAnalytics();
     });
   });
 
@@ -1009,6 +1098,7 @@
 
     renderOrdersSourceFilter();
     renderOrdersTable();
+    if (document.getElementById('tab-analitica').classList.contains('active')) renderAnalytics();
   }
 
   function renderOrdersSourceFilter(){
@@ -1692,6 +1782,217 @@
       btn.textContent = 'Enviar campaña';
     }
   });
+
+  // ---------- Analítica ----------
+  let analyticsCharts = {};
+  let analyticsRangeActive = '30';
+
+  document.getElementById('analyticsRangeSelect').addEventListener('change', (e) => {
+    analyticsRangeActive = e.target.value;
+    renderAnalytics();
+  });
+
+  function formatCLPShort(value){
+    return new Intl.NumberFormat('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits:0 }).format(value || 0);
+  }
+
+  function getRangeBounds(rangeValue){
+    const now = new Date();
+    let start = null;
+    if (rangeValue === 'all'){
+      start = null;
+    } else if (rangeValue === 'year'){
+      start = new Date(now.getFullYear(), 0, 1);
+    } else {
+      start = new Date(now);
+      start.setDate(start.getDate() - parseInt(rangeValue, 10));
+    }
+    return { start, end: now };
+  }
+
+  function ordersInRange(orders, start, end){
+    if (!start) return orders;
+    return orders.filter(o => o.created_at && new Date(o.created_at) >= start && new Date(o.created_at) <= end);
+  }
+
+  function setDelta(elId, current, previous){
+    const el = document.getElementById(elId);
+    if (previous === 0 && current === 0){ el.textContent = 'sin cambios'; el.className = 'kpi-delta'; return; }
+    if (previous === 0){ el.textContent = 'nuevo este período'; el.className = 'kpi-delta up'; return; }
+    const pct = ((current - previous) / previous) * 100;
+    el.textContent = `${pct >= 0 ? '+' : ''}${pct.toFixed(0)}% vs período anterior`;
+    el.className = 'kpi-delta ' + (pct >= 0 ? 'up' : 'down');
+  }
+
+  function upsertChart(canvasId, config){
+    if (analyticsCharts[canvasId]) analyticsCharts[canvasId].destroy();
+    analyticsCharts[canvasId] = new Chart(document.getElementById(canvasId), config);
+  }
+
+  function renderAnalytics(){
+    if (typeof Chart === 'undefined') return; // Chart.js no cargó (ej. sin internet)
+    const all = currentOrders || [];
+    const { start, end } = getRangeBounds(analyticsRangeActive);
+    const inRange = ordersInRange(all, start, end);
+    const deliveredInRange = inRange.filter(o => o.delivered);
+
+    const revenue = deliveredInRange.reduce((s, o) => s + (o.total || 0), 0);
+    const orderCount = deliveredInRange.length;
+    const aov = orderCount > 0 ? revenue / orderCount : 0;
+    const pendingNow = all.filter(o => o.paid && !o.delivered).length;
+
+    document.getElementById('kpiRevenue').textContent = formatCLPShort(revenue);
+    document.getElementById('kpiOrders').textContent = orderCount;
+    document.getElementById('kpiAov').textContent = formatCLPShort(aov);
+    document.getElementById('kpiPending').textContent = pendingNow;
+
+    if (start){
+      const rangeMs = end - start;
+      const prevDelivered = ordersInRange(all, new Date(start.getTime() - rangeMs), new Date(start.getTime())).filter(o => o.delivered);
+      const prevRevenue = prevDelivered.reduce((s, o) => s + (o.total || 0), 0);
+      const prevAov = prevDelivered.length > 0 ? prevRevenue / prevDelivered.length : 0;
+      setDelta('kpiRevenueDelta', revenue, prevRevenue);
+      setDelta('kpiOrdersDelta', orderCount, prevDelivered.length);
+      setDelta('kpiAovDelta', aov, prevAov);
+      document.getElementById('analyticsRangeLabel').textContent = `${orderCount} pedido${orderCount === 1 ? '' : 's'} entregado${orderCount === 1 ? '' : 's'} en el período, comparado con el período anterior de igual duración`;
+    } else {
+      ['kpiRevenueDelta', 'kpiOrdersDelta', 'kpiAovDelta'].forEach(id => { document.getElementById(id).textContent = ''; });
+      document.getElementById('analyticsRangeLabel').textContent = `${orderCount} pedido${orderCount === 1 ? '' : 's'} entregado${orderCount === 1 ? '' : 's'} en total`;
+    }
+
+    renderRevenueChart(deliveredInRange, start, end);
+    renderProductsChart(deliveredInRange);
+    renderRegionsChart(deliveredInRange);
+    renderFulfillmentChart(inRange);
+    renderChannelChart(deliveredInRange);
+    renderShippingChart(deliveredInRange);
+  }
+
+  function renderRevenueChart(orders, start, end){
+    const groupByWeek = start && (end - start) > 1000 * 60 * 60 * 24 * 70;
+    const buckets = new Map();
+    orders.forEach(o => {
+      const d = new Date(o.created_at);
+      let key;
+      if (groupByWeek){
+        const weekStart = new Date(d);
+        weekStart.setDate(d.getDate() - d.getDay());
+        key = weekStart.toISOString().slice(0, 10);
+      } else {
+        key = d.toISOString().slice(0, 10);
+      }
+      buckets.set(key, (buckets.get(key) || 0) + (o.total || 0));
+    });
+    const labels = [...buckets.keys()].sort();
+
+    upsertChart('chartRevenue', {
+      type: 'line',
+      data: {
+        labels: labels.map(l => new Date(l).toLocaleDateString('es-CL', { day: 'numeric', month: 'short' })),
+        datasets: [{
+          label: 'Ingresos', data: labels.map(l => buckets.get(l)),
+          borderColor: '#3a4527', backgroundColor: 'rgba(58,69,39,0.12)',
+          fill: true, tension: 0.3, pointRadius: 3
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => formatCLPShort(ctx.parsed.y) } } },
+        scales: { y: { ticks: { callback: (v) => formatCLPShort(v) } } }
+      }
+    });
+  }
+
+  function renderProductsChart(orders){
+    const totals = new Map();
+    orders.forEach(o => {
+      if (Array.isArray(o.items)){
+        o.items.forEach(i => totals.set(i.name, (totals.get(i.name) || 0) + (i.qty || 0)));
+      }
+    });
+    const sorted = [...totals.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
+
+    upsertChart('chartProducts', {
+      type: 'bar',
+      data: { labels: sorted.map(s => s[0]), datasets: [{ label: 'Unidades vendidas', data: sorted.map(s => s[1]), backgroundColor: '#c89b3c' }] },
+      options: {
+        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
+      }
+    });
+  }
+
+  function renderRegionsChart(orders){
+    const totals = new Map();
+    orders.forEach(o => {
+      const region = o.shipping_region || 'Sin especificar';
+      totals.set(region, (totals.get(region) || 0) + 1);
+    });
+    const sorted = [...totals.entries()].sort((a, b) => b[1] - a[1]);
+
+    upsertChart('chartRegions', {
+      type: 'bar',
+      data: { labels: sorted.map(s => s[0]), datasets: [{ label: 'Pedidos', data: sorted.map(s => s[1]), backgroundColor: '#55643b' }] },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+      }
+    });
+  }
+
+  function renderFulfillmentChart(orders){
+    const paid = orders.filter(o => o.paid).length;
+    const ready = orders.filter(o => o.paid && o.ready).length;
+    const shipped = orders.filter(o => o.paid && o.shipped_notified_at).length;
+    const delivered = orders.filter(o => o.paid && o.delivered).length;
+
+    upsertChart('chartFulfillment', {
+      type: 'bar',
+      data: {
+        labels: ['Pagados', 'Preparados', 'Despachados', 'Entregados'],
+        datasets: [{ data: [paid, ready, shipped, delivered], backgroundColor: ['#3a4527', '#8a9a66', '#c89b3c', '#9c7326'] }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+      }
+    });
+  }
+
+  function renderChannelChart(orders){
+    const web = orders.filter(o => (o.source || 'web') === 'web').reduce((s, o) => s + (o.total || 0), 0);
+    const manual = orders.filter(o => o.source === 'manual').reduce((s, o) => s + (o.total || 0), 0);
+
+    upsertChart('chartChannel', {
+      type: 'doughnut',
+      data: { labels: ['Web (Webpay)', 'Manual (WhatsApp/llamada)'], datasets: [{ data: [web, manual], backgroundColor: ['#3a4527', '#c89b3c'] }] },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${formatCLPShort(ctx.parsed)}` } } }
+      }
+    });
+  }
+
+  function renderShippingChart(orders){
+    let chilexpress = 0, local = 0, sinDefinir = 0;
+    orders.forEach(o => {
+      if (o.shipping_method === 'chilexpress') chilexpress++;
+      else if (o.shipping_method === 'local') local++;
+      else sinDefinir++;
+    });
+
+    upsertChart('chartShipping', {
+      type: 'doughnut',
+      data: {
+        labels: ['Chilexpress', 'Envío local', 'Sin definir'],
+        datasets: [{ data: [chilexpress, local, sinDefinir], backgroundColor: ['#3a4527', '#8a9a66', '#d8d3c4'] }]
+      },
+      options: { responsive: true, maintainAspectRatio: false }
+    });
+  }
 
   checkSession();
 </script>
