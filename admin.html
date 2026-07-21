@@ -154,6 +154,7 @@
   <div class="admin-body">
     <div class="admin-tabs">
       <button class="tab-btn active" data-tab="productos">Productos</button>
+      <button class="tab-btn" data-tab="pedidos">Pedidos <span class="tab-badge" id="pedidosBadge" style="display:none;">0</span></button>
       <button class="tab-btn" data-tab="solicitudes">Solicitudes <span class="tab-badge" id="solicitudesBadge" style="display:none;">0</span></button>
       <button class="tab-btn" data-tab="clientes">Mis Clientes</button>
     </div>
@@ -199,6 +200,42 @@
           <tbody id="productsTableBody"></tbody>
         </table>
         <div class="empty-state" id="emptyState" style="display:none;">Todavía no hay productos. Crea el primero con "+ Nuevo producto".</div>
+      </div>
+    </div>
+
+    <!-- ---------- TAB: PEDIDOS ---------- -->
+    <div class="tab-panel" id="tab-pedidos">
+      <div class="admin-toolbar">
+        <div>
+          <h2>Pedidos</h2>
+          <p id="ordersCountLabel">Cargando...</p>
+        </div>
+        <button class="btn btn-primary" style="width:auto;" id="newOrderBtn">+ Agregar pedido manual</button>
+      </div>
+
+      <div class="region-filter" id="ordersSourceFilter"></div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Cliente</th>
+              <th>Destino</th>
+              <th>Pedido</th>
+              <th>Total</th>
+              <th>Pagado</th>
+              <th>Preparado</th>
+              <th>Envío</th>
+              <th>N° seguimiento</th>
+              <th>Notificar</th>
+              <th>Entregado</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="ordersTableBody"></tbody>
+        </table>
+        <div class="empty-state" id="ordersEmptyState" style="display:none;">Todavía no hay pedidos.</div>
       </div>
     </div>
 
@@ -413,6 +450,73 @@
   </div>
 </div>
 
+<!-- ===================== MODAL: pedido manual (WhatsApp/llamada) ===================== -->
+<div class="modal-backdrop" id="orderModalBackdrop">
+  <div class="modal">
+    <h3>Nuevo pedido manual</h3>
+    <p style="font-size:12.5px; opacity:0.6; margin-top:-12px; margin-bottom:18px;">Para ventas cerradas por WhatsApp o llamada. Se guarda igual que un pedido de la web.</p>
+    <div class="error-msg" id="orderFormError"></div>
+    <form id="orderForm">
+      <div class="field">
+        <label>Nombre del cliente *</label>
+        <input type="text" id="orderCustName" required placeholder="Ej: Rodrigo Muñoz">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Correo <span style="opacity:0.5; font-weight:400;">(para enviarle la confirmación)</span></label>
+          <input type="email" id="orderCustEmail" placeholder="correo@cliente.cl">
+        </div>
+        <div class="field">
+          <label>Teléfono</label>
+          <input type="tel" id="orderCustPhone" placeholder="+56 9 ...">
+        </div>
+      </div>
+      <div class="field">
+        <label>Dirección de despacho</label>
+        <input type="text" id="orderCustAddress" placeholder="Calle, número, depto/casa">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Región</label>
+          <select id="orderCustRegion">
+            <option value="">Selecciona...</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Comuna</label>
+          <input type="text" id="orderCustComuna" placeholder="Ej: Viña del Mar">
+        </div>
+      </div>
+      <div class="field">
+        <label>Detalle del pedido *</label>
+        <textarea id="orderDetail" rows="3" required placeholder="Ej: 2x Aceite de oliva 1L, 1x Pack aceitunas premium"></textarea>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Total (CLP) *</label>
+          <input type="number" id="orderTotal" required min="0" step="1" placeholder="Ej: 24990">
+        </div>
+        <div class="field">
+          <label>Método de envío</label>
+          <select id="orderShippingMethod">
+            <option value="">Sin definir todavía</option>
+            <option value="chilexpress">Chilexpress</option>
+            <option value="local">Envío local</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row">
+        <label class="field-check"><input type="checkbox" id="orderPaid"> Ya está pagado</label>
+        <label class="field-check"><input type="checkbox" id="orderSendEmail" checked> Enviarle correo de confirmación al cliente</label>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" id="cancelOrderModalBtn">Cancelar</button>
+        <button type="submit" class="btn btn-primary" id="saveOrderBtn">Guardar pedido</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
 <script>
@@ -453,6 +557,7 @@
     whoLabel.textContent = session.user.email;
     loadProducts();
     checkCatalog();
+    loadOrders();
     loadWholesaleInquiries();
     loadCustomers();
   }
@@ -718,6 +823,291 @@
       return;
     }
     checkCatalog();
+  });
+
+  // ---------- Pedidos ----------
+  // Reemplaza por la URL real de tu función una vez desplegada si el nombre difiere.
+  const SEND_CONFIRMATION_FN = 'send-order-confirmation';
+  const NOTIFY_SHIPMENT_FN = 'notify-shipment';
+
+  let currentOrders = [];
+  let ordersSourceActive = 'all';
+  const orderModalBackdrop = document.getElementById('orderModalBackdrop');
+  const orderForm = document.getElementById('orderForm');
+  const orderFormError = document.getElementById('orderFormError');
+
+  // Llena el select de región del modal de pedido manual con la misma lista que usa el resto del admin
+  (function fillOrderRegionSelect(){
+    const sel = document.getElementById('orderCustRegion');
+    REGIONS.forEach(r => {
+      const opt = document.createElement('option');
+      opt.value = r; opt.textContent = r;
+      sel.appendChild(opt);
+    });
+  })();
+
+  async function callEdgeFunction(name, body){
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/${name}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'apikey': SUPABASE_ANON_KEY
+      },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.error){
+      throw new Error(data.error || `No se pudo llamar a ${name}.`);
+    }
+    return data;
+  }
+
+  async function loadOrders(){
+    const { data, error } = await supabaseClient.from('orders').select('*').order('created_at', { ascending: false });
+    const countLabel = document.getElementById('ordersCountLabel');
+    const badge = document.getElementById('pedidosBadge');
+
+    if (error){
+      countLabel.textContent = 'Error cargando pedidos.';
+      console.error(error);
+      return;
+    }
+
+    currentOrders = data || [];
+    const pending = currentOrders.filter(o => !o.delivered).length;
+    if (pending > 0){
+      badge.textContent = pending;
+      badge.style.display = 'inline-block';
+    } else {
+      badge.style.display = 'none';
+    }
+
+    renderOrdersSourceFilter();
+    renderOrdersTable();
+  }
+
+  function renderOrdersSourceFilter(){
+    const container = document.getElementById('ordersSourceFilter');
+    const options = [
+      { value: 'all', label: 'Todos' },
+      { value: 'web', label: 'Pagados en la web' },
+      { value: 'manual', label: 'Manuales (WhatsApp/llamada)' }
+    ];
+    container.innerHTML = options.map(o =>
+      `<button class="region-pill ${ordersSourceActive === o.value ? 'active' : ''}" data-source="${o.value}">${o.label}</button>`
+    ).join('');
+    container.querySelectorAll('.region-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        ordersSourceActive = btn.dataset.source;
+        renderOrdersTable();
+      });
+    });
+  }
+
+  function formatOrderItems(o){
+    if (Array.isArray(o.items) && o.items.length > 0){
+      return o.items.map(i => `${i.qty}x ${i.name}`).join(', ');
+    }
+    return o.notes || '—';
+  }
+
+  function renderOrdersTable(){
+    const tbody = document.getElementById('ordersTableBody');
+    const emptyState = document.getElementById('ordersEmptyState');
+    const countLabel = document.getElementById('ordersCountLabel');
+
+    const filtered = ordersSourceActive === 'all'
+      ? currentOrders
+      : currentOrders.filter(o => (o.source || 'web') === ordersSourceActive);
+
+    countLabel.textContent = `${filtered.length} de ${currentOrders.length} pedido${currentOrders.length === 1 ? '' : 's'}`;
+
+    if (filtered.length === 0){
+      tbody.innerHTML = '';
+      emptyState.style.display = 'block';
+      emptyState.textContent = currentOrders.length === 0
+        ? 'Todavía no hay pedidos.'
+        : 'No hay pedidos para este filtro.';
+      return;
+    }
+    emptyState.style.display = 'none';
+
+    tbody.innerHTML = filtered.map(o => {
+      const itemsText = formatOrderItems(o);
+      const notifyDisabled = (!o.tracking_number || !o.shipping_method) ? 'disabled' : '';
+      const notifyLabel = o.shipped_notified_at ? 'Reenviar aviso' : 'Notificar envío';
+      return `
+      <tr>
+        <td>${o.created_at ? new Date(o.created_at).toLocaleDateString('es-CL', { day:'numeric', month:'short' }) : '—'}</td>
+        <td class="cell-name">${o.customer_name || '—'}<div style="font-weight:400; opacity:0.6; font-size:12px;">${o.customer_email || ''}${o.customer_phone ? ' · ' + o.customer_phone : ''}</div></td>
+        <td>${[o.shipping_address, o.shipping_comuna, o.shipping_region].filter(Boolean).join(', ') || '—'}</td>
+        <td><div class="cell-clamp" title="${escapeAttr(itemsText)}">${itemsText}</div></td>
+        <td>${new Intl.NumberFormat('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits:0 }).format(o.total || 0)}</td>
+        <td><input type="checkbox" ${o.paid ? 'checked' : ''} onchange="toggleOrderField('${o.id}', 'paid', this.checked)"></td>
+        <td><input type="checkbox" ${o.ready ? 'checked' : ''} onchange="toggleOrderField('${o.id}', 'ready', this.checked)"></td>
+        <td>
+          <select onchange="updateOrderShippingMethod('${o.id}', this.value)" style="font-size:12.5px; padding:6px 8px; border:1.5px solid var(--line); border-radius:6px;">
+            <option value="" ${!o.shipping_method ? 'selected' : ''}>—</option>
+            <option value="chilexpress" ${o.shipping_method === 'chilexpress' ? 'selected' : ''}>Chilexpress</option>
+            <option value="local" ${o.shipping_method === 'local' ? 'selected' : ''}>Envío local</option>
+          </select>
+        </td>
+        <td>
+          <input type="text" value="${escapeAttr(o.tracking_number || '')}" placeholder="N° seguimiento"
+                 style="width:130px; font-size:12.5px; padding:6px 8px; border:1.5px solid var(--line); border-radius:6px;"
+                 onchange="updateOrderTracking('${o.id}', this.value)">
+        </td>
+        <td>
+          <button class="btn btn-outline" style="width:auto; padding:7px 12px; font-size:11.5px;" ${notifyDisabled} onclick="notifyShipment('${o.id}')">${notifyLabel}</button>
+          ${o.shipped_notified_at ? `<div style="font-size:10.5px; opacity:0.55; margin-top:4px;">Enviado ${new Date(o.shipped_notified_at).toLocaleDateString('es-CL')}</div>` : ''}
+        </td>
+        <td><input type="checkbox" ${o.delivered ? 'checked' : ''} onchange="toggleOrderField('${o.id}', 'delivered', this.checked)"></td>
+        <td>
+          <button class="icon-btn" title="Borrar" onclick="deleteOrder('${o.id}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" stroke="#a3392f" stroke-width="1.6"/></svg>
+          </button>
+        </td>
+      </tr>
+    `;
+    }).join('');
+  }
+
+  window.toggleOrderField = async function(id, field, value){
+    const payload = { [field]: value };
+    if (field === 'delivered'){
+      payload.delivered_at = value ? new Date().toISOString() : null;
+    }
+    const { error } = await supabaseClient.from('orders').update(payload).eq('id', id);
+    if (error){
+      alert('No se pudo actualizar el pedido.');
+      console.error(error);
+      return;
+    }
+    loadOrders();
+  };
+
+  window.updateOrderShippingMethod = async function(id, value){
+    const { error } = await supabaseClient.from('orders').update({ shipping_method: value || null }).eq('id', id);
+    if (error){
+      alert('No se pudo actualizar el método de envío.');
+      console.error(error);
+      return;
+    }
+    loadOrders();
+  };
+
+  window.updateOrderTracking = async function(id, value){
+    const { error } = await supabaseClient.from('orders').update({ tracking_number: value.trim() || null }).eq('id', id);
+    if (error){
+      alert('No se pudo guardar el número de seguimiento.');
+      console.error(error);
+      return;
+    }
+    loadOrders();
+  };
+
+  window.notifyShipment = async function(id){
+    const o = currentOrders.find(x => x.id === id);
+    if (!o) return;
+    if (!o.tracking_number || !o.shipping_method){
+      alert('Primero elige el método de envío y escribe el número de seguimiento.');
+      return;
+    }
+    if (!o.customer_email){
+      alert('Este pedido no tiene correo de cliente, no se puede notificar por email.');
+      return;
+    }
+    if (!confirm(`¿Enviar a ${o.customer_email} el aviso de envío con el N° ${o.tracking_number}?`)) return;
+
+    try {
+      await callEdgeFunction(NOTIFY_SHIPMENT_FN, { orderId: id });
+      loadOrders();
+    } catch (err){
+      alert('No se pudo enviar la notificación: ' + err.message + ' — revisa que la función "' + NOTIFY_SHIPMENT_FN + '" esté desplegada en Supabase.');
+      console.error(err);
+    }
+  };
+
+  window.deleteOrder = async function(id){
+    if (!confirm('¿Borrar este pedido? Esta acción no se puede deshacer.')) return;
+    const { error } = await supabaseClient.from('orders').delete().eq('id', id);
+    if (error){
+      alert('No se pudo borrar el pedido.');
+      console.error(error);
+      return;
+    }
+    loadOrders();
+  };
+
+  // ---------- Modal de pedido manual ----------
+  function resetOrderForm(){
+    orderForm.reset();
+    orderFormError.style.display = 'none';
+    document.getElementById('orderSendEmail').checked = true;
+  }
+
+  document.getElementById('newOrderBtn').addEventListener('click', () => {
+    resetOrderForm();
+    orderModalBackdrop.classList.add('open');
+  });
+
+  document.getElementById('cancelOrderModalBtn').addEventListener('click', () => {
+    orderModalBackdrop.classList.remove('open');
+  });
+
+  orderForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    orderFormError.style.display = 'none';
+    const saveBtn = document.getElementById('saveOrderBtn');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Guardando...';
+
+    try {
+      const total = parseFloat(document.getElementById('orderTotal').value) || 0;
+      const sendEmail = document.getElementById('orderSendEmail').checked;
+      const payload = {
+        source: 'manual',
+        buy_order: `MANUAL-${Date.now()}`,
+        status: 'manual',
+        paid: document.getElementById('orderPaid').checked,
+        ready: false,
+        delivered: false,
+        customer_name: document.getElementById('orderCustName').value.trim(),
+        customer_email: document.getElementById('orderCustEmail').value.trim() || null,
+        customer_phone: document.getElementById('orderCustPhone').value.trim() || null,
+        shipping_address: document.getElementById('orderCustAddress').value.trim() || null,
+        shipping_comuna: document.getElementById('orderCustComuna').value.trim() || null,
+        shipping_region: document.getElementById('orderCustRegion').value || null,
+        shipping_method: document.getElementById('orderShippingMethod').value || null,
+        notes: document.getElementById('orderDetail').value.trim(),
+        subtotal: total,
+        shipping_cost: 0,
+        total: total
+      };
+
+      const { data: inserted, error: insertError } = await supabaseClient.from('orders').insert(payload).select().single();
+      if (insertError) throw insertError;
+
+      orderModalBackdrop.classList.remove('open');
+      loadOrders();
+
+      if (sendEmail && payload.customer_email){
+        try {
+          await callEdgeFunction(SEND_CONFIRMATION_FN, { orderId: inserted.id });
+        } catch (emailErr){
+          console.error(emailErr);
+          alert('El pedido se guardó, pero no se pudo enviar el correo de confirmación: ' + emailErr.message);
+        }
+      }
+    } catch (err){
+      orderFormError.textContent = 'No se pudo guardar el pedido: ' + (err.message || 'error desconocido.');
+      orderFormError.style.display = 'block';
+      console.error(err);
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Guardar pedido';
+    }
   });
 
   // ---------- Solicitudes de venta por mayor ----------
