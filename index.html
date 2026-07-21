@@ -113,6 +113,7 @@
   }
   .video-overlay-text span.active{ opacity:1; transform:translateY(0);}
   .hero-logo-inline{ height:1.3em; width:auto; vertical-align:middle; margin-left:0.15em; position:relative; top:-0.05em;}
+  .hero-line-nowrap{ white-space:nowrap; display:inline-block;}
 
   /* ---------- videos promocionales (carrusel, mismo tamaño, slide lateral) ---------- */
   .promo-videos{ position:relative; padding:32px 0; background:var(--paper);}
@@ -616,7 +617,8 @@
   const heroPhraseEl = document.getElementById('heroPhraseText');
 
   function renderHeroPhrase(phrase){
-    return phrase.replace('{logo}', '<img src="whitelogo.png" alt="ProOliva" class="hero-logo-inline">');
+    const html = phrase.replace('{logo}', '<img src="whitelogo.png" alt="ProOliva" class="hero-logo-inline">');
+    return phrase.includes('{logo}') ? `<span class="hero-line-nowrap">${html}</span>` : html;
   }
 
   function rotateHeroPhrase(){
