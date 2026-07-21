@@ -122,7 +122,7 @@
   @media (max-width:900px){ .campaign-grid{ grid-template-columns:1fr;} }
 
   /* ---------- Analítica ---------- */
-  .kpi-grid{ display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; margin-bottom:24px;}
+  .kpi-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:16px; margin-bottom:24px;}
   .kpi-card{ background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:20px 22px; display:flex; flex-direction:column; gap:6px;}
   .kpi-label{ font-family:'IBM Plex Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:0.05em; opacity:0.55;}
   .kpi-value{ font-family:'Archivo',sans-serif; font-weight:700; font-size:26px; color:var(--ink);}
@@ -457,9 +457,19 @@
 
       <div class="kpi-grid">
         <div class="kpi-card">
-          <span class="kpi-label">Ingresos</span>
+          <span class="kpi-label">Ingresos totales</span>
           <span class="kpi-value" id="kpiRevenue">—</span>
           <span class="kpi-delta" id="kpiRevenueDelta"></span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Ingresos por productos</span>
+          <span class="kpi-value" id="kpiRevenueProducts">—</span>
+          <span class="kpi-delta" id="kpiRevenueProductsDelta"></span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Ingresos por envío</span>
+          <span class="kpi-value" id="kpiRevenueShipping">—</span>
+          <span class="kpi-delta" id="kpiRevenueShippingDelta"></span>
         </div>
         <div class="kpi-card">
           <span class="kpi-label">Pedidos entregados</span>
@@ -488,7 +498,7 @@
           <div class="chart-box"><canvas id="chartProducts"></canvas></div>
         </div>
         <div class="panel chart-panel">
-          <h3>Pedidos por región</h3>
+          <h3>Ingresos por región (productos vs. envío)</h3>
           <div class="chart-box"><canvas id="chartRegions"></canvas></div>
         </div>
         <div class="panel chart-panel">
@@ -1837,11 +1847,15 @@
     const deliveredInRange = inRange.filter(o => o.delivered);
 
     const revenue = deliveredInRange.reduce((s, o) => s + (o.total || 0), 0);
+    const revenueProducts = deliveredInRange.reduce((s, o) => s + (o.subtotal || 0), 0);
+    const revenueShipping = deliveredInRange.reduce((s, o) => s + (o.shipping_cost || 0), 0);
     const orderCount = deliveredInRange.length;
     const aov = orderCount > 0 ? revenue / orderCount : 0;
     const pendingNow = all.filter(o => o.paid && !o.delivered).length;
 
     document.getElementById('kpiRevenue').textContent = formatCLPShort(revenue);
+    document.getElementById('kpiRevenueProducts').textContent = formatCLPShort(revenueProducts);
+    document.getElementById('kpiRevenueShipping').textContent = formatCLPShort(revenueShipping);
     document.getElementById('kpiOrders').textContent = orderCount;
     document.getElementById('kpiAov').textContent = formatCLPShort(aov);
     document.getElementById('kpiPending').textContent = pendingNow;
@@ -1850,13 +1864,17 @@
       const rangeMs = end - start;
       const prevDelivered = ordersInRange(all, new Date(start.getTime() - rangeMs), new Date(start.getTime())).filter(o => o.delivered);
       const prevRevenue = prevDelivered.reduce((s, o) => s + (o.total || 0), 0);
+      const prevRevenueProducts = prevDelivered.reduce((s, o) => s + (o.subtotal || 0), 0);
+      const prevRevenueShipping = prevDelivered.reduce((s, o) => s + (o.shipping_cost || 0), 0);
       const prevAov = prevDelivered.length > 0 ? prevRevenue / prevDelivered.length : 0;
       setDelta('kpiRevenueDelta', revenue, prevRevenue);
+      setDelta('kpiRevenueProductsDelta', revenueProducts, prevRevenueProducts);
+      setDelta('kpiRevenueShippingDelta', revenueShipping, prevRevenueShipping);
       setDelta('kpiOrdersDelta', orderCount, prevDelivered.length);
       setDelta('kpiAovDelta', aov, prevAov);
       document.getElementById('analyticsRangeLabel').textContent = `${orderCount} pedido${orderCount === 1 ? '' : 's'} entregado${orderCount === 1 ? '' : 's'} en el período, comparado con el período anterior de igual duración`;
     } else {
-      ['kpiRevenueDelta', 'kpiOrdersDelta', 'kpiAovDelta'].forEach(id => { document.getElementById(id).textContent = ''; });
+      ['kpiRevenueDelta', 'kpiRevenueProductsDelta', 'kpiRevenueShippingDelta', 'kpiOrdersDelta', 'kpiAovDelta'].forEach(id => { document.getElementById(id).textContent = ''; });
       document.getElementById('analyticsRangeLabel').textContent = `${orderCount} pedido${orderCount === 1 ? '' : 's'} entregado${orderCount === 1 ? '' : 's'} en total`;
     }
 
@@ -1924,20 +1942,29 @@
   }
 
   function renderRegionsChart(orders){
-    const totals = new Map();
+    const totals = new Map(); // region -> { products, shipping }
     orders.forEach(o => {
       const region = o.shipping_region || 'Sin especificar';
-      totals.set(region, (totals.get(region) || 0) + 1);
+      if (!totals.has(region)) totals.set(region, { products: 0, shipping: 0 });
+      const t = totals.get(region);
+      t.products += (o.subtotal || 0);
+      t.shipping += (o.shipping_cost || 0);
     });
-    const sorted = [...totals.entries()].sort((a, b) => b[1] - a[1]);
+    const sorted = [...totals.entries()].sort((a, b) => (b[1].products + b[1].shipping) - (a[1].products + a[1].shipping));
 
     upsertChart('chartRegions', {
       type: 'bar',
-      data: { labels: sorted.map(s => s[0]), datasets: [{ label: 'Pedidos', data: sorted.map(s => s[1]), backgroundColor: '#55643b' }] },
+      data: {
+        labels: sorted.map(s => s[0]),
+        datasets: [
+          { label: 'Productos', data: sorted.map(s => s[1].products), backgroundColor: '#55643b', stack: 'ingresos' },
+          { label: 'Envío', data: sorted.map(s => s[1].shipping), backgroundColor: '#c89b3c', stack: 'ingresos' }
+        ]
+      },
       options: {
         responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+        plugins: { tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${formatCLPShort(ctx.parsed.y)}` } } },
+        scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, ticks: { callback: (v) => formatCLPShort(v) } } }
       }
     });
   }
