@@ -108,6 +108,10 @@
   .modal h3{ font-size:19px; margin-bottom:20px;}
   .field-row{ display:grid; grid-template-columns:1fr 1fr; gap:14px;}
   .field-check{ display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:500;}
+  .doc-type-toggle{ display:flex; gap:10px;}
+  .doc-type-btn{ flex:1; padding:11px; border:1.5px solid var(--line); border-radius:6px; background:#fff; color:var(--ink); font-size:13.5px; font-weight:600; cursor:pointer; transition:all .15s;}
+  .doc-type-btn:hover{ border-color:var(--olive-deep);}
+  .doc-type-btn.active{ border-color:var(--olive-deep); background:var(--olive-deep); color:var(--paper);}
   .field-check input{ width:auto;}
   .modal-actions{ display:flex; gap:10px; margin-top:24px;}
   .modal-actions .btn{ width:auto; flex:1;}
@@ -745,6 +749,27 @@
           </select>
         </div>
       </div>
+      <div class="field">
+        <label>Documento tributario</label>
+        <div class="doc-type-toggle" id="orderDocTypeToggle">
+          <button type="button" class="doc-type-btn active" data-doc="boleta">Boleta</button>
+          <button type="button" class="doc-type-btn" data-doc="factura">Factura</button>
+        </div>
+      </div>
+      <div class="field-row" id="orderFacturaFields" style="display:none;">
+        <div class="field">
+          <label>RUT empresa</label>
+          <input type="text" id="orderBillingRut" placeholder="Ej: 76.123.456-7">
+        </div>
+        <div class="field">
+          <label>Razón social</label>
+          <input type="text" id="orderBillingBusinessName" placeholder="Nombre legal">
+        </div>
+      </div>
+      <div class="field" id="orderFacturaGiroField" style="display:none;">
+        <label>Giro</label>
+        <input type="text" id="orderBillingGiro" placeholder="Ej: Venta al por menor de alimentos">
+      </div>
       <div class="field-row">
         <label class="field-check"><input type="checkbox" id="orderPaid"> Ya está pagado</label>
         <label class="field-check"><input type="checkbox" id="orderSendEmail" checked> Enviarle correo de confirmación al cliente</label>
@@ -1257,10 +1282,26 @@
   };
 
   // ---------- Modal de pedido manual ----------
+  let orderDocType = 'boleta';
+  document.querySelectorAll('#orderDocTypeToggle .doc-type-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      orderDocType = btn.dataset.doc;
+      document.querySelectorAll('#orderDocTypeToggle .doc-type-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const show = orderDocType === 'factura';
+      document.getElementById('orderFacturaFields').style.display = show ? 'grid' : 'none';
+      document.getElementById('orderFacturaGiroField').style.display = show ? 'block' : 'none';
+    });
+  });
+
   function resetOrderForm(){
     orderForm.reset();
     orderFormError.style.display = 'none';
     document.getElementById('orderSendEmail').checked = true;
+    orderDocType = 'boleta';
+    document.querySelectorAll('#orderDocTypeToggle .doc-type-btn').forEach(b => b.classList.toggle('active', b.dataset.doc === 'boleta'));
+    document.getElementById('orderFacturaFields').style.display = 'none';
+    document.getElementById('orderFacturaGiroField').style.display = 'none';
   }
 
   document.getElementById('newOrderBtn').addEventListener('click', () => {
@@ -1282,6 +1323,17 @@
     try {
       const total = parseFloat(document.getElementById('orderTotal').value) || 0;
       const sendEmail = document.getElementById('orderSendEmail').checked;
+
+      let billingRut = null, billingBusinessName = null, billingGiro = null;
+      if (orderDocType === 'factura'){
+        billingRut = document.getElementById('orderBillingRut').value.trim();
+        billingBusinessName = document.getElementById('orderBillingBusinessName').value.trim();
+        billingGiro = document.getElementById('orderBillingGiro').value.trim();
+        if (!billingRut || !billingBusinessName || !billingGiro){
+          throw new Error('Para factura completa el RUT de la empresa, la razón social y el giro.');
+        }
+      }
+
       const payload = {
         source: 'manual',
         buy_order: `MANUAL-${Date.now()}`,
@@ -1299,7 +1351,11 @@
         notes: document.getElementById('orderDetail').value.trim(),
         subtotal: total,
         shipping_cost: 0,
-        total: total
+        total: total,
+        document_type: orderDocType,
+        billing_rut: billingRut,
+        billing_business_name: billingBusinessName,
+        billing_giro: billingGiro
       };
 
       const { data: inserted, error: insertError } = await supabaseClient.from('orders').insert(payload).select().single();

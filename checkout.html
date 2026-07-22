@@ -66,6 +66,11 @@
 
   .test-mode-banner{ background:#fff4d6; border:1px solid var(--gold); color:#6b4e00; font-size:12.5px; padding:12px 16px; border-radius:8px; margin-bottom:20px; display:flex; gap:10px; align-items:flex-start;}
 
+  .doc-type-toggle{ display:flex; gap:10px;}
+  .doc-type-btn{ flex:1; padding:12px; border:1.5px solid var(--line); border-radius:6px; background:#fff; color:var(--ink); font-size:13.5px; font-weight:600; cursor:pointer; transition:all .15s;}
+  .doc-type-btn:hover{ border-color:var(--olive-deep);}
+  .doc-type-btn.active{ border-color:var(--olive-deep); background:var(--olive-deep); color:var(--paper);}
+
   @media (max-width:800px){ .checkout-grid{ grid-template-columns:1fr;} .field-row{ grid-template-columns:1fr;} }
 </style>
 </head>
@@ -142,6 +147,29 @@
           <button class="btn btn-outline" id="quoteShippingBtn" type="button">Cotizar envío con Chilexpress</button>
           <div class="shipping-quote-result" id="shippingQuoteResult"></div>
           <div class="error-msg" id="shippingError"></div>
+        </div>
+
+        <div class="panel">
+          <h2>Documento tributario</h2>
+          <div class="doc-type-toggle">
+            <button type="button" class="doc-type-btn active" data-doc="boleta">Boleta</button>
+            <button type="button" class="doc-type-btn" data-doc="factura">Factura</button>
+          </div>
+          <div id="facturaFields" style="display:none; margin-top:16px;">
+            <div class="field">
+              <label>RUT de la empresa</label>
+              <input type="text" id="billingRut" placeholder="Ej: 76.123.456-7">
+            </div>
+            <div class="field">
+              <label>Razón social</label>
+              <input type="text" id="billingBusinessName" placeholder="Nombre legal de la empresa">
+            </div>
+            <div class="field">
+              <label>Giro</label>
+              <input type="text" id="billingGiro" placeholder="Ej: Venta al por menor de alimentos">
+            </div>
+          </div>
+          <div class="error-msg" id="billingError"></div>
         </div>
       </div>
 
@@ -276,6 +304,17 @@
     }
   });
 
+  let documentType = 'boleta';
+  document.querySelectorAll('.doc-type-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      documentType = btn.dataset.doc;
+      document.querySelectorAll('.doc-type-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('facturaFields').style.display = documentType === 'factura' ? 'block' : 'none';
+      document.getElementById('billingError').style.display = 'none';
+    });
+  });
+
   document.getElementById('payBtn').addEventListener('click', async () => {
     const name = document.getElementById('custName').value.trim();
     const email = document.getElementById('custEmail').value.trim();
@@ -288,6 +327,20 @@
       errorEl.textContent = 'Completa nombre, correo, dirección y comuna antes de pagar.';
       errorEl.style.display = 'block';
       return;
+    }
+
+    const billingError = document.getElementById('billingError');
+    billingError.style.display = 'none';
+    let billingRut = '', billingBusinessName = '', billingGiro = '';
+    if (documentType === 'factura'){
+      billingRut = document.getElementById('billingRut').value.trim();
+      billingBusinessName = document.getElementById('billingBusinessName').value.trim();
+      billingGiro = document.getElementById('billingGiro').value.trim();
+      if (!billingRut || !billingBusinessName || !billingGiro){
+        billingError.textContent = 'Para factura necesitamos el RUT de la empresa, la razón social y el giro.';
+        billingError.style.display = 'block';
+        return;
+      }
     }
 
     const payBtn = document.getElementById('payBtn');
@@ -317,6 +370,12 @@
             address,
             comuna,
             region: document.getElementById('custRegion').value
+          },
+          billing: {
+            documentType,
+            rut: documentType === 'factura' ? billingRut : null,
+            businessName: documentType === 'factura' ? billingBusinessName : null,
+            giro: documentType === 'factura' ? billingGiro : null
           }
         })
       });

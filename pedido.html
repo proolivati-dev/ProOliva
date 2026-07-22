@@ -227,6 +227,16 @@
             <div class="info-row"><span>Estado Webpay</span><span>${o.status || '—'}</span></div>
             <div class="info-row"><span>Sesión</span><span>${o.session_id || '—'}</span></div>
           </div>
+
+          <div class="panel">
+            <h2>Documento tributario</h2>
+            <div class="info-row"><span>Tipo</span><span>${o.document_type === 'factura' ? 'Factura' : 'Boleta'}</span></div>
+            ${o.document_type === 'factura' ? `
+              <div class="info-row"><span>RUT empresa</span><span>${o.billing_rut || '—'}</span></div>
+              <div class="info-row"><span>Razón social</span><span>${o.billing_business_name || '—'}</span></div>
+              <div class="info-row"><span>Giro</span><span>${o.billing_giro || '—'}</span></div>
+            ` : ''}
+          </div>
         </div>
 
         <div>
