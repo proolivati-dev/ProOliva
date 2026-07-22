@@ -134,6 +134,8 @@
 
   .order-total-row{ display:flex; justify-content:space-between; align-items:center; padding:12px 0; margin-bottom:16px; border-top:1.5px solid var(--line); border-bottom:1.5px solid var(--line); font-weight:700; font-size:15px;}
   .order-total-row span:last-child{ color:var(--olive-deep); font-family:'Archivo',sans-serif; font-size:18px;}
+  .shipping-quote-result{ background:var(--linen); border-radius:8px; padding:12px 14px; margin-top:10px; font-size:13px; display:none;}
+  .shipping-quote-result.show{ display:block;}
   .field-check input{ width:auto;}
   .modal-actions{ display:flex; gap:10px; margin-top:24px;}
   .modal-actions .btn{ width:auto; flex:1;}
@@ -870,6 +872,11 @@
           </select>
         </div>
       </div>
+      <div id="orderChilexpressQuoteWrap" style="display:none; margin-bottom:16px;">
+        <button type="button" class="btn btn-outline" id="orderQuoteShippingBtn">Cotizar con Chilexpress</button>
+        <div class="shipping-quote-result" id="orderShippingQuoteResult"></div>
+        <div class="error-msg" id="orderShippingQuoteError" style="display:none;"></div>
+      </div>
       <div class="order-total-row" id="orderTotalRow">
         <span>Total del pedido</span>
         <span id="orderTotalDisplay">$0</span>
@@ -900,11 +907,29 @@
         <label class="field-check"><input type="checkbox" id="orderPaid"> Ya está pagado</label>
         <label class="field-check"><input type="checkbox" id="orderSendEmail" checked> Enviarle correo de confirmación al cliente</label>
       </div>
+      <label class="field-check" style="margin-top:-6px; margin-bottom:16px;">
+        <input type="checkbox" id="orderGenerateLink"> Generar link de pago para que el cliente pague online
+      </label>
       <div class="modal-actions">
         <button type="button" class="btn btn-outline" id="cancelOrderModalBtn">Cancelar</button>
         <button type="submit" class="btn btn-primary" id="saveOrderBtn">Guardar pedido</button>
       </div>
     </form>
+
+    <div id="orderLinkResultView" style="display:none;">
+      <p style="text-align:center; font-weight:700; font-size:16px; margin-bottom:4px;">¡Pedido guardado!</p>
+      <p style="text-align:center; font-size:12.5px; opacity:0.65; margin-bottom:18px;">Envíale este link al cliente para que pague online con Webpay.</p>
+      <div class="field">
+        <label>Link de pago</label>
+        <input type="text" id="orderPaymentLinkInput" readonly>
+      </div>
+      <div class="error-msg" id="orderLinkError" style="display:none;"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" id="copyPaymentLinkBtn">Copiar link</button>
+        <button type="button" class="btn btn-primary" id="whatsappPaymentLinkBtn">Enviar por WhatsApp</button>
+      </div>
+      <button type="button" class="btn btn-outline" id="closeLinkResultBtn" style="margin-top:10px;">Cerrar</button>
+    </div>
   </div>
 </div>
 
@@ -1471,7 +1496,7 @@
     } else {
       orderSelectedItems[productId] = {
         id: product.id, name: product.name, price: product.price || 0,
-        image_url: product.image_url || null, qty: next
+        image_url: product.image_url || null, weight_kg: product.weight_kg || 0.5, qty: next
       };
     }
     renderOrderProductPicker();
@@ -1511,11 +1536,91 @@
   });
   document.getElementById('orderShippingCost').addEventListener('input', updateOrderTotalDisplay);
 
+  document.getElementById('orderShippingMethod').addEventListener('change', (e) => {
+    document.getElementById('orderChilexpressQuoteWrap').style.display = e.target.value === 'chilexpress' ? 'block' : 'none';
+  });
+
+  document.getElementById('orderQuoteShippingBtn').addEventListener('click', async () => {
+    const region = document.getElementById('orderCustRegion').value;
+    const comuna = document.getElementById('orderCustComuna').value.trim();
+    const errorEl = document.getElementById('orderShippingQuoteError');
+    const resultEl = document.getElementById('orderShippingQuoteResult');
+    errorEl.style.display = 'none';
+    resultEl.classList.remove('show');
+
+    if (!comuna){
+      errorEl.textContent = 'Escribe la comuna de destino primero.';
+      errorEl.style.display = 'block';
+      return;
+    }
+    const items = Object.values(orderSelectedItems);
+    if (items.length === 0){
+      errorEl.textContent = 'Selecciona los productos primero (se necesita el peso para cotizar).';
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    const btn = document.getElementById('orderQuoteShippingBtn');
+    btn.disabled = true;
+    btn.textContent = 'Cotizando...';
+
+    const totalWeight = items.reduce((sum, i) => sum + ((i.weight_kg || 0.5) * i.qty), 0);
+    const subtotal = orderSubtotal();
+
+    try {
+      const data = await callEdgeFunction('chilexpress-quote', { region, comuna, pesoKg: totalWeight || 1, valorDeclarado: subtotal });
+      if (!data.options || data.options.length === 0){
+        throw new Error('Chilexpress no devolvió opciones de envío para esta comuna.');
+      }
+
+      resultEl.innerHTML = '<b>Elige el servicio de envío:</b>' + data.options.map((o, i) => `
+        <label style="display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--line); cursor:pointer; font-size:13px;">
+          <input type="radio" name="orderShippingOption" value="${o.price}" ${i === 0 ? 'checked' : ''} style="width:auto;">
+          <span style="flex:1;">${o.service}</span>
+          <b>${new Intl.NumberFormat('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits:0 }).format(o.price)}</b>
+        </label>
+      `).join('');
+      resultEl.classList.add('show');
+
+      resultEl.querySelectorAll('input[name="orderShippingOption"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+          document.getElementById('orderShippingCost').value = e.target.value;
+          updateOrderTotalDisplay();
+        });
+      });
+
+      document.getElementById('orderShippingCost').value = data.options[0].price;
+      updateOrderTotalDisplay();
+    } catch (err){
+      errorEl.textContent = 'No se pudo cotizar: ' + err.message;
+      errorEl.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Cotizar con Chilexpress';
+    }
+  });
+
+  document.getElementById('orderGenerateLink').addEventListener('change', (e) => {
+    const paidCheckbox = document.getElementById('orderPaid');
+    if (e.target.checked){
+      paidCheckbox.checked = false;
+      paidCheckbox.disabled = true;
+    } else {
+      paidCheckbox.disabled = false;
+    }
+  });
+
   function resetOrderForm(){
     orderForm.reset();
+    orderForm.style.display = 'block';
+    document.getElementById('orderLinkResultView').style.display = 'none';
     orderFormError.style.display = 'none';
     document.getElementById('orderSendEmail').checked = true;
     document.getElementById('orderShippingCost').value = 0;
+    document.getElementById('orderChilexpressQuoteWrap').style.display = 'none';
+    document.getElementById('orderShippingQuoteResult').classList.remove('show');
+    document.getElementById('orderShippingQuoteError').style.display = 'none';
+    document.getElementById('orderPaid').disabled = false;
     orderDocType = 'boleta';
     document.querySelectorAll('#orderDocTypeToggle .doc-type-btn').forEach(b => b.classList.toggle('active', b.dataset.doc === 'boleta'));
     document.getElementById('orderFacturaFields').style.display = 'none';
@@ -1591,16 +1696,35 @@
       const { data: inserted, error: insertError } = await supabaseClient.from('orders').insert(payload).select().single();
       if (insertError) throw insertError;
 
-      orderModalBackdrop.classList.remove('open');
       loadOrders();
 
-      if (sendEmail && payload.customer_email){
+      const generateLink = document.getElementById('orderGenerateLink').checked;
+
+      if (sendEmail && payload.customer_email && !generateLink){
         try {
           await callEdgeFunction(SEND_CONFIRMATION_FN, { orderId: inserted.id });
         } catch (emailErr){
           console.error(emailErr);
           alert('El pedido se guardó, pero no se pudo enviar el correo de confirmación: ' + emailErr.message);
         }
+      }
+
+      if (generateLink){
+        const linkError = document.getElementById('orderLinkError');
+        linkError.style.display = 'none';
+        try {
+          const linkData = await callEdgeFunction('create-payment-link', { orderId: inserted.id });
+          if (linkData.error) throw new Error(linkData.error);
+          document.getElementById('orderPaymentLinkInput').value = linkData.paymentLink;
+          orderForm.style.display = 'none';
+          document.getElementById('orderLinkResultView').style.display = 'block';
+        } catch (linkErr){
+          console.error(linkErr);
+          orderModalBackdrop.classList.remove('open');
+          alert('El pedido se guardó, pero no se pudo generar el link de pago: ' + linkErr.message + ' — revisa que la función "create-payment-link" esté desplegada en Supabase.');
+        }
+      } else {
+        orderModalBackdrop.classList.remove('open');
       }
     } catch (err){
       orderFormError.textContent = 'No se pudo guardar el pedido: ' + (err.message || 'error desconocido.');
@@ -2631,6 +2755,32 @@
   document.addEventListener('fullscreenchange', () => {
     const isFs = !!document.fullscreenElement;
     document.getElementById('liveFullscreenBtn').textContent = isFs ? '✕ Salir de pantalla completa' : '⛶ Pantalla completa';
+  });
+
+  document.getElementById('copyPaymentLinkBtn').addEventListener('click', async () => {
+    const input = document.getElementById('orderPaymentLinkInput');
+    input.select();
+    try {
+      await navigator.clipboard.writeText(input.value);
+      const btn = document.getElementById('copyPaymentLinkBtn');
+      const original = btn.textContent;
+      btn.textContent = '¡Copiado!';
+      setTimeout(() => { btn.textContent = original; }, 1500);
+    } catch (err){
+      console.error(err);
+    }
+  });
+
+  document.getElementById('whatsappPaymentLinkBtn').addEventListener('click', () => {
+    const link = document.getElementById('orderPaymentLinkInput').value;
+    const phone = document.getElementById('orderCustPhone').value.trim().replace(/[^0-9]/g, '');
+    const message = encodeURIComponent(`Hola! Aquí está el link para pagar tu pedido en ProOliva: ${link}`);
+    const waUrl = phone ? `https://wa.me/${phone.startsWith('56') ? phone : '56' + phone}?text=${message}` : `https://wa.me/?text=${message}`;
+    window.open(waUrl, '_blank');
+  });
+
+  document.getElementById('closeLinkResultBtn').addEventListener('click', () => {
+    orderModalBackdrop.classList.remove('open');
   });
 
   checkSession();
