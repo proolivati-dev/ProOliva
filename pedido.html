@@ -70,6 +70,7 @@
   .btn-outline{ background:transparent; border-color:var(--line); color:var(--ink);}
   .btn-outline:hover{ border-color:var(--olive-deep);}
   .btn-danger{ background:transparent; border-color:var(--danger); color:var(--danger); font-size:12.5px; padding:9px 14px; width:auto;}
+  .error-msg{ background:#fbe9e7; border:1px solid var(--danger); color:var(--danger); font-size:12.5px; padding:10px 12px; border-radius:6px;}
   .btn-danger:hover{ background:var(--danger); color:#fff;}
 
   .save-toast{ font-size:12px; color:var(--olive-deep); font-weight:600; margin-top:8px; opacity:0; transition:opacity .3s;}
@@ -236,6 +237,15 @@
               <div class="info-row"><span>Razón social</span><span>${o.billing_business_name || '—'}</span></div>
               <div class="info-row"><span>Giro</span><span>${o.billing_giro || '—'}</span></div>
             ` : ''}
+            ${o.sii_folio ? `
+              <div class="info-row"><span>Folio SII</span><span>${o.sii_folio}</span></div>
+              <div class="info-row"><span>Emitido</span><span>${formatDate(o.sii_emitted_at, true)}</span></div>
+            ` : ''}
+            <button class="btn btn-outline" id="emitDocumentBtn" style="margin-top:14px;">
+              ${o.sii_folio ? 'Volver a emitir' : 'Emitir boleta/factura'}
+            </button>
+            ${o.sii_document_url ? `<a href="${o.sii_document_url}" target="_blank" rel="noopener" class="btn btn-primary" style="margin-top:10px;">Ver PDF</a>` : ''}
+            <div class="error-msg" id="emitDocumentError" style="display:none; margin-top:10px;"></div>
           </div>
         </div>
 
@@ -312,6 +322,30 @@
 
     document.getElementById('notifyBtn').addEventListener('click', notifyShipment);
     document.getElementById('deleteBtn').addEventListener('click', deleteOrder);
+    document.getElementById('emitDocumentBtn').addEventListener('click', emitDocument);
+  }
+
+  async function emitDocument(){
+    const label = order.document_type === 'factura' ? 'la factura' : 'la boleta';
+    if (!confirm(`¿Emitir ${label} de este pedido en OpenFactura?`)) return;
+
+    const btn = document.getElementById('emitDocumentBtn');
+    const errorEl = document.getElementById('emitDocumentError');
+    errorEl.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Emitiendo...';
+
+    try {
+      const data = await callEdgeFunction('emit-document', { orderId });
+      if (data.error) throw new Error(data.error);
+      await loadOrder();
+    } catch (err){
+      errorEl.textContent = 'No se pudo emitir el documento: ' + err.message;
+      errorEl.style.display = 'block';
+      console.error(err);
+      btn.disabled = false;
+      btn.textContent = order.sii_folio ? 'Volver a emitir' : 'Emitir boleta/factura';
+    }
   }
 
   async function quickUpdate(payload, skipReload){
