@@ -116,17 +116,17 @@
   .hero-logo-inline{ height:1.3em; width:auto; vertical-align:middle; margin-left:0.15em; position:relative; top:-0.05em;}
   .hero-line-nowrap{ white-space:nowrap; display:inline-block;}
 
-  /* ---------- videos promocionales (carrusel, mismo tamaño, slide lateral) ---------- */
-  .promo-videos{ position:relative; padding:32px 0; background:var(--paper);}
-  .promo-video-viewport{ position:relative; overflow:hidden; border-radius:14px; box-shadow:0 20px 44px -22px rgba(32,40,26,0.4); height:clamp(260px, 40vw, 540px);}
-  .promo-video-track{ display:flex; width:100%; height:100%; transition:transform .7s cubic-bezier(.65,0,.35,1);}
-  .promo-video-slide{ flex:0 0 100%; width:100%; height:100%; position:relative;}
-  .promo-video-slide video{ width:100%; height:100%; object-fit:cover; display:block; background:var(--ink);}
-  .promo-video-nav{ position:absolute; left:0; right:0; bottom:20px; display:flex; justify-content:center; gap:8px; z-index:4;}
-  .promo-video-bar{ width:34px; height:4px; border-radius:2px; background:rgba(255,255,255,0.45); cursor:pointer; transition:background .25s, width .25s; border:none; padding:0;}
-  .promo-video-bar.active{ background:#fff; width:52px;}
+  /* ---------- fotos promocionales (carrusel, mismo tamaño, slide lateral) ---------- */
+  .promo-photos{ position:relative; padding:32px 0; background:var(--paper);}
+  .promo-photo-viewport{ position:relative; overflow:hidden; border-radius:14px; box-shadow:0 20px 44px -22px rgba(32,40,26,0.4); height:clamp(260px, 40vw, 540px);}
+  .promo-photo-track{ display:flex; width:100%; height:100%; transition:transform .7s cubic-bezier(.65,0,.35,1);}
+  .promo-photo-slide{ flex:0 0 100%; width:100%; height:100%; position:relative;}
+  .promo-photo-slide img{ width:100%; height:100%; object-fit:cover; display:block; background:var(--ink);}
+  .promo-photo-nav{ position:absolute; left:0; right:0; bottom:20px; display:flex; justify-content:center; gap:8px; z-index:4;}
+  .promo-photo-bar{ width:34px; height:4px; border-radius:2px; background:rgba(255,255,255,0.45); cursor:pointer; transition:background .25s, width .25s; border:none; padding:0;}
+  .promo-photo-bar.active{ background:#fff; width:52px;}
   @media (max-width:860px){
-    .promo-videos{ padding:24px 0;}
+    .promo-photos{ padding:24px 0;}
   }
 
   section{ padding:64px 0; }
@@ -144,7 +144,7 @@
   .cat-col-split .cat-card{ height:auto; flex:1;}
 
   /* ---------- confidence / trust section ---------- */
-  .confidence{ background:var(--paper); border-top:1px solid var(--line); border-bottom:1px solid var(--line);}
+  .confidence{ background:var(--paper); border-top:1px solid var(--line); border-bottom:1px solid var(--line); padding:56px 0;}
   .confidence-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:36px;}
   .confidence-item{ text-align:center; padding:0 12px;}
   .confidence-icon{ width:54px; height:54px; border-radius:50%; background:var(--linen); display:flex; align-items:center; justify-content:center; margin:0 auto 16px;}
@@ -233,6 +233,8 @@
     .cat-grid{ grid-template-columns:1fr; --card-h:260px;}
     .cat-col-split{ height:auto; flex-direction:row;}
     .prod-grid, .featured, .foot-grid, .confidence-grid{ grid-template-columns:1fr;}
+    .confidence{ padding:40px 0;}
+    .confidence-grid{ gap:32px;}
     .foot-divider-col{ border-left:none; padding-left:0; border-top:1px solid var(--line); padding-top:24px; margin-top:8px;}
     .nav{ grid-template-columns:auto 1fr auto;}
     .nav-links{ display:none;}
@@ -278,27 +280,21 @@
   </div>
 </div>
 
-<section class="promo-videos" aria-label="Promociones en video">
+<section class="promo-photos" aria-label="Promociones">
   <div class="wrap">
-    <div class="promo-video-viewport">
-      <div class="promo-video-track" id="promoVideoTrack">
-        <div class="promo-video-slide" data-index="0">
-          <video muted loop playsinline preload="metadata">
-            <source src="promovideo1.mp4" type="video/mp4">
-          </video>
+    <div class="promo-photo-viewport">
+      <div class="promo-photo-track" id="promoPhotoTrack">
+        <div class="promo-photo-slide" data-index="0">
+          <img src="fotopromo1.png" alt="Promoción ProOliva">
         </div>
-        <div class="promo-video-slide" data-index="1">
-          <video muted loop playsinline preload="metadata">
-            <source src="promovideo2.mp4" type="video/mp4">
-          </video>
+        <div class="promo-photo-slide" data-index="1">
+          <img src="fotopromo2.png" alt="Promoción ProOliva">
         </div>
-        <div class="promo-video-slide" data-index="2">
-          <video muted loop playsinline preload="metadata">
-            <source src="promovideo3.mp4" type="video/mp4">
-          </video>
+        <div class="promo-photo-slide" data-index="2">
+          <img src="fotopromo3.png" alt="Promoción ProOliva">
         </div>
       </div>
-      <div class="promo-video-nav" id="promoVideoDots"></div>
+      <div class="promo-photo-nav" id="promoPhotoDots"></div>
     </div>
   </div>
 </section>
@@ -606,7 +602,7 @@
   loadHomeProducts();
   loadFeatured();
   initCart();
-  initPromoVideos();
+  initPromoPhotos();
 
   // ---------- Frases alternando sobre el video ----------
   const heroPhrases = [
@@ -648,31 +644,22 @@
   })();
 
   // ---------- Carrusel de videos promocionales (peek, debajo del banner) ----------
-  function initPromoVideos(){
-    const track = document.getElementById('promoVideoTrack');
-    const slides = Array.from(document.querySelectorAll('.promo-video-slide'));
+  function initPromoPhotos(){
+    const track = document.getElementById('promoPhotoTrack');
+    const slides = Array.from(document.querySelectorAll('.promo-photo-slide'));
     if (slides.length === 0) return;
-    const dotsContainer = document.getElementById('promoVideoDots');
+    const dotsContainer = document.getElementById('promoPhotoDots');
     const total = slides.length;
     let active = 0;
     let timer = null;
 
     dotsContainer.innerHTML = slides.map((_, i) =>
-      `<button class="promo-video-bar ${i === 0 ? 'active' : ''}" data-i="${i}" aria-label="Ver promoción ${i + 1}"></button>`
+      `<button class="promo-photo-bar ${i === 0 ? 'active' : ''}" data-i="${i}" aria-label="Ver promoción ${i + 1}"></button>`
     ).join('');
-    const bars = Array.from(dotsContainer.querySelectorAll('.promo-video-bar'));
+    const bars = Array.from(dotsContainer.querySelectorAll('.promo-photo-bar'));
 
     function update(){
       track.style.transform = `translateX(-${active * 100}%)`;
-      slides.forEach((slide, i) => {
-        const video = slide.querySelector('video');
-        if (i === active){
-          const playPromise = video.play();
-          if (playPromise) playPromise.catch(() => {});
-        } else {
-          video.pause();
-        }
-      });
       bars.forEach((bar, i) => bar.classList.toggle('active', i === active));
     }
 
