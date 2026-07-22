@@ -17,6 +17,7 @@
   *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
   html{ background:var(--linen); -webkit-text-size-adjust:100%; text-size-adjust:100%;}
   body{ font-family:'Public Sans', sans-serif; background:var(--linen); color:var(--ink); line-height:1.5; -webkit-font-smoothing:antialiased;}
+  body.modal-open{ position:fixed; left:0; right:0; width:100%; overflow:hidden;}
   h1,h2,h3{ font-family:'Archivo', sans-serif; font-weight:700; color:var(--ink);}
   a{ color:inherit; }
   button, input, select, textarea{ font-family:'Public Sans', sans-serif; }
@@ -96,8 +97,9 @@
   .cell-clamp{ max-width:240px; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; font-size:12.5px; opacity:0.8; cursor:help;}
 
   /* ---------- filtro por región ---------- */
-  .region-filter{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px;}
-  .region-pill{ font-size:12.5px; font-weight:600; padding:7px 14px; border-radius:20px; border:1.5px solid var(--line); background:var(--paper); cursor:pointer; transition:all .15s; color:var(--ink); opacity:0.75;}
+  .region-filter{ display:flex; gap:8px; flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; margin-bottom:20px;}
+  .region-filter::-webkit-scrollbar{ display:none;}
+  .region-pill{ font-size:12.5px; font-weight:600; padding:7px 14px; border-radius:20px; border:1.5px solid var(--line); background:var(--paper); cursor:pointer; transition:all .15s; color:var(--ink); opacity:0.75; flex-shrink:0; white-space:nowrap;}
   .region-pill:hover{ opacity:1; border-color:var(--olive-light);}
   .region-pill.active{ background:var(--olive-deep); border-color:var(--olive-deep); color:var(--paper); opacity:1;}
 
@@ -248,6 +250,21 @@
     .field-row{ grid-template-columns:1fr;}
     .modal-actions{ flex-direction:column;}
     .modal-actions .btn{ width:100%;}
+
+    /* Selector de productos del pedido manual: contador más grande para el dedo */
+    .order-product-picker{ max-height:280px;}
+    .order-product-row{ padding:10px 6px; gap:8px;}
+    .order-product-row img, .order-product-row > div:first-child{ width:30px; height:30px;}
+    .order-product-price{ font-size:11px;}
+    .order-qty-stepper{ gap:8px;}
+    .order-qty-stepper button{ width:36px; height:36px; font-size:17px;}
+    .order-qty-stepper span{ min-width:22px; font-size:14px;}
+    .order-selected-row .remove-item{ font-size:19px; padding:6px 8px;}
+    .order-total-row{ font-size:14px;}
+    .order-total-row span:last-child{ font-size:17px;}
+    .doc-type-btn{ padding:13px;}
+    .field-check{ padding:9px 0;}
+    .field-check input[type="checkbox"]{ width:19px; height:19px; flex-shrink:0;}
 
     /* Tablas → tarjetas apiladas */
     .table-wrap table, .table-wrap thead, .table-wrap tbody, .table-wrap th{ display:block;}
@@ -1037,6 +1054,26 @@
     return (str || '').replace(/"/g, '&quot;');
   }
 
+  // ---------- Abrir/cerrar modales bloqueando el scroll del fondo ----------
+  // En iOS Safari, si el body de atrás queda scrolleable mientras el modal
+  // está abierto, el scroll se puede "filtrar" hacia el fondo y el navegador
+  // llega a renderizar ambas capas mezcladas. Esto lo evita del todo.
+  let modalSavedScrollY = 0;
+
+  function openModal(backdrop){
+    modalSavedScrollY = window.scrollY;
+    document.body.style.top = `-${modalSavedScrollY}px`;
+    document.body.classList.add('modal-open');
+    backdrop.classList.add('open');
+  }
+
+  function closeModal(backdrop){
+    backdrop.classList.remove('open');
+    document.body.classList.remove('modal-open');
+    document.body.style.top = '';
+    window.scrollTo(0, modalSavedScrollY);
+  }
+
   // ---------- Cargar productos ----------
   async function loadProducts(){
     const { data, error } = await supabaseClient.from('products').select('*').order('created_at', { ascending: false });
@@ -1101,11 +1138,11 @@
   document.getElementById('newProductBtn').addEventListener('click', () => {
     resetForm();
     document.getElementById('modalTitle').textContent = 'Nuevo producto';
-    modalBackdrop.classList.add('open');
+    openModal(modalBackdrop);
   });
 
   document.getElementById('cancelModalBtn').addEventListener('click', () => {
-    modalBackdrop.classList.remove('open');
+    closeModal(modalBackdrop);
   });
 
   window.openEditModal = function(id){
@@ -1127,7 +1164,7 @@
     if (p.image_url){
       imagePreview.innerHTML = `<img src="${p.image_url}" alt="">`;
     }
-    modalBackdrop.classList.add('open');
+    openModal(modalBackdrop);
   };
 
   window.deleteProduct = async function(id){
@@ -1200,7 +1237,7 @@
       }
       if (saveError) throw saveError;
 
-      modalBackdrop.classList.remove('open');
+      closeModal(modalBackdrop);
       loadProducts();
     } catch (err){
       formError.textContent = 'No se pudo guardar el producto: ' + (err.message || 'error desconocido.');
@@ -1633,11 +1670,11 @@
 
   document.getElementById('newOrderBtn').addEventListener('click', () => {
     resetOrderForm();
-    orderModalBackdrop.classList.add('open');
+    openModal(orderModalBackdrop);
   });
 
   document.getElementById('cancelOrderModalBtn').addEventListener('click', () => {
-    orderModalBackdrop.classList.remove('open');
+    closeModal(orderModalBackdrop);
   });
 
   orderForm.addEventListener('submit', async (e) => {
@@ -1720,11 +1757,11 @@
           document.getElementById('orderLinkResultView').style.display = 'block';
         } catch (linkErr){
           console.error(linkErr);
-          orderModalBackdrop.classList.remove('open');
+          closeModal(orderModalBackdrop);
           alert('El pedido se guardó, pero no se pudo generar el link de pago: ' + linkErr.message + ' — revisa que la función "create-payment-link" esté desplegada en Supabase.');
         }
       } else {
-        orderModalBackdrop.classList.remove('open');
+        closeModal(orderModalBackdrop);
       }
     } catch (err){
       orderFormError.textContent = 'No se pudo guardar el pedido: ' + (err.message || 'error desconocido.');
@@ -1926,11 +1963,11 @@
   document.getElementById('newCustomerBtn').addEventListener('click', () => {
     resetCustomerForm();
     document.getElementById('customerModalTitle').textContent = 'Nuevo cliente';
-    customerModalBackdrop.classList.add('open');
+    openModal(customerModalBackdrop);
   });
 
   document.getElementById('cancelCustomerModalBtn').addEventListener('click', () => {
-    customerModalBackdrop.classList.remove('open');
+    closeModal(customerModalBackdrop);
   });
 
   window.openEditCustomerModal = function(id){
@@ -1946,7 +1983,7 @@
     document.getElementById('custFieldRegion').value = c.region || '';
     document.getElementById('custFieldComuna').value = c.comuna || '';
     document.getElementById('custFieldNotes').value = c.notes || '';
-    customerModalBackdrop.classList.add('open');
+    openModal(customerModalBackdrop);
   };
 
   window.convertToCustomer = function(inquiryId){
@@ -1961,7 +1998,7 @@
     document.getElementById('custFieldRegion').value = w.region || '';
     document.getElementById('custFieldComuna').value = w.comuna || '';
     document.getElementById('custFieldNotes').value = `Venía de una solicitud de venta por mayor (${new Date(w.created_at).toLocaleDateString('es-CL')}): ${w.message || ''}`;
-    customerModalBackdrop.classList.add('open');
+    openModal(customerModalBackdrop);
     document.querySelector('[data-tab="clientes"]').click();
   };
 
@@ -2003,7 +2040,7 @@
       }
       if (saveError) throw saveError;
 
-      customerModalBackdrop.classList.remove('open');
+      closeModal(customerModalBackdrop);
       loadCustomers();
     } catch (err){
       customerFormError.textContent = 'No se pudo guardar el cliente: ' + (err.message || 'error desconocido.');
@@ -2780,7 +2817,7 @@
   });
 
   document.getElementById('closeLinkResultBtn').addEventListener('click', () => {
-    orderModalBackdrop.classList.remove('open');
+    closeModal(orderModalBackdrop);
   });
 
   checkSession();
