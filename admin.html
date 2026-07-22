@@ -112,6 +112,28 @@
   .doc-type-btn{ flex:1; padding:11px; border:1.5px solid var(--line); border-radius:6px; background:#fff; color:var(--ink); font-size:13.5px; font-weight:600; cursor:pointer; transition:all .15s;}
   .doc-type-btn:hover{ border-color:var(--olive-deep);}
   .doc-type-btn.active{ border-color:var(--olive-deep); background:var(--olive-deep); color:var(--paper);}
+
+  .order-product-picker{ max-height:220px; overflow-y:auto; border:1.5px solid var(--line); border-radius:6px;}
+  .order-product-row{ display:flex; align-items:center; gap:10px; padding:9px 12px; border-bottom:1px solid var(--line);}
+  .order-product-row:last-child{ border-bottom:none;}
+  .order-product-row img{ width:34px; height:34px; border-radius:5px; object-fit:cover; background:var(--linen); flex-shrink:0;}
+  .order-product-name{ flex:1; font-size:13px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .order-product-name .hidden-tag{ font-size:10px; opacity:0.5; margin-left:5px;}
+  .order-product-price{ font-size:12px; opacity:0.6; font-family:'IBM Plex Mono',monospace; white-space:nowrap; flex-shrink:0;}
+  .order-qty-stepper{ display:flex; align-items:center; gap:6px; flex-shrink:0;}
+  .order-qty-stepper button{ width:26px; height:26px; border-radius:5px; border:1px solid var(--line); background:#fff; cursor:pointer; font-size:14px; line-height:1; color:var(--ink);}
+  .order-qty-stepper button:hover{ border-color:var(--olive-deep);}
+  .order-qty-stepper span{ min-width:20px; text-align:center; font-weight:700; font-size:13px;}
+  .order-empty-search{ padding:16px; text-align:center; font-size:12.5px; opacity:0.55;}
+
+  .order-selected-items{ border:1.5px solid var(--line); border-radius:6px; padding:2px 12px;}
+  .order-selected-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 0; border-bottom:1px solid var(--line); font-size:13px;}
+  .order-selected-row:last-child{ border-bottom:none;}
+  .order-selected-row .name{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .order-selected-row .remove-item{ background:none; border:none; color:var(--danger); cursor:pointer; font-size:15px; flex-shrink:0; padding:0 4px;}
+
+  .order-total-row{ display:flex; justify-content:space-between; align-items:center; padding:12px 0; margin-bottom:16px; border-top:1.5px solid var(--line); border-bottom:1.5px solid var(--line); font-weight:700; font-size:15px;}
+  .order-total-row span:last-child{ color:var(--olive-deep); font-family:'Archivo',sans-serif; font-size:18px;}
   .field-check input{ width:auto;}
   .modal-actions{ display:flex; gap:10px; margin-top:24px;}
   .modal-actions .btn{ width:auto; flex:1;}
@@ -822,13 +844,22 @@
         </div>
       </div>
       <div class="field">
-        <label>Detalle del pedido *</label>
-        <textarea id="orderDetail" rows="3" required placeholder="Ej: 2x Aceite de oliva 1L, 1x Pack aceitunas premium"></textarea>
+        <label>Productos del pedido *</label>
+        <input type="text" id="orderProductSearch" placeholder="Buscar producto..." style="margin-bottom:10px;">
+        <div class="order-product-picker" id="orderProductPicker"></div>
+      </div>
+      <div class="field" id="orderSelectedItemsWrap" style="display:none;">
+        <label>Resumen del pedido</label>
+        <div class="order-selected-items" id="orderSelectedItems"></div>
+      </div>
+      <div class="field">
+        <label>Notas adicionales <span style="opacity:0.5; font-weight:400;">(opcional)</span></label>
+        <textarea id="orderDetail" rows="2" placeholder="Ej: sin cebolla, envolver para regalo"></textarea>
       </div>
       <div class="field-row">
         <div class="field">
-          <label>Total (CLP) *</label>
-          <input type="number" id="orderTotal" required min="0" step="1" placeholder="Ej: 24990">
+          <label>Costo de envío (CLP)</label>
+          <input type="number" id="orderShippingCost" min="0" step="1" value="0">
         </div>
         <div class="field">
           <label>Método de envío</label>
@@ -839,6 +870,11 @@
           </select>
         </div>
       </div>
+      <div class="order-total-row" id="orderTotalRow">
+        <span>Total del pedido</span>
+        <span id="orderTotalDisplay">$0</span>
+      </div>
+
       <div class="field">
         <label>Documento tributario</label>
         <div class="doc-type-toggle" id="orderDocTypeToggle">
@@ -1392,14 +1428,102 @@
     });
   });
 
+  // ---------- Selector de productos con contador (pedido manual) ----------
+  let orderSelectedItems = {}; // { [productId]: {id, name, price, image_url, qty} }
+  let orderProductSearchTerm = '';
+
+  function renderOrderProductPicker(){
+    const container = document.getElementById('orderProductPicker');
+    const term = orderProductSearchTerm.trim().toLowerCase();
+    const filtered = (currentProducts || []).filter(p => !term || p.name.toLowerCase().includes(term));
+
+    if (filtered.length === 0){
+      container.innerHTML = '<div class="order-empty-search">No hay productos que coincidan.</div>';
+      return;
+    }
+
+    container.innerHTML = filtered.map(p => {
+      const qty = orderSelectedItems[p.id] ? orderSelectedItems[p.id].qty : 0;
+      return `
+        <div class="order-product-row">
+          ${p.image_url ? `<img src="${p.image_url}" alt="">` : '<div style="width:34px;height:34px;border-radius:5px;background:var(--linen);flex-shrink:0;"></div>'}
+          <div class="order-product-name">${escapeAttr(p.name)}${!p.active ? '<span class="hidden-tag">(oculto)</span>' : ''}</div>
+          <div class="order-product-price">${new Intl.NumberFormat('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits:0 }).format(p.price || 0)}</div>
+          <div class="order-qty-stepper">
+            <button type="button" onclick="orderChangeQty('${p.id}', -1)">−</button>
+            <span>${qty}</span>
+            <button type="button" onclick="orderChangeQty('${p.id}', 1)">+</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  window.orderChangeQty = function(productId, delta){
+    const product = (currentProducts || []).find(p => p.id === productId);
+    if (!product) return;
+
+    const current = orderSelectedItems[productId] ? orderSelectedItems[productId].qty : 0;
+    const next = Math.max(0, current + delta);
+
+    if (next === 0){
+      delete orderSelectedItems[productId];
+    } else {
+      orderSelectedItems[productId] = {
+        id: product.id, name: product.name, price: product.price || 0,
+        image_url: product.image_url || null, qty: next
+      };
+    }
+    renderOrderProductPicker();
+    renderOrderSelectedItems();
+  };
+
+  function renderOrderSelectedItems(){
+    const items = Object.values(orderSelectedItems);
+    const wrap = document.getElementById('orderSelectedItemsWrap');
+    const container = document.getElementById('orderSelectedItems');
+
+    wrap.style.display = items.length > 0 ? 'block' : 'none';
+    container.innerHTML = items.map(i => `
+      <div class="order-selected-row">
+        <span class="name">${i.qty}× ${escapeAttr(i.name)}</span>
+        <span>${new Intl.NumberFormat('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits:0 }).format(i.price * i.qty)}</span>
+        <button type="button" class="remove-item" onclick="orderChangeQty('${i.id}', -${i.qty})" title="Quitar">✕</button>
+      </div>
+    `).join('');
+
+    updateOrderTotalDisplay();
+  }
+
+  function orderSubtotal(){
+    return Object.values(orderSelectedItems).reduce((s, i) => s + i.price * i.qty, 0);
+  }
+
+  function updateOrderTotalDisplay(){
+    const shippingCost = parseFloat(document.getElementById('orderShippingCost').value) || 0;
+    const total = orderSubtotal() + shippingCost;
+    document.getElementById('orderTotalDisplay').textContent = new Intl.NumberFormat('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits:0 }).format(total);
+  }
+
+  document.getElementById('orderProductSearch').addEventListener('input', (e) => {
+    orderProductSearchTerm = e.target.value;
+    renderOrderProductPicker();
+  });
+  document.getElementById('orderShippingCost').addEventListener('input', updateOrderTotalDisplay);
+
   function resetOrderForm(){
     orderForm.reset();
     orderFormError.style.display = 'none';
     document.getElementById('orderSendEmail').checked = true;
+    document.getElementById('orderShippingCost').value = 0;
     orderDocType = 'boleta';
     document.querySelectorAll('#orderDocTypeToggle .doc-type-btn').forEach(b => b.classList.toggle('active', b.dataset.doc === 'boleta'));
     document.getElementById('orderFacturaFields').style.display = 'none';
     document.getElementById('orderFacturaGiroField').style.display = 'none';
+    orderSelectedItems = {};
+    orderProductSearchTerm = '';
+    renderOrderProductPicker();
+    renderOrderSelectedItems();
   }
 
   document.getElementById('newOrderBtn').addEventListener('click', () => {
@@ -1419,7 +1543,14 @@
     saveBtn.textContent = 'Guardando...';
 
     try {
-      const total = parseFloat(document.getElementById('orderTotal').value) || 0;
+      const items = Object.values(orderSelectedItems);
+      if (items.length === 0){
+        throw new Error('Selecciona al menos un producto para el pedido.');
+      }
+
+      const subtotal = orderSubtotal();
+      const shippingCost = parseFloat(document.getElementById('orderShippingCost').value) || 0;
+      const total = subtotal + shippingCost;
       const sendEmail = document.getElementById('orderSendEmail').checked;
 
       let billingRut = null, billingBusinessName = null, billingGiro = null;
@@ -1446,10 +1577,11 @@
         shipping_comuna: document.getElementById('orderCustComuna').value.trim() || null,
         shipping_region: document.getElementById('orderCustRegion').value || null,
         shipping_method: document.getElementById('orderShippingMethod').value || null,
-        notes: document.getElementById('orderDetail').value.trim(),
-        subtotal: total,
-        shipping_cost: 0,
-        total: total,
+        notes: document.getElementById('orderDetail').value.trim() || null,
+        items,
+        subtotal,
+        shipping_cost: shippingCost,
+        total,
         document_type: orderDocType,
         billing_rut: billingRut,
         billing_business_name: billingBusinessName,
