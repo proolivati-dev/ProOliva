@@ -308,13 +308,26 @@
     border:1.5px solid var(--line); border-radius:6px; padding:9px 12px; font-size:13px; flex:1; max-width:240px;
     background:#fff; color:var(--ink); outline:none;
   }
-  .live-history{ flex-shrink:0; margin-top:12px; max-height:150px; overflow-y:auto; background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:14px 16px;}
+  .live-history{ flex-shrink:0; margin-top:12px; max-height:320px; overflow-y:auto; background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:14px 16px;}
   .live-history h3{ font-size:11.5px; text-transform:uppercase; letter-spacing:0.05em; color:var(--gold-deep); font-family:'IBM Plex Mono',monospace; margin-bottom:8px;}
-  .live-history-row{ display:flex; justify-content:space-between; gap:10px; padding:6px 0; border-bottom:1px solid var(--line); font-size:12.5px;}
+  .live-history-day{ font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--olive-deep); background:var(--linen); padding:5px 10px; border-radius:5px; margin:10px 0 6px;}
+  .live-history-day:first-child{ margin-top:0;}
+  .live-history-row{ display:flex; align-items:flex-start; gap:10px; padding:8px 0; border-bottom:1px solid var(--line); font-size:12.5px;}
   .live-history-row:last-child{ border-bottom:none;}
-  .live-history-name{ font-weight:600;}
-  .live-history-time, .live-history-by{ opacity:0.6; font-family:'IBM Plex Mono',monospace; font-size:11.5px;}
+  .live-history-thumbs{ display:flex; gap:3px; flex-shrink:0;}
+  .live-history-thumbs img{ width:26px; height:26px; border-radius:5px; object-fit:cover; background:var(--linen); border:1px solid var(--paper);}
+  .live-history-main{ flex:1; min-width:0;}
+  .live-history-name{ font-weight:700; display:block;}
+  .live-history-items{ font-size:11px; opacity:0.6; display:block; margin-top:1px;}
+  .live-history-side{ text-align:right; flex-shrink:0; font-size:11px;}
+  .live-history-time, .live-history-by{ opacity:0.6; font-family:'IBM Plex Mono',monospace; font-size:11px; display:block;}
   .live-history-empty{ font-size:12px; opacity:0.5;}
+  .despacho-route-result{ background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:16px; margin-top:14px;}
+  .despacho-route-summary{ display:flex; gap:20px; flex-wrap:wrap; font-size:13px; font-weight:600; margin-bottom:12px;}
+  .despacho-route-summary b{ color:var(--olive-deep); font-family:'Archivo',sans-serif; font-size:15px;}
+  #despachoRouteMap{ width:100%; height:280px; border-radius:8px; overflow:hidden; background:var(--linen); margin-bottom:12px;}
+  .despacho-route-stops{ font-size:12.5px; padding-left:20px; margin-bottom:6px;}
+  .despacho-route-stops li{ padding:4px 0;}
 
   @media (max-width:1100px){
     .live-orders-grid{ grid-template-columns:repeat(2,1fr); grid-template-rows:repeat(4,1fr);}
@@ -766,6 +779,7 @@
         <div class="live-overflow-strip" id="liveOverflowStrip"></div>
 
         <div class="live-batch-bar">
+          <input type="text" id="livePreparerName" placeholder="Nombre de quién prepara">
           <span id="livePrepareCount">0 seleccionados</span>
           <button class="btn btn-primary" id="livePrepareBtn" disabled style="width:auto;">Marcar preparados</button>
         </div>
@@ -807,12 +821,24 @@
         </div>
 
         <div class="live-batch-bar">
-          <input type="text" id="despachoDispatcherName" placeholder="Nombre de quién despacha">
+          <input type="text" id="despachoDispatcherName" placeholder="Nombre del repartidor">
           <span id="despachoSelectCount">0 seleccionados</span>
-          <button class="btn btn-primary" id="despachoDispatchBtn" disabled style="width:auto;">Despachar</button>
+          <button class="btn btn-outline" id="despachoCalcRouteBtn" style="width:auto;">📍 Calcular ruta óptima</button>
         </div>
+
+        <div class="despacho-route-result" id="despachoRouteResult" style="display:none;">
+          <div class="despacho-route-summary" id="despachoRouteSummary"></div>
+          <div id="despachoRouteMap"></div>
+          <ol class="despacho-route-stops" id="despachoRouteStops"></ol>
+          <label class="field-check" style="margin:12px 0;">
+            <input type="checkbox" id="despachoNotifyCustomers" checked> Notificar a los clientes que su pedido está en reparto
+          </label>
+          <button class="btn btn-primary" id="despachoDispatchBtn" style="width:auto;">Confirmar despacho</button>
+          <div class="error-msg" id="despachoRouteError" style="display:none;"></div>
+        </div>
+
         <div class="live-history">
-          <h3>Nómina de despachos</h3>
+          <h3>Historial de repartos</h3>
           <div id="despachoHistory"></div>
         </div>
       </div>
@@ -869,6 +895,15 @@
           <label class="field-check">
             <input type="checkbox" id="cfgLocalEnabled"> Envío local
           </label>
+        </div>
+
+        <div class="panel config-panel">
+          <h3>Rutas de reparto</h3>
+          <div class="field">
+            <label>Dirección de origen (bodega/local)</label>
+            <input type="text" id="cfgDispatchOrigin" placeholder="Ej: Av. Libertad 1348, Viña del Mar">
+          </div>
+          <p class="hint">Desde acá parte y hacia acá vuelve la ruta óptima que se calcula en la pestaña Despacho.</p>
         </div>
       </div>
 
@@ -1161,6 +1196,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<!-- TODO: reemplaza TU_API_KEY_AQUI por tu propia API Key de Google Maps (Directions + Maps JavaScript API habilitadas) -->
+<script src="https://maps.googleapis.com/maps/api/js?key=TU_API_KEY_AQUI"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script src="supabase-config.js"></script>
@@ -3001,15 +3038,21 @@
 
   function updateLivePrepareBar(){
     document.getElementById('livePrepareCount').textContent = `${liveSelectedIds.size} seleccionado${liveSelectedIds.size === 1 ? '' : 's'}`;
-    document.getElementById('livePrepareBtn').disabled = liveSelectedIds.size === 0;
+    const name = document.getElementById('livePreparerName').value.trim();
+    document.getElementById('livePrepareBtn').disabled = liveSelectedIds.size === 0 || !name;
   }
 
+  document.getElementById('livePreparerName').addEventListener('input', updateLivePrepareBar);
+
   document.getElementById('livePrepareBtn').addEventListener('click', async () => {
-    if (liveSelectedIds.size === 0) return;
-    if (!confirm(`¿Marcar ${liveSelectedIds.size} pedido${liveSelectedIds.size === 1 ? '' : 's'} como preparado${liveSelectedIds.size === 1 ? '' : 's'}?`)) return;
+    const name = document.getElementById('livePreparerName').value.trim();
+    if (liveSelectedIds.size === 0 || !name) return;
+    if (!confirm(`¿Marcar ${liveSelectedIds.size} pedido${liveSelectedIds.size === 1 ? '' : 's'} como preparado${liveSelectedIds.size === 1 ? '' : 's'} a nombre de ${name}?`)) return;
 
     const ids = [...liveSelectedIds];
-    const { error } = await supabaseClient.from('orders').update({ ready: true, ready_at: new Date().toISOString() }).in('id', ids);
+    const { error } = await supabaseClient.from('orders').update({
+      ready: true, ready_at: new Date().toISOString(), prepared_by: name
+    }).in('id', ids);
     if (error){
       alert('No se pudo marcar como preparado.');
       console.error(error);
@@ -3020,18 +3063,60 @@
     loadLivePrepareHistory();
   });
 
+  // Agrupa filas de historial por día calendario, usando el campo de fecha indicado.
+  // Devuelve [{ dayLabel, rows }] — asume que 'rows' ya viene ordenado desc por esa fecha.
+  function groupHistoryByDay(rows, dateField){
+    const groups = [];
+    let currentKey = null;
+    rows.forEach(row => {
+      const d = new Date(row[dateField]);
+      const key = d.toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long' });
+      if (key !== currentKey){
+        groups.push({ dayLabel: key, rows: [] });
+        currentKey = key;
+      }
+      groups[groups.length - 1].rows.push(row);
+    });
+    return groups;
+  }
+
+  function historyItemThumbs(o){
+    if (!Array.isArray(o.items) || o.items.length === 0) return '';
+    return `<div class="live-history-thumbs">${o.items.slice(0, 4).map(i =>
+      i.image_url ? `<img src="${i.image_url}" alt="" title="${escapeAttr(i.name)}">` : '<div style="width:26px;height:26px;border-radius:5px;background:var(--linen);"></div>'
+    ).join('')}</div>`;
+  }
+
+  function historyItemsSummary(o){
+    if (Array.isArray(o.items) && o.items.length > 0){
+      return o.items.map(i => `${i.qty}× ${escapeAttr(i.name)}`).join(', ');
+    }
+    return o.notes ? escapeAttr(o.notes) : 'Sin detalle';
+  }
+
   async function loadLivePrepareHistory(){
     const container = document.getElementById('livePrepareHistory');
-    const { data, error } = await supabaseClient.from('orders').select('*').eq('ready', true).order('ready_at', { ascending: false }).limit(10);
+    const { data, error } = await supabaseClient.from('orders').select('*').eq('ready', true).order('ready_at', { ascending: false }).limit(40);
     if (error || !data || data.length === 0){
       container.innerHTML = '<p class="live-history-empty">Todavía no hay pedidos preparados.</p>';
       return;
     }
-    container.innerHTML = data.map(o => `
-      <div class="live-history-row">
-        <span class="live-history-name">${escapeAttr(o.customer_name || 'Cliente')}</span>
-        <span class="live-history-time">${o.ready_at ? new Date(o.ready_at).toLocaleString('es-CL', { dateStyle: 'short', timeStyle: 'short' }) : '—'}</span>
-      </div>
+    const groups = groupHistoryByDay(data, 'ready_at');
+    container.innerHTML = groups.map(g => `
+      <div class="live-history-day">${g.dayLabel}</div>
+      ${g.rows.map(o => `
+        <div class="live-history-row">
+          ${historyItemThumbs(o)}
+          <div class="live-history-main">
+            <span class="live-history-name">${escapeAttr(o.customer_name || 'Cliente')}</span>
+            <span class="live-history-items">${historyItemsSummary(o)}</span>
+          </div>
+          <div class="live-history-side">
+            <span class="live-history-by">${o.prepared_by ? escapeAttr(o.prepared_by) : '—'}</span>
+            <span class="live-history-time">${o.ready_at ? new Date(o.ready_at).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', hour12: false }) : '—'}</span>
+          </div>
+        </div>
+      `).join('')}
     `).join('');
   }
 
@@ -3198,46 +3283,178 @@
     updateDespachoBar();
   };
 
+  let computedRoute = null;
+  let despachoMap = null;
+  let despachoRenderer = null;
+
   function updateDespachoBar(){
     document.getElementById('despachoSelectCount').textContent = `${despachoSelectedIds.size} seleccionado${despachoSelectedIds.size === 1 ? '' : 's'}`;
-    const name = document.getElementById('despachoDispatcherName').value.trim();
-    document.getElementById('despachoDispatchBtn').disabled = despachoSelectedIds.size === 0 || !name;
+    // Cualquier cambio en la selección invalida una ruta ya calculada
+    document.getElementById('despachoRouteResult').style.display = 'none';
+    computedRoute = null;
   }
 
   document.getElementById('despachoDispatcherName').addEventListener('input', updateDespachoBar);
 
-  document.getElementById('despachoDispatchBtn').addEventListener('click', async () => {
-    const name = document.getElementById('despachoDispatcherName').value.trim();
-    if (despachoSelectedIds.size === 0 || !name) return;
-    if (!confirm(`¿Despachar ${despachoSelectedIds.size} pedido${despachoSelectedIds.size === 1 ? '' : 's'} a nombre de ${name}?`)) return;
+  document.getElementById('despachoCalcRouteBtn').addEventListener('click', async () => {
+    const errorEl = document.getElementById('despachoRouteError');
+    errorEl.style.display = 'none';
 
-    const ids = [...despachoSelectedIds];
-    const { error } = await supabaseClient.from('orders').update({
-      dispatched: true, dispatched_at: new Date().toISOString(), dispatched_by: name
-    }).in('id', ids);
-    if (error){
-      alert('No se pudo despachar.');
-      console.error(error);
+    if (despachoSelectedIds.size === 0){
+      alert('Selecciona al menos un pedido para calcular la ruta.');
       return;
     }
-    despachoSelectedIds.clear();
-    loadDespachoOrders();
-    loadDespachoHistory();
+    if (despachoSelectedIds.size > 23){
+      alert('Google Maps permite máximo 23 paradas por ruta — selecciona menos pedidos, o arma dos repartos.');
+      return;
+    }
+    if (typeof google === 'undefined' || !google.maps){
+      errorEl.textContent = 'Google Maps no cargó — revisa que la API Key esté bien configurada en admin.html.';
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    const { data: settings } = await supabaseClient.from('shipping_settings').select('dispatch_origin_address').eq('id', 1).single();
+    const origin = settings?.dispatch_origin_address;
+    if (!origin){
+      errorEl.textContent = 'Configura la "Dirección de origen" en la pestaña Configuración antes de calcular rutas.';
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    const selectedOrders = despachoOrders.filter(o => despachoSelectedIds.has(o.id));
+    const waypoints = selectedOrders.map(o => ({
+      location: [o.shipping_address, o.shipping_comuna, o.shipping_region, 'Chile'].filter(Boolean).join(', '),
+      stopover: true
+    }));
+
+    const btn = document.getElementById('despachoCalcRouteBtn');
+    btn.disabled = true;
+    btn.textContent = 'Calculando...';
+
+    const directionsService = new google.maps.DirectionsService();
+    directionsService.route({
+      origin,
+      destination: origin,
+      waypoints,
+      optimizeWaypoints: true,
+      travelMode: google.maps.TravelMode.DRIVING
+    }, (result, status) => {
+      btn.disabled = false;
+      btn.textContent = '📍 Calcular ruta óptima';
+
+      if (status !== 'OK'){
+        errorEl.textContent = 'No se pudo calcular la ruta (' + status + '). Revisa que las direcciones estén completas.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      const route = result.routes[0];
+      const optimalOrder = route.waypoint_order;
+      const orderedOrders = optimalOrder.map(i => selectedOrders[i]);
+
+      let totalMeters = 0, totalSeconds = 0;
+      route.legs.forEach(leg => { totalMeters += leg.distance.value; totalSeconds += leg.duration.value; });
+
+      computedRoute = {
+        orderedOrderIds: orderedOrders.map(o => o.id),
+        distanceKm: Math.round(totalMeters / 100) / 10,
+        durationMin: Math.round(totalSeconds / 60)
+      };
+
+      document.getElementById('despachoRouteSummary').innerHTML = `
+        <span>Distancia total: <b>${computedRoute.distanceKm} km</b></span>
+        <span>Tiempo estimado: <b>${computedRoute.durationMin} min</b></span>
+        <span>Paradas: <b>${orderedOrders.length}</b></span>
+      `;
+
+      if (!despachoMap){
+        despachoMap = new google.maps.Map(document.getElementById('despachoRouteMap'), { zoom: 12 });
+        despachoRenderer = new google.maps.DirectionsRenderer();
+        despachoRenderer.setMap(despachoMap);
+      }
+      despachoRenderer.setDirections(result);
+
+      document.getElementById('despachoRouteStops').innerHTML = orderedOrders.map((o, i) => `
+        <li><b>${i + 1}. ${escapeAttr(o.customer_name || 'Cliente')}</b> — ${escapeAttr([o.shipping_address, o.shipping_comuna].filter(Boolean).join(', '))}</li>
+      `).join('');
+
+      document.getElementById('despachoRouteResult').style.display = 'block';
+    });
+  });
+
+  document.getElementById('despachoDispatchBtn').addEventListener('click', async () => {
+    const name = document.getElementById('despachoDispatcherName').value.trim();
+    if (!name){
+      alert('Escribe el nombre del repartidor.');
+      return;
+    }
+    if (!computedRoute){
+      alert('Primero calcula la ruta óptima.');
+      return;
+    }
+    if (!confirm(`¿Confirmar el despacho de ${computedRoute.orderedOrderIds.length} pedido(s) con ${name}?`)) return;
+
+    const btn = document.getElementById('despachoDispatchBtn');
+    const errorEl = document.getElementById('despachoRouteError');
+    errorEl.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Guardando...';
+
+    try {
+      const notify = document.getElementById('despachoNotifyCustomers').checked;
+
+      const { data: run, error: runError } = await supabaseClient.from('dispatch_runs').insert({
+        repartidor: name,
+        departed_at: new Date().toISOString(),
+        notified_customers: notify,
+        route_distance_km: computedRoute.distanceKm,
+        route_duration_min: computedRoute.durationMin,
+        route_order: computedRoute.orderedOrderIds
+      }).select().single();
+      if (runError) throw runError;
+
+      const { error: updateError } = await supabaseClient.from('orders').update({
+        dispatched: true, dispatched_at: new Date().toISOString(), dispatched_by: name, dispatch_run_id: run.id
+      }).in('id', computedRoute.orderedOrderIds);
+      if (updateError) throw updateError;
+
+      if (notify){
+        callEdgeFunction('notify-out-for-delivery', { orderIds: computedRoute.orderedOrderIds })
+          .catch(err => console.error('No se pudo notificar a los clientes:', err));
+      }
+
+      window.location.href = `reparto.html?id=${run.id}`;
+    } catch (err){
+      errorEl.textContent = 'No se pudo confirmar el despacho: ' + err.message;
+      errorEl.style.display = 'block';
+      console.error(err);
+      btn.disabled = false;
+      btn.textContent = 'Confirmar despacho';
+    }
   });
 
   async function loadDespachoHistory(){
     const container = document.getElementById('despachoHistory');
-    const { data, error } = await supabaseClient.from('orders').select('*').eq('dispatched', true).order('dispatched_at', { ascending: false }).limit(10);
+    const { data, error } = await supabaseClient.from('dispatch_runs').select('*').order('departed_at', { ascending: false }).limit(20);
     if (error || !data || data.length === 0){
-      container.innerHTML = '<p class="live-history-empty">Todavía no hay despachos registrados.</p>';
+      container.innerHTML = '<p class="live-history-empty">Todavía no hay repartos registrados.</p>';
       return;
     }
-    container.innerHTML = data.map(o => `
-      <div class="live-history-row">
-        <span class="live-history-name">${escapeAttr(o.customer_name || 'Cliente')}</span>
-        <span class="live-history-by">${o.dispatched_by ? escapeAttr(o.dispatched_by) : '—'}</span>
-        <span class="live-history-time">${o.dispatched_at ? new Date(o.dispatched_at).toLocaleString('es-CL', { dateStyle: 'short', timeStyle: 'short' }) : '—'}</span>
-      </div>
+    const groups = groupHistoryByDay(data, 'departed_at');
+    container.innerHTML = groups.map(g => `
+      <div class="live-history-day">${g.dayLabel}</div>
+      ${g.rows.map(run => `
+        <a href="reparto.html?id=${run.id}" class="live-history-row" style="text-decoration:none; color:inherit; cursor:pointer;">
+          <div class="live-history-main">
+            <span class="live-history-name">${escapeAttr(run.repartidor)}</span>
+            <span class="live-history-items">${Array.isArray(run.route_order) ? run.route_order.length : 0} parada(s)${run.route_distance_km ? ' · ' + run.route_distance_km + ' km' : ''}</span>
+          </div>
+          <div class="live-history-side">
+            <span class="live-history-time">${run.departed_at ? new Date(run.departed_at).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', hour12: false }) : '—'}</span>
+          </div>
+        </a>
+      `).join('')}
     `).join('');
   }
 
@@ -3476,6 +3693,7 @@
     document.getElementById('cfgChilexpressEnabled').checked = data.chilexpress_enabled;
     document.getElementById('cfgBlueExpressEnabled').checked = data.blue_express_enabled;
     document.getElementById('cfgLocalEnabled').checked = data.local_enabled;
+    document.getElementById('cfgDispatchOrigin').value = data.dispatch_origin_address || '';
   }
 
   document.getElementById('saveShippingConfigBtn').addEventListener('click', async () => {
@@ -3491,6 +3709,7 @@
         chilexpress_enabled: document.getElementById('cfgChilexpressEnabled').checked,
         blue_express_enabled: document.getElementById('cfgBlueExpressEnabled').checked,
         local_enabled: document.getElementById('cfgLocalEnabled').checked,
+        dispatch_origin_address: document.getElementById('cfgDispatchOrigin').value.trim() || null,
         updated_at: new Date().toISOString()
       }).eq('id', 1);
       if (error) throw error;

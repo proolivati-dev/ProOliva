@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Reparto — ProOliva Admin</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#20281a; --olive:#55643b; --olive-deep:#3a4527; --olive-light:#8a9a66;
+    --gold:#c89b3c; --gold-deep:#9c7326; --linen:#f3eee0; --paper:#fbf9f2; --line:rgba(32,40,26,0.14);
+    --danger:#a3392f;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html{ background:var(--linen); -webkit-text-size-adjust:100%; text-size-adjust:100%;}
+  body{ font-family:'Public Sans', sans-serif; background:var(--linen); color:var(--ink); line-height:1.5; -webkit-font-smoothing:antialiased;}
+  a{ color:inherit; }
+  button, input{ font-family:'Public Sans', sans-serif; }
+
+  .admin-header{ background:var(--ink); color:var(--paper); padding:16px 0; padding-top:calc(16px + env(safe-area-inset-top));}
+  .admin-header .wrap{ max-width:1100px; margin:0 auto; padding:0 28px; display:flex; align-items:center; justify-content:space-between;}
+  .admin-header .brand{ display:flex; align-items:center; gap:10px; font-family:'Archivo',sans-serif; font-weight:700; font-size:16px;}
+  .admin-header .brand img{ height:30px;}
+  .back-link{ font-size:13.5px; font-weight:600; display:flex; align-items:center; gap:6px; opacity:0.85;}
+  .back-link:hover{ opacity:1;}
+
+  .admin-body{ max-width:1100px; margin:0 auto; padding:32px 28px 80px;}
+
+  .run-hero{ display:flex; align-items:flex-start; justify-content:space-between; gap:20px; flex-wrap:wrap; margin-bottom:24px;}
+  .run-hero h1{ font-family:'Archivo',sans-serif; font-size:24px; margin-bottom:6px;}
+  .run-hero .meta{ font-size:13px; opacity:0.6;}
+  .run-summary{ display:flex; gap:24px; flex-wrap:wrap;}
+  .run-summary-item{ background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:14px 20px; text-align:center;}
+  .run-summary-item .val{ font-family:'Archivo',sans-serif; font-weight:700; font-size:20px; color:var(--olive-deep); display:block;}
+  .run-summary-item .lbl{ font-size:11px; text-transform:uppercase; letter-spacing:0.04em; opacity:0.6;}
+
+  #routeMap{ width:100%; height:340px; border-radius:12px; overflow:hidden; background:var(--paper); border:1px solid var(--line); margin-bottom:24px;}
+
+  .stop-card{ background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:20px 22px; margin-bottom:16px; display:flex; gap:18px; flex-wrap:wrap;}
+  .stop-num{
+    font-family:'Archivo',sans-serif; font-weight:700; font-size:20px; color:#fff; background:var(--olive-deep);
+    width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .stop-main{ flex:1; min-width:220px;}
+  .stop-name{ font-weight:700; font-size:15.5px; margin-bottom:4px;}
+  .stop-address{ font-size:13.5px; opacity:0.75; margin-bottom:8px;}
+  .stop-items{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px;}
+  .stop-items img{ width:34px; height:34px; border-radius:6px; object-fit:cover; background:var(--linen);}
+  .stop-items span{ font-size:11.5px; opacity:0.6; align-self:center;}
+  .stop-actions{ display:flex; gap:8px; flex-wrap:wrap;}
+  .btn{ display:inline-flex; align-items:center; gap:6px; padding:9px 16px; border-radius:6px; font-size:12.5px; font-weight:700; text-decoration:none; border:1.5px solid var(--line); background:#fff; color:var(--ink);}
+  .btn-wsp{ background:#25D366; border-color:#25D366; color:#fff;}
+  .btn-tel{ background:var(--olive-deep); border-color:var(--olive-deep); color:#fff;}
+
+  .loading-state, .error-state{ text-align:center; padding:80px 20px; opacity:0.65;}
+</style>
+</head>
+<body>
+
+<div class="admin-header">
+  <div class="wrap">
+    <div class="brand"><img src="logo.png" alt="ProOlivas Chile"> Panel de administración</div>
+    <a class="back-link" href="admin.html#despacho">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="#fbf9f2" stroke-width="2" stroke-linecap="round"/></svg>
+      Volver a Despacho
+    </a>
+  </div>
+</div>
+
+<div class="admin-body" id="adminBody">
+  <div class="loading-state" id="loadingState">Cargando reparto...</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<!-- TODO: reemplaza TU_API_KEY_AQUI por tu propia API Key de Google Maps -->
+<script src="https://maps.googleapis.com/maps/api/js?key=TU_API_KEY_AQUI"></script>
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const runId = params.get('id');
+  let run = null;
+  let stops = [];
+
+  async function init(){
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session){
+      window.location.href = 'admin.html';
+      return;
+    }
+    if (!runId){
+      renderError('Falta el ID del reparto en la URL.');
+      return;
+    }
+    await loadRun();
+  }
+
+  async function loadRun(){
+    const { data: runData, error: runError } = await supabaseClient.from('dispatch_runs').select('*').eq('id', runId).single();
+    if (runError || !runData){
+      renderError('No se encontró este reparto.');
+      return;
+    }
+    run = runData;
+
+    const { data: orders, error: ordersError } = await supabaseClient.from('orders').select('*').eq('dispatch_run_id', runId);
+    if (ordersError){
+      renderError('No se pudieron cargar los pedidos de este reparto.');
+      return;
+    }
+
+    // Ordena las paradas según el orden óptimo guardado (route_order)
+    const orderMap = {};
+    (orders || []).forEach(o => { orderMap[o.id] = o; });
+    stops = Array.isArray(run.route_order) ? run.route_order.map(id => orderMap[id]).filter(Boolean) : (orders || []);
+
+    render();
+  }
+
+  function renderError(msg){
+    document.getElementById('adminBody').innerHTML = `<div class="error-state"><h2 style="margin-bottom:10px;">${msg}</h2><a href="admin.html#despacho" class="btn" style="width:auto; display:inline-flex;">Volver a Despacho</a></div>`;
+  }
+
+  function stopItemsHtml(o){
+    if (Array.isArray(o.items) && o.items.length > 0){
+      return `<div class="stop-items">${o.items.slice(0, 6).map(i =>
+        i.image_url ? `<img src="${i.image_url}" alt="" title="${i.qty}x ${i.name}">` : ''
+      ).join('')}<span>${o.items.reduce((s, i) => s + (i.qty || 0), 0)} unidades</span></div>`;
+    }
+    return `<div class="stop-items"><span>${o.notes || 'Sin detalle'}</span></div>`;
+  }
+
+  function render(){
+    document.getElementById('adminBody').innerHTML = `
+      <div class="run-hero">
+        <div>
+          <h1>Reparto — ${run.repartidor}</h1>
+          <div class="meta">Salió el ${new Date(run.departed_at).toLocaleString('es-CL', { dateStyle: 'long', timeStyle: 'short' })}</div>
+        </div>
+        <div class="run-summary">
+          <div class="run-summary-item"><span class="val">${stops.length}</span><span class="lbl">Paradas</span></div>
+          <div class="run-summary-item"><span class="val">${run.route_distance_km || '—'} km</span><span class="lbl">Distancia</span></div>
+          <div class="run-summary-item"><span class="val">${run.route_duration_min || '—'} min</span><span class="lbl">Tiempo est.</span></div>
+        </div>
+      </div>
+
+      <div id="routeMap"></div>
+
+      ${stops.map((o, i) => `
+        <div class="stop-card">
+          <span class="stop-num">${i + 1}</span>
+          <div class="stop-main">
+            <div class="stop-name">${o.customer_name || 'Cliente'}</div>
+            <div class="stop-address">${[o.shipping_address, o.shipping_comuna, o.shipping_region].filter(Boolean).join(', ') || 'Sin dirección'}</div>
+            ${stopItemsHtml(o)}
+            <div class="stop-actions">
+              ${o.customer_phone ? `<a class="btn btn-wsp" href="https://wa.me/${o.customer_phone.replace(/[^0-9]/g, '')}" target="_blank" rel="noopener">💬 WhatsApp</a>` : ''}
+              ${o.customer_phone ? `<a class="btn btn-tel" href="tel:${o.customer_phone.replace(/[^0-9+]/g, '')}">📞 Llamar</a>` : ''}
+            </div>
+          </div>
+        </div>
+      `).join('')}
+    `;
+
+    drawMap();
+  }
+
+  function drawMap(){
+    if (typeof google === 'undefined' || !google.maps || stops.length === 0) return;
+
+    supabaseClient.from('shipping_settings').select('dispatch_origin_address').eq('id', 1).single().then(({ data: settings }) => {
+      const origin = settings?.dispatch_origin_address;
+      if (!origin) return;
+
+      const map = new google.maps.Map(document.getElementById('routeMap'), { zoom: 12 });
+      const renderer = new google.maps.DirectionsRenderer();
+      renderer.setMap(map);
+
+      const directionsService = new google.maps.DirectionsService();
+      directionsService.route({
+        origin,
+        destination: origin,
+        waypoints: stops.map(o => ({
+          location: [o.shipping_address, o.shipping_comuna, o.shipping_region, 'Chile'].filter(Boolean).join(', '),
+          stopover: true
+        })),
+        travelMode: google.maps.TravelMode.DRIVING
+        // Nota: no se vuelve a pedir optimizeWaypoints acá — el orden ya quedó
+        // fijado en route_order al momento de confirmar el despacho.
+      }, (result, status) => {
+        if (status === 'OK') renderer.setDirections(result);
+      });
+    });
+  }
+
+  init();
+</script>
+
+</body>
+</html>
