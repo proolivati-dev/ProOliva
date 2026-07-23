@@ -121,7 +121,16 @@
   .promo-photo-viewport{ position:relative; overflow:hidden; border-radius:14px; box-shadow:0 20px 44px -22px rgba(32,40,26,0.4); height:clamp(260px, 40vw, 540px);}
   .promo-photo-track{ display:flex; width:100%; height:100%; transition:transform .7s cubic-bezier(.65,0,.35,1);}
   .promo-photo-slide{ flex:0 0 100%; width:100%; height:100%; position:relative;}
+  .promo-photo-link{ display:block; width:100%; height:100%; position:relative;}
+  .promo-photo-link.no-link{ cursor:default;}
   .promo-photo-slide img{ width:100%; height:100%; object-fit:cover; display:block; background:var(--ink);}
+  .promo-photo-title{
+    position:absolute; left:0; right:0; bottom:0; padding:60px 36px 60px;
+    background:linear-gradient(0deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 100%);
+    color:#fff; font-family:'Archivo', sans-serif; font-weight:700; font-size:clamp(20px, 3vw, 32px);
+    display:none;
+  }
+  .promo-photo-title.show{ display:block;}
   .promo-photo-nav{ position:absolute; left:0; right:0; bottom:20px; display:flex; justify-content:center; gap:8px; z-index:4;}
   .promo-photo-bar{ width:34px; height:4px; border-radius:2px; background:rgba(255,255,255,0.45); cursor:pointer; transition:background .25s, width .25s; border:none; padding:0;}
   .promo-photo-bar.active{ background:#fff; width:52px;}
@@ -283,13 +292,22 @@
     <div class="promo-photo-viewport">
       <div class="promo-photo-track" id="promoPhotoTrack">
         <div class="promo-photo-slide" data-index="0">
-          <img id="fotopromo1Img" src="fotopromo1.png" alt="Promoción ProOliva">
+          <a id="fotopromo1Link" href="#" class="promo-photo-link" tabindex="-1">
+            <img id="fotopromo1Img" src="fotopromo1.png" alt="Promoción ProOliva">
+            <span class="promo-photo-title" id="fotopromo1Title"></span>
+          </a>
         </div>
         <div class="promo-photo-slide" data-index="1">
-          <img id="fotopromo2Img" src="fotopromo2.png" alt="Promoción ProOliva">
+          <a id="fotopromo2Link" href="#" class="promo-photo-link" tabindex="-1">
+            <img id="fotopromo2Img" src="fotopromo2.png" alt="Promoción ProOliva">
+            <span class="promo-photo-title" id="fotopromo2Title"></span>
+          </a>
         </div>
         <div class="promo-photo-slide" data-index="2">
-          <img id="fotopromo3Img" src="fotopromo3.png" alt="Promoción ProOliva">
+          <a id="fotopromo3Link" href="#" class="promo-photo-link" tabindex="-1">
+            <img id="fotopromo3Img" src="fotopromo3.png" alt="Promoción ProOliva">
+            <span class="promo-photo-title" id="fotopromo3Title"></span>
+          </a>
         </div>
       </div>
       <div class="promo-photo-nav" id="promoPhotoDots"></div>
@@ -300,22 +318,22 @@
 <section id="productos" style="padding-top:0; padding-bottom:0;">
   <div class="wrap">
     <div class="cat-grid">
-      <a class="cat-card" href="productos.html?cat=aceitunas-mesa">
+      <a class="cat-card" id="catMesaLink" href="productos.html?cat=aceitunas-mesa">
         <img id="catMesaImg" src="aceitunasmesa.jpg" alt="Aceitunas de mesa">
-        <span class="cat-label">Aceitunas de mesa</span>
+        <span class="cat-label" id="catMesaLabel">Aceitunas de mesa</span>
       </a>
-      <a class="cat-card" href="productos.html?cat=aceitunas-premium">
+      <a class="cat-card" id="catPremiumLink" href="productos.html?cat=aceitunas-premium">
         <img id="catPremiumImg" src="aceitunaspremium.jpg" alt="Aceitunas premium">
-        <span class="cat-label">Aceitunas premium</span>
+        <span class="cat-label" id="catPremiumLabel">Aceitunas premium</span>
       </a>
       <div class="cat-col-split">
-        <a class="cat-card" href="productos.html?cat=aceitunas-especiales">
+        <a class="cat-card" id="catEspecialesLink" href="productos.html?cat=aceitunas-especiales">
           <img id="catEspecialesImg" src="especiales.jpg" alt="Aceitunas especiales">
-          <span class="cat-label">Especiales</span>
+          <span class="cat-label" id="catEspecialesLabel">Especiales</span>
         </a>
-        <a class="cat-card" href="ventas-mayor.html">
+        <a class="cat-card" id="catPacksLink" href="ventas-mayor.html">
           <img id="catPacksImg" src="packs.jpg" alt="Venta por mayor">
-          <span class="cat-label">Venta por mayor</span>
+          <span class="cat-label" id="catPacksLabel">Venta por mayor</span>
         </a>
       </div>
     </div>
@@ -640,23 +658,54 @@
     }
   })();
 
-  // ---------- Imágenes del sitio subidas desde admin.html (con la foto estática como respaldo) ----------
+  // ---------- Imágenes, títulos y enlaces del Home Editor (admin.html) ----------
   (async () => {
     const slots = [
-      { key: 'fotopromo1', elId: 'fotopromo1Img' },
-      { key: 'fotopromo2', elId: 'fotopromo2Img' },
-      { key: 'fotopromo3', elId: 'fotopromo3Img' },
-      { key: 'aceitunas-mesa', elId: 'catMesaImg' },
-      { key: 'aceitunas-premium', elId: 'catPremiumImg' },
-      { key: 'especiales', elId: 'catEspecialesImg' },
-      { key: 'packs', elId: 'catPacksImg' }
+      { key: 'fotopromo1', imgId: 'fotopromo1Img', linkId: 'fotopromo1Link', titleId: 'fotopromo1Title' },
+      { key: 'fotopromo2', imgId: 'fotopromo2Img', linkId: 'fotopromo2Link', titleId: 'fotopromo2Title' },
+      { key: 'fotopromo3', imgId: 'fotopromo3Img', linkId: 'fotopromo3Link', titleId: 'fotopromo3Title' },
+      { key: 'aceitunas-mesa', imgId: 'catMesaImg', linkId: 'catMesaLink', labelId: 'catMesaLabel' },
+      { key: 'aceitunas-premium', imgId: 'catPremiumImg', linkId: 'catPremiumLink', labelId: 'catPremiumLabel' },
+      { key: 'especiales', imgId: 'catEspecialesImg', linkId: 'catEspecialesLink', labelId: 'catEspecialesLabel' },
+      { key: 'packs', imgId: 'catPacksImg', linkId: 'catPacksLink', labelId: 'catPacksLabel' }
     ];
+
+    const { data: contentRows } = await supabaseClient.from('home_content').select('*');
+    const contentMap = {};
+    (contentRows || []).forEach(row => { contentMap[row.slot_key] = row; });
+
     await Promise.all(slots.map(async (slot) => {
+      // Imagen (con la foto estática como respaldo si no se ha subido nada)
       const { data } = await supabaseClient.storage.from('site-files').list('site-images', { search: slot.key });
       if (data && data.length > 0){
         const { data: urlData } = supabaseClient.storage.from('site-files').getPublicUrl(`site-images/${data[0].name}`);
-        const el = document.getElementById(slot.elId);
-        if (el) el.src = urlData.publicUrl;
+        const imgEl = document.getElementById(slot.imgId);
+        if (imgEl) imgEl.src = urlData.publicUrl;
+      }
+
+      // Título y enlace (si se definieron en el Home Editor)
+      const content = contentMap[slot.key];
+      const linkEl = document.getElementById(slot.linkId);
+
+      if (content && content.link_url){
+        if (linkEl){
+          linkEl.href = content.link_url;
+          linkEl.classList.remove('no-link');
+          linkEl.removeAttribute('tabindex');
+        }
+      } else if (linkEl && linkEl.classList.contains('promo-photo-link')){
+        // Las fotos promo no tienen link por defecto — si no hay uno guardado, no navegan a ningún lado
+        linkEl.addEventListener('click', (e) => e.preventDefault());
+        linkEl.classList.add('no-link');
+      }
+
+      if (content && content.title){
+        if (slot.titleId){
+          const titleEl = document.getElementById(slot.titleId);
+          if (titleEl){ titleEl.textContent = content.title; titleEl.classList.add('show'); }
+        } else if (slot.labelId){
+          document.getElementById(slot.labelId).textContent = content.title;
+        }
       }
     }));
   })();

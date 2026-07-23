@@ -350,7 +350,7 @@
       <button class="tab-btn" data-tab="difusion">Difusión</button>
       <button class="tab-btn" data-tab="analitica">Analítica</button>
       <button class="tab-btn" data-tab="live">LIVE</button>
-      <button class="tab-btn" data-tab="imagenes">Imágenes</button>
+      <button class="tab-btn" data-tab="home-editor">Home Editor</button>
     </div>
 
     <!-- ---------- TAB: PRODUCTOS ---------- -->
@@ -696,12 +696,12 @@
       </div>
     </div>
 
-    <!-- ---------- TAB: IMÁGENES ---------- -->
-    <div class="tab-panel" id="tab-imagenes">
+    <!-- ---------- TAB: HOME EDITOR ---------- -->
+    <div class="tab-panel" id="tab-home-editor">
       <div class="admin-toolbar">
         <div>
-          <h2>Imágenes del sitio</h2>
-          <p>Sube o reemplaza las fotos que se muestran en index.html — quedan guardadas en Supabase, ya no hace falta subirlas directo a GitHub.</p>
+          <h2>Home Editor</h2>
+          <p>Edita las fotos, títulos y enlaces del inicio (index.html) — queda todo guardado en Supabase, ya no hace falta tocar GitHub.</p>
         </div>
       </div>
       <div class="site-images-grid" id="siteImagesGrid"></div>
@@ -1079,7 +1079,7 @@
         clearInterval(liveInterval);
         liveInterval = null;
       }
-      if (btn.dataset.tab === 'imagenes' && !siteImagesLoaded) loadSiteImages();
+      if (btn.dataset.tab === 'home-editor' && !siteImagesLoaded) loadSiteImages();
     });
   });
 
@@ -2861,17 +2861,18 @@
     closeModal(orderModalBackdrop);
   });
 
-  // ---------- Imágenes del sitio (index.html) ----------
+  // ---------- Home Editor (index.html): imagen + título + enlace ----------
   const SITE_IMAGE_SLOTS = [
-    { key: 'fotopromo1', label: 'Foto promo 1', hint: 'Carrusel de promociones, debajo del banner' },
-    { key: 'fotopromo2', label: 'Foto promo 2', hint: 'Carrusel de promociones, debajo del banner' },
-    { key: 'fotopromo3', label: 'Foto promo 3', hint: 'Carrusel de promociones, debajo del banner' },
-    { key: 'aceitunas-mesa', label: 'Aceitunas de mesa', hint: 'Tarjeta de categoría en el inicio' },
-    { key: 'aceitunas-premium', label: 'Aceitunas premium', hint: 'Tarjeta de categoría en el inicio' },
-    { key: 'especiales', label: 'Especiales', hint: 'Tarjeta de categoría en el inicio' },
-    { key: 'packs', label: 'Venta por mayor', hint: 'Tarjeta de categoría — enlaza a ventas-mayor.html' }
+    { key: 'fotopromo1', label: 'Foto promo 1', hint: 'Carrusel de promociones, debajo del banner', size: '1920 × 1080 px (16:9)' },
+    { key: 'fotopromo2', label: 'Foto promo 2', hint: 'Carrusel de promociones, debajo del banner', size: '1920 × 1080 px (16:9)' },
+    { key: 'fotopromo3', label: 'Foto promo 3', hint: 'Carrusel de promociones, debajo del banner', size: '1920 × 1080 px (16:9)' },
+    { key: 'aceitunas-mesa', label: 'Aceitunas de mesa', hint: 'Tarjeta de categoría en el inicio', size: '700 × 1000 px (vertical)' },
+    { key: 'aceitunas-premium', label: 'Aceitunas premium', hint: 'Tarjeta de categoría en el inicio', size: '900 × 950 px (casi cuadrada)' },
+    { key: 'especiales', label: 'Especiales', hint: 'Tarjeta de categoría en el inicio', size: '700 × 500 px (horizontal)' },
+    { key: 'packs', label: 'Venta por mayor', hint: 'Tarjeta de categoría — enlaza a ventas-mayor.html por defecto', size: '700 × 500 px (horizontal)' }
   ];
   let siteImagesLoaded = false;
+  let homeContentMap = {};
 
   function renderSiteImagesGrid(){
     const grid = document.getElementById('siteImagesGrid');
@@ -2881,12 +2882,24 @@
         <p class="hint">${slot.hint}</p>
         <div class="site-image-preview" id="siteImgPreview-${slot.key}"><span>Cargando...</span></div>
         <input type="file" accept="image/*" id="siteImgFile-${slot.key}">
+        <p class="hint" style="margin-top:6px; margin-bottom:0;">Tamaño recomendado: ${slot.size}</p>
         <div class="site-image-status" id="siteImgStatus-${slot.key}"></div>
+
+        <div class="field" style="margin-top:14px;">
+          <label>Título sobre la imagen <span style="opacity:0.5; font-weight:400;">(opcional)</span></label>
+          <input type="text" id="siteImgTitle-${slot.key}" placeholder="Ej: 20% de descuento esta semana">
+        </div>
+        <div class="field">
+          <label>Enlace al hacer clic <span style="opacity:0.5; font-weight:400;">(opcional)</span></label>
+          <input type="text" id="siteImgLink-${slot.key}" placeholder="Ej: productos.html?cat=ofertas">
+        </div>
+        <button type="button" class="btn btn-outline" id="siteImgSaveMeta-${slot.key}">Guardar título y enlace</button>
       </div>
     `).join('');
 
     SITE_IMAGE_SLOTS.forEach(slot => {
       document.getElementById(`siteImgFile-${slot.key}`).addEventListener('change', () => uploadSiteImage(slot.key));
+      document.getElementById(`siteImgSaveMeta-${slot.key}`).addEventListener('click', () => saveSiteImageMeta(slot.key));
     });
   }
 
@@ -2900,11 +2913,54 @@
   async function loadSiteImages(){
     renderSiteImagesGrid();
     siteImagesLoaded = true;
+
+    const { data: contentRows, error: contentError } = await supabaseClient.from('home_content').select('*');
+    if (!contentError && contentRows){
+      homeContentMap = {};
+      contentRows.forEach(row => { homeContentMap[row.slot_key] = row; });
+    }
+
+    SITE_IMAGE_SLOTS.forEach(slot => {
+      const content = homeContentMap[slot.key];
+      if (content){
+        document.getElementById(`siteImgTitle-${slot.key}`).value = content.title || '';
+        document.getElementById(`siteImgLink-${slot.key}`).value = content.link_url || '';
+      }
+    });
+
     await Promise.all(SITE_IMAGE_SLOTS.map(async (slot) => {
       const url = await getSiteImageUrl(slot.key);
       const preview = document.getElementById(`siteImgPreview-${slot.key}`);
       preview.innerHTML = url ? `<img src="${url}" alt="">` : '<span>Sin imagen</span>';
     }));
+  }
+
+  async function saveSiteImageMeta(key){
+    const statusEl = document.getElementById(`siteImgStatus-${key}`);
+    const btn = document.getElementById(`siteImgSaveMeta-${key}`);
+    const title = document.getElementById(`siteImgTitle-${key}`).value.trim();
+    const linkUrl = document.getElementById(`siteImgLink-${key}`).value.trim();
+
+    btn.disabled = true;
+    btn.textContent = 'Guardando...';
+    try {
+      const { error } = await supabaseClient.from('home_content').upsert({
+        slot_key: key,
+        title: title || null,
+        link_url: linkUrl || null,
+        updated_at: new Date().toISOString()
+      });
+      if (error) throw error;
+      statusEl.textContent = 'Título y enlace guardados ✓';
+      statusEl.className = 'site-image-status ok';
+    } catch (err){
+      statusEl.textContent = 'No se pudo guardar: ' + err.message;
+      statusEl.className = 'site-image-status error';
+      console.error(err);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Guardar título y enlace';
+    }
   }
 
   async function uploadSiteImage(key){
@@ -2932,7 +2988,7 @@
 
       const url = await getSiteImageUrl(key);
       preview.innerHTML = url ? `<img src="${url}" alt="">` : '<span>Sin imagen</span>';
-      statusEl.textContent = 'Guardado ✓';
+      statusEl.textContent = 'Imagen guardada ✓';
       statusEl.className = 'site-image-status ok';
     } catch (err){
       preview.innerHTML = '<span>Error</span>';
