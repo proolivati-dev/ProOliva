@@ -292,6 +292,7 @@
   .despacho-card-header{ display:flex; justify-content:space-between; align-items:baseline; gap:8px; margin-bottom:6px;}
   .despacho-card-name{ font-weight:700; font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .despacho-card-meta{ font-size:10.5px; opacity:0.55; font-family:'IBM Plex Mono',monospace; flex-shrink:0; white-space:nowrap;}
+  .despacho-card-address{ font-size:11.5px; opacity:0.65; margin-bottom:6px;}
   .despacho-card-items{ font-size:12px; opacity:0.75; margin-bottom:10px; line-height:1.4;}
   .despacho-card-dispatch{ display:flex; align-items:center; gap:8px; font-size:12px; font-weight:700; padding-top:8px; border-top:1px solid var(--line); cursor:pointer;}
   .despacho-card-dispatch input{ width:16px; height:16px; cursor:pointer;}
@@ -3347,6 +3348,7 @@
     const itemsText = Array.isArray(o.items) && o.items.length > 0
       ? o.items.map(i => `${i.qty}× ${escapeAttr(i.name)}`).join(', ')
       : (o.notes ? escapeAttr(o.notes) : 'Sin detalle');
+    const address = [o.shipping_address, o.shipping_comuna, o.shipping_region].filter(Boolean).join(', ') || 'Sin dirección registrada';
     const isSelected = despachoSelectedIds.has(o.id);
     return `
       <div class="despacho-card ${isSelected ? 'is-selected' : ''}">
@@ -3354,6 +3356,7 @@
           <span class="despacho-card-name" title="${escapeAttr(o.customer_name || 'Cliente')}">${escapeAttr(o.customer_name || 'Cliente')}</span>
           <span class="despacho-card-meta">hace ${liveAgeLabel(mins)}</span>
         </div>
+        <div class="despacho-card-address">📍 ${escapeAttr(address)}</div>
         <div class="despacho-card-items">${itemsText}</div>
         <label class="despacho-card-dispatch">
           <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="despachoToggleSelect('${o.id}', this.checked, this)"> Seleccionar para despachar
@@ -3485,18 +3488,23 @@
         <span>Paradas: <b>${orderedOrders.length}</b></span>
       `;
 
+      // Importante: mostrar el contenedor ANTES de crear/redibujar el mapa —
+      // si Google Maps se inicializa dentro de un div oculto (display:none),
+      // calcula mal el tamaño y el mapa queda en blanco.
+      document.getElementById('despachoRouteResult').style.display = 'block';
+
       if (!despachoMap){
         despachoMap = new google.maps.Map(document.getElementById('despachoRouteMap'), { zoom: 12 });
         despachoRenderer = new google.maps.DirectionsRenderer();
         despachoRenderer.setMap(despachoMap);
+      } else {
+        google.maps.event.trigger(despachoMap, 'resize');
       }
       despachoRenderer.setDirections(result);
 
       document.getElementById('despachoRouteStops').innerHTML = orderedOrders.map((o, i) => `
         <li><b>${i + 1}. ${escapeAttr(o.customer_name || 'Cliente')}</b> — ${escapeAttr([o.shipping_address, o.shipping_comuna].filter(Boolean).join(', '))}</li>
       `).join('');
-
-      document.getElementById('despachoRouteResult').style.display = 'block';
     });
   });
 
