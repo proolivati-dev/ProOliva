@@ -146,9 +146,7 @@
             </div>
           </div>
 
-          <div class="local-delivery-banner" id="localDeliveryBanner" style="display:none;">
-            🚐 Este pedido se despacha con <b>transporte propio de ProOliva</b> (Viña del Mar / Valparaíso) — sin costo de envío.
-          </div>
+          <div class="local-delivery-banner" id="localDeliveryBanner" style="display:none;"></div>
           <div class="free-shipping-banner" id="freeShippingBanner" style="display:none;">
             🎉 ¡Tu pedido califica para <b>envío gratis</b>!
           </div>
@@ -216,6 +214,7 @@
   let shippingCost = 0;
   let shippingQuoted = false;
   let shippingSettings = null;
+  let freeShippingZones = [];
   let selectedShippingMethod = null;
 
   const LOCAL_DELIVERY_REGION = 'Valparaíso';
@@ -232,9 +231,12 @@
   async function loadShippingSettings(){
     const { data } = await supabaseClient.from('shipping_settings').select('*').eq('id', 1).single();
     shippingSettings = data || {
-      free_shipping_enabled: false, free_shipping_comuna: '', free_shipping_min_amount: 0,
+      free_shipping_enabled: false, local_delivery_fee: 0,
       chilexpress_enabled: true, blue_express_enabled: false, local_enabled: true
     };
+
+    const { data: zones } = await supabaseClient.from('free_shipping_zones').select('*');
+    freeShippingZones = zones || [];
 
     if (!shippingSettings.chilexpress_enabled){
       document.getElementById('quoteShippingBtn').style.display = 'none';
@@ -254,8 +256,9 @@
   }
 
   // Revisa las reglas automáticas de envío con los datos actuales del formulario:
-  // 1) Viña del Mar / Valparaíso → siempre transporte propio, sin costo.
-  // 2) Si no, envío gratis configurado por comuna + monto mínimo.
+  // 1) ¿La comuna tiene envío gratis configurado Y el pedido alcanza su mínimo? → gratis.
+  // 2) Si no, ¿es Viña del Mar/Valparaíso (transporte propio)? → se cobra la tarifa fija configurada (NO es gratis por defecto).
+  // 3) Si no, se cotiza normal con Chilexpress/Blue Express.
   // Devuelve true si alguna regla ya dejó todo listo para pagar (sin necesitar cotizar).
   function evaluateShipping(){
     const freeBanner = document.getElementById('freeShippingBanner');
@@ -263,21 +266,49 @@
     const comuna = document.getElementById('custComuna').value.trim();
     const region = document.getElementById('custRegion').value;
     const subtotal = cartTotal(cart);
+    const normComuna = normalizeText(comuna);
 
     freeBanner.style.display = 'none';
     localBanner.style.display = 'none';
 
-    const isLocalDeliveryZone = comuna && region === LOCAL_DELIVERY_REGION && LOCAL_DELIVERY_COMUNAS.includes(normalizeText(comuna));
+    const isLocalDeliveryZone = comuna && region === LOCAL_DELIVERY_REGION && LOCAL_DELIVERY_COMUNAS.includes(normComuna);
+
+    const freeZone = shippingSettings?.free_shipping_enabled
+      ? freeShippingZones.find(z => normalizeText(z.comuna) === normComuna)
+      : null;
+    const qualifiesFree = comuna && freeZone && subtotal >= (freeZone.min_amount || 0);
+
+    if (qualifiesFree){
+      selectedShippingMethod = isLocalDeliveryZone ? 'local' : selectedShippingMethod;
+      shippingCost = 0;
+      shippingQuoted = true;
+      document.getElementById('shippingValue').textContent = 'Gratis';
+      document.getElementById('shippingQuoteResult').classList.remove('show');
+      document.getElementById('shippingError').style.display = 'none';
+      if (isLocalDeliveryZone){
+        document.getElementById('quoteShippingBtn').style.display = 'none';
+        document.getElementById('quoteBlueExpressBtn').style.display = 'none';
+        localBanner.innerHTML = '🚐 Este pedido se despacha con <b>transporte propio de ProOliva</b> — sin costo de envío.';
+        localBanner.style.display = 'block';
+      } else {
+        freeBanner.style.display = 'block';
+      }
+      updateTotals();
+      document.getElementById('payWebpayBtn').disabled = false;
+      document.getElementById('payMercadoPagoBtn').disabled = false;
+      return true;
+    }
 
     if (isLocalDeliveryZone){
       selectedShippingMethod = 'local';
-      shippingCost = 0;
+      shippingCost = shippingSettings?.local_delivery_fee || 0;
       shippingQuoted = true;
-      document.getElementById('shippingValue').textContent = 'Gratis (transporte propio)';
+      document.getElementById('shippingValue').textContent = formatCLP(shippingCost);
       document.getElementById('shippingQuoteResult').classList.remove('show');
       document.getElementById('shippingError').style.display = 'none';
       document.getElementById('quoteShippingBtn').style.display = 'none';
       document.getElementById('quoteBlueExpressBtn').style.display = 'none';
+      localBanner.innerHTML = `🚐 Este pedido se despacha con <b>transporte propio de ProOliva</b> — costo de envío: ${formatCLP(shippingCost)}.`;
       localBanner.style.display = 'block';
       updateTotals();
       document.getElementById('payWebpayBtn').disabled = false;
@@ -285,28 +316,11 @@
       return true;
     }
 
-    // Fuera de la zona de transporte propio: restaurar los botones de cotización normales
+    // Fuera de la zona de transporte propio y sin envío gratis: restaurar los botones de cotización normales
     if (shippingSettings){
       document.getElementById('quoteShippingBtn').style.display = shippingSettings.chilexpress_enabled ? '' : 'none';
     }
     document.getElementById('quoteBlueExpressBtn').style.display = '';
-
-    if (shippingSettings && shippingSettings.free_shipping_enabled){
-      const matchesComuna = comuna && normalizeText(comuna) === normalizeText(shippingSettings.free_shipping_comuna);
-      const meetsMinimum = subtotal >= (shippingSettings.free_shipping_min_amount || 0);
-      if (matchesComuna && meetsMinimum){
-        shippingCost = 0;
-        shippingQuoted = true;
-        document.getElementById('shippingValue').textContent = 'Gratis';
-        document.getElementById('shippingQuoteResult').classList.remove('show');
-        document.getElementById('shippingError').style.display = 'none';
-        updateTotals();
-        freeBanner.style.display = 'block';
-        document.getElementById('payWebpayBtn').disabled = false;
-        document.getElementById('payMercadoPagoBtn').disabled = false;
-        return true;
-      }
-    }
     return false;
   }
 

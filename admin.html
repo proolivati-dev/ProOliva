@@ -170,6 +170,15 @@
   .site-image-status.error{ color:var(--danger);}
   .config-grid{ display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px; align-items:start;}
   .config-panel h3{ font-size:15px; margin-bottom:16px;}
+  .free-zones-list{ display:flex; flex-direction:column; gap:8px;}
+  .free-zone-row{ display:flex; align-items:center; gap:10px; background:var(--linen); border-radius:8px; padding:9px 12px; font-size:13px;}
+  .free-zone-row .zone-comuna{ font-weight:700; flex:1;}
+  .free-zone-row .zone-min{ opacity:0.7; font-family:'IBM Plex Mono',monospace; font-size:12px;}
+  .free-zone-row .zone-remove{ background:none; border:none; cursor:pointer; color:var(--danger); font-size:16px; line-height:1; padding:2px 4px;}
+  .free-zones-empty{ font-size:12.5px; opacity:0.5; padding:6px 0;}
+  .quote-result{ margin-top:16px; background:var(--linen); border-radius:8px; padding:16px 18px; font-size:13.5px;}
+  .quote-result .qr-row{ display:flex; justify-content:space-between; padding:4px 0;}
+  .quote-result .qr-total{ font-weight:700; font-size:15px; color:var(--olive-deep); border-top:1px solid var(--line); margin-top:6px; padding-top:8px;}
   @media (max-width:900px){ .config-grid{ grid-template-columns:1fr;} }
   .image-preview img{ width:100%; height:100%; object-fit:cover;}
   .image-preview span{ font-size:12.5px; opacity:0.5;}
@@ -477,7 +486,7 @@
       <button class="tab-btn" data-tab="live">Preparación</button>
       <button class="tab-btn" data-tab="despacho">Despacho</button>
       <button class="tab-btn" data-tab="home-editor">Home Editor</button>
-      <button class="tab-btn" data-tab="config">Configuración</button>
+      <button class="tab-btn" data-tab="config">Precio de envío</button>
     </div>
 
     <!-- ---------- TAB: PRODUCTOS ---------- -->
@@ -899,28 +908,32 @@
     <div class="tab-panel" id="tab-config">
       <div class="admin-toolbar">
         <div>
-          <h2>Configuración de envío</h2>
-          <p>Estas reglas se aplican automáticamente en checkout.html — sin tocar código.</p>
+          <h2>Precio de envío</h2>
+          <p>Estas reglas se aplican automáticamente en checkout.html y en el pedido manual — sin tocar código.</p>
         </div>
       </div>
 
       <div class="config-grid">
         <div class="panel config-panel">
-          <h3>Envío gratis</h3>
+          <h3>Comunas con envío gratis</h3>
           <label class="field-check" style="margin-bottom:16px;">
             <input type="checkbox" id="cfgFreeShippingEnabled"> Activar envío gratis por comuna + monto mínimo
           </label>
-          <div class="field-row">
+
+          <div class="free-zones-list" id="freeZonesList"></div>
+
+          <div class="field-row" style="margin-top:14px;">
             <div class="field">
-              <label>Comuna con envío gratis</label>
-              <input type="text" id="cfgFreeShippingComuna" placeholder="Ej: Viña del Mar">
+              <label>Comuna</label>
+              <input type="text" id="newZoneComuna" placeholder="Ej: Viña del Mar">
             </div>
             <div class="field">
-              <label>Monto mínimo de compra (CLP)</label>
-              <input type="number" id="cfgFreeShippingMin" min="0" step="1000">
+              <label>Monto mínimo (CLP)</label>
+              <input type="number" id="newZoneMin" min="0" step="1000" placeholder="Ej: 40000">
             </div>
           </div>
-          <p class="hint">Se compara contra el <b>subtotal de productos</b> (sin contar el envío), y la comuna se compara sin distinguir mayúsculas/tildes.</p>
+          <button type="button" class="btn btn-outline" id="addZoneBtn" style="width:auto;">+ Agregar comuna</button>
+          <p class="hint" style="margin-top:10px;">Se compara contra el <b>subtotal de productos</b> (sin el envío), y la comuna se compara sin distinguir mayúsculas/tildes. Pon el monto en 0 si quieres que esa comuna sea siempre gratis.</p>
         </div>
 
         <div class="panel config-panel">
@@ -938,17 +951,50 @@
         </div>
 
         <div class="panel config-panel">
-          <h3>Rutas de reparto</h3>
+          <h3>Rutas de reparto y envío propio</h3>
           <div class="field">
             <label>Dirección de origen (bodega/local)</label>
             <input type="text" id="cfgDispatchOrigin" placeholder="Ej: Av. Libertad 1348, Viña del Mar">
           </div>
-          <p class="hint">Desde acá parte y hacia acá vuelve la ruta óptima que se calcula en la pestaña Despacho.</p>
+          <div class="field">
+            <label>Tarifa de envío propio cuando NO alcanza el mínimo gratis (CLP)</label>
+            <input type="number" id="cfgLocalDeliveryFee" min="0" step="500" placeholder="Ej: 3000">
+          </div>
+          <p class="hint">Viña del Mar y Valparaíso (Región de Valparaíso) siempre se despachan con transporte propio — esto define cuánto se cobra cuando el pedido no llega al mínimo de la comuna.</p>
         </div>
       </div>
 
       <button class="btn btn-primary" id="saveShippingConfigBtn" style="width:auto;">Guardar configuración</button>
       <div class="site-image-status" id="shippingConfigStatus"></div>
+
+      <div class="panel" style="margin-top:32px;">
+        <h3 style="margin-bottom:4px;">Cotizador de prueba</h3>
+        <p class="hint" style="margin-bottom:16px;">Simula una cotización real — mismo cálculo que ve un cliente en checkout.html.</p>
+
+        <div class="field">
+          <label>Productos</label>
+          <input type="text" id="quoteProductSearch" placeholder="Buscar producto..." style="margin-bottom:10px;">
+          <div class="order-product-picker" id="quoteProductPicker"></div>
+        </div>
+        <div class="field" id="quoteSelectedWrap" style="display:none;">
+          <label>Carrito de prueba</label>
+          <div class="order-selected-items" id="quoteSelectedItems"></div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Región</label>
+            <select id="quoteRegion"></select>
+          </div>
+          <div class="field">
+            <label>Comuna</label>
+            <input type="text" id="quoteComuna" placeholder="Ej: Viña del Mar">
+          </div>
+        </div>
+
+        <button type="button" class="btn btn-primary" id="runQuoteBtn" style="width:auto;">Cotizar</button>
+        <div class="quote-result" id="quoteResult" style="display:none;"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -1237,7 +1283,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <!-- TODO: reemplaza TU_API_KEY_AQUI por tu propia API Key de Google Maps (Directions + Maps JavaScript API habilitadas) -->
-<script src="https://maps.googleapis.com/maps/api/js?key=TU_API_KEY_AQUI"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=TU_API_KEY_AQUI&loading=async" async></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script src="supabase-config.js"></script>
@@ -1944,21 +1990,35 @@
     return (str || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   }
 
-  function checkOrderLocalDelivery(){
+  async function checkOrderLocalDelivery(){
     const comuna = document.getElementById('orderCustComuna').value.trim();
     const region = document.getElementById('orderCustRegion').value;
     const banner = document.getElementById('orderLocalDeliveryBanner');
-    const isLocal = comuna && region === ORDER_LOCAL_DELIVERY_REGION && ORDER_LOCAL_DELIVERY_COMUNAS.includes(normalizeTextOrder(comuna));
+    const normComuna = normalizeTextOrder(comuna);
+    const isLocal = comuna && region === ORDER_LOCAL_DELIVERY_REGION && ORDER_LOCAL_DELIVERY_COMUNAS.includes(normComuna);
 
-    if (isLocal){
-      document.getElementById('orderShippingMethod').value = 'local';
-      document.getElementById('orderShippingCost').value = 0;
-      document.getElementById('orderChilexpressQuoteWrap').style.display = 'none';
-      updateOrderTotalDisplay();
-      banner.style.display = 'block';
-    } else {
+    if (!isLocal){
       banner.style.display = 'none';
+      return;
     }
+
+    document.getElementById('orderShippingMethod').value = 'local';
+    document.getElementById('orderChilexpressQuoteWrap').style.display = 'none';
+
+    // Revisa si esta venta ya califica gratis según la lista de comunas configurada
+    const subtotal = Object.values(orderSelectedItems).reduce((s, i) => s + i.price * i.qty, 0);
+    const { data: settings } = await supabaseClient.from('shipping_settings').select('local_delivery_fee, free_shipping_enabled').eq('id', 1).single();
+    const { data: zones } = await supabaseClient.from('free_shipping_zones').select('*');
+    const freeZone = settings?.free_shipping_enabled ? (zones || []).find(z => normalizeTextOrder(z.comuna) === normComuna) : null;
+    const qualifiesFree = freeZone && subtotal >= (freeZone.min_amount || 0);
+
+    const fee = qualifiesFree ? 0 : (settings?.local_delivery_fee || 0);
+    document.getElementById('orderShippingCost').value = fee;
+    updateOrderTotalDisplay();
+    banner.textContent = qualifiesFree
+      ? '🚐 Viña del Mar / Valparaíso — transporte propio, gratis (califica por la comuna).'
+      : `🚐 Viña del Mar / Valparaíso — transporte propio asignado, tarifa: ${new Intl.NumberFormat('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits:0 }).format(fee)}.`;
+    banner.style.display = 'block';
   }
 
   document.getElementById('orderCustComuna').addEventListener('blur', checkOrderLocalDelivery);
@@ -3803,6 +3863,9 @@
   // ---------- Configuración de envío ----------
   let shippingConfigLoaded = false;
 
+  const REGIONS_LIST = ['Valparaíso','Metropolitana','Biobío','La Araucanía','Los Lagos','Coquimbo',"O'Higgins",'Maule','Ñuble','Antofagasta','Otra región'];
+  let freeShippingZones = [];
+
   async function loadShippingConfig(){
     shippingConfigLoaded = true;
     const { data, error } = await supabaseClient.from('shipping_settings').select('*').eq('id', 1).single();
@@ -3813,13 +3876,62 @@
       return;
     }
     document.getElementById('cfgFreeShippingEnabled').checked = data.free_shipping_enabled;
-    document.getElementById('cfgFreeShippingComuna').value = data.free_shipping_comuna || '';
-    document.getElementById('cfgFreeShippingMin').value = data.free_shipping_min_amount;
     document.getElementById('cfgChilexpressEnabled').checked = data.chilexpress_enabled;
     document.getElementById('cfgBlueExpressEnabled').checked = data.blue_express_enabled;
     document.getElementById('cfgLocalEnabled').checked = data.local_enabled;
     document.getElementById('cfgDispatchOrigin').value = data.dispatch_origin_address || '';
+    document.getElementById('cfgLocalDeliveryFee').value = data.local_delivery_fee || 0;
+
+    await loadFreeShippingZones();
+
+    const regionSelect = document.getElementById('quoteRegion');
+    if (regionSelect.options.length === 0){
+      regionSelect.innerHTML = REGIONS_LIST.map(r => `<option>${r}</option>`).join('');
+    }
+    renderQuoteProductPicker();
   }
+
+  async function loadFreeShippingZones(){
+    const { data, error } = await supabaseClient.from('free_shipping_zones').select('*').order('comuna');
+    freeShippingZones = error ? [] : (data || []);
+    renderFreeZonesList();
+  }
+
+  function renderFreeZonesList(){
+    const container = document.getElementById('freeZonesList');
+    if (freeShippingZones.length === 0){
+      container.innerHTML = '<p class="free-zones-empty">Todavía no hay comunas agregadas.</p>';
+      return;
+    }
+    container.innerHTML = freeShippingZones.map(z => `
+      <div class="free-zone-row">
+        <span class="zone-comuna">${escapeAttr(z.comuna)}</span>
+        <span class="zone-min">${z.min_amount > 0 ? 'desde ' + new Intl.NumberFormat('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits:0 }).format(z.min_amount) : 'siempre gratis'}</span>
+        <button type="button" class="zone-remove" onclick="removeFreeZone('${z.id}')" title="Quitar">✕</button>
+      </div>
+    `).join('');
+  }
+
+  window.removeFreeZone = async function(id){
+    if (!confirm('¿Quitar esta comuna de la lista de envío gratis?')) return;
+    const { error } = await supabaseClient.from('free_shipping_zones').delete().eq('id', id);
+    if (error){ alert('No se pudo quitar.'); console.error(error); return; }
+    loadFreeShippingZones();
+  };
+
+  document.getElementById('addZoneBtn').addEventListener('click', async () => {
+    const comuna = document.getElementById('newZoneComuna').value.trim();
+    const min = parseFloat(document.getElementById('newZoneMin').value) || 0;
+    if (!comuna){
+      alert('Escribe el nombre de la comuna.');
+      return;
+    }
+    const { error } = await supabaseClient.from('free_shipping_zones').insert({ comuna, min_amount: min });
+    if (error){ alert('No se pudo agregar la comuna.'); console.error(error); return; }
+    document.getElementById('newZoneComuna').value = '';
+    document.getElementById('newZoneMin').value = '';
+    loadFreeShippingZones();
+  });
 
   document.getElementById('saveShippingConfigBtn').addEventListener('click', async () => {
     const btn = document.getElementById('saveShippingConfigBtn');
@@ -3829,12 +3941,11 @@
     try {
       const { error } = await supabaseClient.from('shipping_settings').update({
         free_shipping_enabled: document.getElementById('cfgFreeShippingEnabled').checked,
-        free_shipping_comuna: document.getElementById('cfgFreeShippingComuna').value.trim(),
-        free_shipping_min_amount: parseFloat(document.getElementById('cfgFreeShippingMin').value) || 0,
         chilexpress_enabled: document.getElementById('cfgChilexpressEnabled').checked,
         blue_express_enabled: document.getElementById('cfgBlueExpressEnabled').checked,
         local_enabled: document.getElementById('cfgLocalEnabled').checked,
         dispatch_origin_address: document.getElementById('cfgDispatchOrigin').value.trim() || null,
+        local_delivery_fee: parseFloat(document.getElementById('cfgLocalDeliveryFee').value) || 0,
         updated_at: new Date().toISOString()
       }).eq('id', 1);
       if (error) throw error;
@@ -3847,6 +3958,141 @@
     } finally {
       btn.disabled = false;
       btn.textContent = 'Guardar configuración';
+    }
+  });
+
+  // ---------- Cotizador de prueba ----------
+  let quoteSelectedItems = {};
+  let quoteProductSearchTerm = '';
+
+  function renderQuoteProductPicker(){
+    const container = document.getElementById('quoteProductPicker');
+    if (!container) return;
+    const term = quoteProductSearchTerm.trim().toLowerCase();
+    const filtered = (currentProducts || []).filter(p => !term || p.name.toLowerCase().includes(term));
+
+    if (filtered.length === 0){
+      container.innerHTML = '<div class="order-empty-search">No hay productos que coincidan.</div>';
+      return;
+    }
+
+    container.innerHTML = filtered.map(p => {
+      const qty = quoteSelectedItems[p.id] ? quoteSelectedItems[p.id].qty : 0;
+      return `
+        <div class="order-product-row">
+          ${p.image_url ? `<img src="${p.image_url}" alt="">` : '<div style="width:34px;height:34px;border-radius:5px;background:var(--linen);flex-shrink:0;"></div>'}
+          <div class="order-product-name">${escapeAttr(p.name)}</div>
+          <div class="order-product-price">${new Intl.NumberFormat('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits:0 }).format(p.price || 0)}</div>
+          <div class="order-qty-stepper">
+            <button type="button" onclick="quoteChangeQty('${p.id}', -1)">−</button>
+            <span>${qty}</span>
+            <button type="button" onclick="quoteChangeQty('${p.id}', 1)">+</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  window.quoteChangeQty = function(productId, delta){
+    const product = (currentProducts || []).find(p => p.id === productId);
+    if (!product) return;
+    const current = quoteSelectedItems[productId] ? quoteSelectedItems[productId].qty : 0;
+    const next = Math.max(0, current + delta);
+    if (next === 0){
+      delete quoteSelectedItems[productId];
+    } else {
+      quoteSelectedItems[productId] = { id: product.id, name: product.name, price: product.price || 0, weight_kg: product.weight_kg || 0.5, qty: next };
+    }
+    renderQuoteProductPicker();
+    renderQuoteSelectedItems();
+  };
+
+  function renderQuoteSelectedItems(){
+    const items = Object.values(quoteSelectedItems);
+    const wrap = document.getElementById('quoteSelectedWrap');
+    const container = document.getElementById('quoteSelectedItems');
+    wrap.style.display = items.length > 0 ? 'block' : 'none';
+    container.innerHTML = items.map(i => `
+      <div class="order-selected-row">
+        <span class="name">${i.qty}× ${escapeAttr(i.name)}</span>
+        <span>${new Intl.NumberFormat('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits:0 }).format(i.price * i.qty)}</span>
+        <button type="button" class="remove-item" onclick="quoteChangeQty('${i.id}', -${i.qty})" title="Quitar">✕</button>
+      </div>
+    `).join('');
+  }
+
+  const quoteProductSearchEl = document.getElementById('quoteProductSearch');
+  if (quoteProductSearchEl){
+    quoteProductSearchEl.addEventListener('input', (e) => {
+      quoteProductSearchTerm = e.target.value;
+      renderQuoteProductPicker();
+    });
+  }
+
+  const QUOTE_LOCAL_REGION = 'Valparaíso';
+  const QUOTE_LOCAL_COMUNAS = ['viña del mar', 'valparaiso'];
+
+  document.getElementById('runQuoteBtn').addEventListener('click', async () => {
+    const resultEl = document.getElementById('quoteResult');
+    const comuna = document.getElementById('quoteComuna').value.trim();
+    const region = document.getElementById('quoteRegion').value;
+    const items = Object.values(quoteSelectedItems);
+    const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
+
+    if (!comuna){
+      alert('Escribe una comuna para cotizar.');
+      return;
+    }
+    if (items.length === 0){
+      alert('Selecciona al menos un producto.');
+      return;
+    }
+
+    resultEl.style.display = 'block';
+    resultEl.innerHTML = 'Cotizando...';
+
+    const normComuna = normalizeTextOrder(comuna);
+    const isLocalZone = region === QUOTE_LOCAL_REGION && QUOTE_LOCAL_COMUNAS.includes(normComuna);
+    const freeZone = freeShippingZones.find(z => normalizeTextOrder(z.comuna) === normComuna);
+    const qualifiesFree = freeZone && subtotal >= freeZone.min_amount;
+
+    const { data: settings } = await supabaseClient.from('shipping_settings').select('*').eq('id', 1).single();
+
+    function showResult(shippingCost, method, note){
+      resultEl.innerHTML = `
+        <div class="qr-row"><span>Subtotal productos</span><span>${new Intl.NumberFormat('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits:0 }).format(subtotal)}</span></div>
+        <div class="qr-row"><span>Envío (${method})</span><span>${shippingCost === 0 ? 'Gratis' : new Intl.NumberFormat('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits:0 }).format(shippingCost)}</span></div>
+        <div class="qr-row qr-total"><span>Total</span><span>${new Intl.NumberFormat('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits:0 }).format(subtotal + shippingCost)}</span></div>
+        ${note ? `<p class="hint" style="margin-top:10px; margin-bottom:0;">${note}</p>` : ''}
+      `;
+    }
+
+    if (qualifiesFree){
+      showResult(0, isLocalZone ? 'envío propio' : 'envío gratis', `Califica por la comuna "${freeZone.comuna}" (mínimo configurado: ${new Intl.NumberFormat('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits:0 }).format(freeZone.min_amount)}).`);
+      return;
+    }
+
+    if (isLocalZone){
+      showResult(settings?.local_delivery_fee || 0, 'envío propio', 'No alcanza el mínimo de esa comuna para envío gratis — se cobra la tarifa fija de envío propio.');
+      return;
+    }
+
+    // Fuera de zona de envío propio y sin envío gratis: cotiza con Chilexpress real
+    try {
+      const totalWeight = items.reduce((s, i) => s + (i.weight_kg || 0.5) * i.qty, 0);
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/chilexpress-quote`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'apikey': SUPABASE_ANON_KEY },
+        body: JSON.stringify({ region, comuna, pesoKg: totalWeight || 1, valorDeclarado: subtotal })
+      });
+      const data = await res.json();
+      if (!res.ok || data.error || !data.options || data.options.length === 0){
+        resultEl.innerHTML = `<p class="hint">No se pudo obtener una cotización de Chilexpress para esta comuna.</p>`;
+        return;
+      }
+      showResult(data.options[0].price, 'Chilexpress', `Tarifa más barata de ${data.options.length} opción(es) disponibles.`);
+    } catch (err){
+      resultEl.innerHTML = `<p class="hint">Error al cotizar: ${err.message}</p>`;
     }
   });
 
