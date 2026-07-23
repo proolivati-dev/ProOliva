@@ -44,14 +44,23 @@
   .nav-links a.active{ opacity:1; color:var(--olive-deep);}
   .nav-item-wrap{ position:relative; display:flex; align-items:center;}
   .nav-dropdown{
-    position:absolute; top:100%; left:50%; transform:translateX(-50%); margin-top:14px;
-    background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:8px;
-    min-width:190px; box-shadow:0 16px 32px -16px rgba(32,40,26,0.35);
-    display:none; flex-direction:column; z-index:70;
+    position:absolute; top:100%; left:50%; transform:translateX(-50%); margin-top:16px;
+    background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:22px;
+    display:none; gap:28px; z-index:70; min-width:340px;
+    box-shadow:0 24px 48px -20px rgba(32,40,26,0.35);
   }
   .nav-item-wrap:hover .nav-dropdown{ display:flex;}
-  .nav-dropdown a{ padding:8px 12px; border-radius:6px; font-size:13px; font-weight:500; text-transform:none; letter-spacing:normal; opacity:0.85; white-space:nowrap;}
-  .nav-dropdown a:hover{ background:var(--linen); opacity:1;}
+  .nav-dropdown-links{ display:flex; flex-direction:column; gap:2px; min-width:150px; flex-shrink:0;}
+  .nav-dropdown-links a{ padding:8px 10px; border-radius:6px; font-size:13px; font-weight:600; text-transform:none; letter-spacing:normal; opacity:0.75;}
+  .nav-dropdown-links a:hover{ background:var(--linen); opacity:1;}
+  .nav-dropdown-products{ display:flex; gap:16px; padding-left:24px; border-left:1px solid var(--line);}
+  .nav-dropdown-products:only-child{ padding-left:0; border-left:none;}
+  .nav-dropdown-product{ display:flex; flex-direction:column; gap:8px; width:110px; opacity:1; text-transform:none; letter-spacing:normal;}
+  .ndp-img{ display:block; width:110px; height:110px; border-radius:10px; overflow:hidden; background:var(--linen);}
+  .ndp-img img{ width:100%; height:100%; object-fit:cover; transition:transform .3s;}
+  .nav-dropdown-product:hover .ndp-img img{ transform:scale(1.06);}
+  .ndp-name{ font-size:12px; font-weight:600; line-height:1.3; color:var(--ink); white-space:normal;}
+  .ndp-price{ font-size:12px; font-weight:700; color:var(--olive-deep); font-family:'Archivo',sans-serif;}
   .nav-actions{ display:flex; align-items:center; justify-content:flex-end; gap:18px;}
   .nav-actions-link{ font-size:13.5px; font-weight:600; text-transform:uppercase; letter-spacing:0.02em; opacity:0.8; transition:opacity .15s; white-space:nowrap;}
   .nav-actions-link:hover{ opacity:1; color:var(--olive-deep);}
@@ -487,10 +496,11 @@
 
   // ---------- Barra de navegación dinámica (categorías elegidas en Home Editor) ----------
   (async () => {
-    const [{ data: navRows }, { data: relRows }, { data: allCats }] = await Promise.all([
+    const [{ data: navRows }, { data: relRows }, { data: allCats }, { data: featRows }] = await Promise.all([
       supabaseClient.from('nav_categories').select('sort_order, categories(id, name, slug)').order('sort_order'),
       supabaseClient.from('category_relations').select('*').order('sort_order'),
-      supabaseClient.from('categories').select('id, name, slug')
+      supabaseClient.from('categories').select('id, name, slug'),
+      supabaseClient.from('category_featured_products').select('*, products(id, name, price, image_url)').order('sort_order')
     ]);
 
     const catById = {};
@@ -500,11 +510,18 @@
       if (!relMap[r.category_id]) relMap[r.category_id] = [];
       relMap[r.category_id].push(r.related_category_id);
     });
+    const featMap = {};
+    (featRows || []).forEach(r => {
+      if (!r.products) return;
+      if (!featMap[r.category_id]) featMap[r.category_id] = [];
+      featMap[r.category_id].push(r.products);
+    });
 
     const nav = document.getElementById('navLinks');
     (navRows || []).forEach(row => {
       if (!row.categories) return;
       const related = (relMap[row.categories.id] || []).map(id => catById[id]).filter(Boolean);
+      const featured = featMap[row.categories.id] || [];
 
       const wrap = document.createElement('div');
       wrap.className = 'nav-item-wrap';
@@ -514,15 +531,39 @@
       a.textContent = row.categories.name;
       wrap.appendChild(a);
 
-      if (related.length > 0){
+      if (related.length > 0 || featured.length > 0){
         const dropdown = document.createElement('div');
         dropdown.className = 'nav-dropdown';
-        related.forEach(rc => {
-          const ra = document.createElement('a');
-          ra.href = `productos.html?cat=${encodeURIComponent(rc.slug)}`;
-          ra.textContent = rc.name;
-          dropdown.appendChild(ra);
-        });
+
+        if (related.length > 0){
+          const col = document.createElement('div');
+          col.className = 'nav-dropdown-links';
+          related.forEach(rc => {
+            const ra = document.createElement('a');
+            ra.href = `productos.html?cat=${encodeURIComponent(rc.slug)}`;
+            ra.textContent = rc.name;
+            col.appendChild(ra);
+          });
+          dropdown.appendChild(col);
+        }
+
+        if (featured.length > 0){
+          const prodCol = document.createElement('div');
+          prodCol.className = 'nav-dropdown-products';
+          featured.forEach(p => {
+            const pa = document.createElement('a');
+            pa.href = `producto.html?id=${p.id}`;
+            pa.className = 'nav-dropdown-product';
+            pa.innerHTML = `
+              <span class="ndp-img">${p.image_url ? `<img src="${p.image_url}" alt="">` : ''}</span>
+              <span class="ndp-name">${p.name}</span>
+              <span class="ndp-price">${formatCLP(p.price)}</span>
+            `;
+            prodCol.appendChild(pa);
+          });
+          dropdown.appendChild(prodCol);
+        }
+
         wrap.appendChild(dropdown);
       }
 

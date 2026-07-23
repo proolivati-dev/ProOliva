@@ -186,6 +186,11 @@
   .nav-manager-arrows button:disabled{ opacity:0.25; cursor:default;}
   .nav-manager-related{ margin-top:10px; padding-top:10px; border-top:1px solid var(--line); margin-left:34px;}
   .nav-manager-related .hint{ display:block; margin-bottom:8px;}
+  .nav-featured-picker{ display:flex; flex-wrap:wrap; gap:8px; max-height:180px; overflow-y:auto;}
+  .nav-featured-pill{ display:flex; align-items:center; gap:7px; background:var(--linen); border:1.5px solid var(--line); border-radius:20px; padding:5px 12px 5px 5px; font-size:12.5px; cursor:pointer; user-select:none;}
+  .nav-featured-pill img, .nav-featured-noimg{ width:26px; height:26px; border-radius:50%; object-fit:cover; background:var(--paper); flex-shrink:0;}
+  .nav-featured-pill input{ display:none;}
+  .nav-featured-pill.checked{ background:var(--olive-deep); border-color:var(--olive-deep); color:#fff;}
   .free-zone-row{ display:flex; align-items:center; gap:10px; background:var(--linen); border-radius:8px; padding:9px 12px; font-size:13px;}
   .free-zone-row .zone-comuna{ font-weight:700; flex:1;}
   .free-zone-row .zone-min{ opacity:0.7; font-family:'IBM Plex Mono',monospace; font-size:12px;}
@@ -1431,6 +1436,7 @@
   // ---------- Categorías de la barra de navegación (Home Editor) ----------
   let navCategoryOrder = []; // ids de categorías en el menú, en orden
   let categoryRelations = {}; // { category_id: [related_category_id, ...] }
+  let categoryFeaturedProducts = {}; // { category_id: [product_id, ...] }
   let navCategoriesLoaded = false;
 
   async function loadNavCategories(){
@@ -1443,6 +1449,13 @@
     (relData || []).forEach(r => {
       if (!categoryRelations[r.category_id]) categoryRelations[r.category_id] = [];
       categoryRelations[r.category_id].push(r.related_category_id);
+    });
+
+    const { data: featData } = await supabaseClient.from('category_featured_products').select('*').order('sort_order');
+    categoryFeaturedProducts = {};
+    (featData || []).forEach(r => {
+      if (!categoryFeaturedProducts[r.category_id]) categoryFeaturedProducts[r.category_id] = [];
+      categoryFeaturedProducts[r.category_id].push(r.product_id);
     });
 
     renderNavCategoriesManager();
@@ -1465,6 +1478,7 @@
       const isSelected = navCategoryOrder.includes(c.id);
       const idx = navCategoryOrder.indexOf(c.id);
       const related = categoryRelations[c.id] || [];
+      const featured = categoryFeaturedProducts[c.id] || [];
       return `
         <div class="nav-manager-row">
           <div class="nav-manager-main">
@@ -1489,6 +1503,18 @@
                 `).join('')}
               </div>
             </div>
+            <div class="nav-manager-related">
+              <span class="hint">Productos destacados en ese menú (foto, ideal 3-4):</span>
+              <div class="nav-featured-picker">
+                ${(currentProducts || []).filter(p => p.active).map(p => `
+                  <label class="nav-featured-pill ${featured.includes(p.id) ? 'checked' : ''}">
+                    <input type="checkbox" ${featured.includes(p.id) ? 'checked' : ''} onchange="toggleFeaturedProduct('${c.id}', '${p.id}', this.checked); this.closest('.nav-featured-pill').classList.toggle('checked', this.checked)">
+                    ${p.image_url ? `<img src="${p.image_url}" alt="">` : '<div class="nav-featured-noimg"></div>'}
+                    <span>${escapeAttr(p.name)}</span>
+                  </label>
+                `).join('')}
+              </div>
+            </div>
           ` : ''}
         </div>
       `;
@@ -1501,8 +1527,18 @@
     } else {
       navCategoryOrder = navCategoryOrder.filter(x => x !== id);
       delete categoryRelations[id];
+      delete categoryFeaturedProducts[id];
     }
     renderNavCategoriesManager();
+  };
+
+  window.toggleFeaturedProduct = function(categoryId, productId, checked){
+    if (!categoryFeaturedProducts[categoryId]) categoryFeaturedProducts[categoryId] = [];
+    if (checked){
+      if (!categoryFeaturedProducts[categoryId].includes(productId)) categoryFeaturedProducts[categoryId].push(productId);
+    } else {
+      categoryFeaturedProducts[categoryId] = categoryFeaturedProducts[categoryId].filter(x => x !== productId);
+    }
   };
 
   window.moveNavCategory = function(id, dir){
@@ -1541,6 +1577,16 @@
       });
       if (relRows.length > 0){
         const { error } = await supabaseClient.from('category_relations').insert(relRows);
+        if (error) throw error;
+      }
+
+      await supabaseClient.from('category_featured_products').delete().gte('sort_order', 0);
+      const featRows = [];
+      Object.entries(categoryFeaturedProducts).forEach(([catId, productIds]) => {
+        productIds.forEach((prodId, i) => featRows.push({ category_id: catId, product_id: prodId, sort_order: i }));
+      });
+      if (featRows.length > 0){
+        const { error } = await supabaseClient.from('category_featured_products').insert(featRows);
         if (error) throw error;
       }
 
