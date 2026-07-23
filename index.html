@@ -263,11 +263,8 @@
 
 <header>
   <div class="wrap nav">
-    <nav class="nav-links">
+    <nav class="nav-links" id="navLinks">
       <a href="productos.html">Productos</a>
-      <a href="productos.html?cat=packs">Packs</a>
-      <a href="productos.html?cat=ofertas">Ofertas</a>
-      <a href="productos.html?cat=regalos">Regalar</a>
     </nav>
     <a class="logo" href="index.html"><img class="logo-mark" src="logo.png" alt="ProOlivas Chile"></a>
     <div class="nav-actions">
@@ -508,7 +505,7 @@
     const grid = document.getElementById('homeProductGrid');
     const { data, error } = await supabaseClient
       .from('products')
-      .select('*')
+      .select('*, product_categories(categories(name, slug))')
       .eq('active', true)
       .order('created_at', { ascending: false })
       .limit(8);
@@ -518,14 +515,17 @@
       return;
     }
 
-    homeProducts = data;
+    homeProducts = data.map(p => ({
+      ...p,
+      categoryList: (p.product_categories || []).map(pc => pc.categories).filter(Boolean)
+    }));
 
-    grid.innerHTML = data.map(p => `
+    grid.innerHTML = homeProducts.map(p => `
       <div class="prod-card">
         <a href="producto.html?id=${p.id}" style="display:block; color:inherit;">
           <div class="prod-visual">${p.image_url ? `<img src="${p.image_url}" alt="${p.name}" loading="lazy">` : ''}</div>
           <div class="prod-body">
-            <span class="prod-cat-label">${CATEGORY_LABELS[p.category] || p.category}</span>
+            <span class="prod-cat-label">${p.categoryList.length ? p.categoryList.map(c => c.name).join(' · ') : (CATEGORY_LABELS[p.category] || p.category)}</span>
             <h4>${p.name}</h4>
             <span class="prod-price">${formatCLP(p.price)}</span>
           </div>
@@ -589,7 +589,7 @@
     container.innerHTML = `
       <a class="featured-visual" href="producto.html?id=${p.id}">${p.image_url ? `<img src="${p.image_url}" alt="${p.name}">` : ''}</a>
       <div class="featured-body">
-        <div class="featured-tag">${CATEGORY_LABELS[p.category] || p.category}</div>
+        <div class="featured-tag">${p.categoryList && p.categoryList.length ? p.categoryList.map(c => c.name).join(' · ') : (CATEGORY_LABELS[p.category] || p.category)}</div>
         <h2>${p.name}</h2>
         <p>${p.description || ''}</p>
         <span class="featured-price">${formatCLP(p.price)}</span>
@@ -645,13 +645,16 @@
   async function loadFeatured(){
     const { data, error } = await supabaseClient
       .from('products')
-      .select('*')
+      .select('*, product_categories(categories(name, slug))')
       .eq('active', true)
       .eq('featured', true)
       .order('created_at', { ascending: false });
 
     if (!error && data){
-      featuredProducts = data;
+      featuredProducts = data.map(p => ({
+        ...p,
+        categoryList: (p.product_categories || []).map(pc => pc.categories).filter(Boolean)
+      }));
     }
     renderFeatured();
     resetFeaturedTimer();
@@ -699,6 +702,22 @@
     } else {
       catalogBtn.style.display = 'none';
     }
+  })();
+
+  // ---------- Barra de navegación dinámica (categorías elegidas en Home Editor) ----------
+  (async () => {
+    const { data } = await supabaseClient
+      .from('nav_categories')
+      .select('sort_order, categories(name, slug)')
+      .order('sort_order');
+    const nav = document.getElementById('navLinks');
+    (data || []).forEach(row => {
+      if (!row.categories) return;
+      const a = document.createElement('a');
+      a.href = `productos.html?cat=${encodeURIComponent(row.categories.slug)}`;
+      a.textContent = row.categories.name;
+      nav.appendChild(a);
+    });
   })();
 
   // ---------- Imágenes, títulos y enlaces del Home Editor (admin.html) ----------

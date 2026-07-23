@@ -234,13 +234,6 @@
   <div class="wrap filters-row">
     <div class="pill-group" id="categoryFilters">
       <button class="pill active" data-category="all">Todos</button>
-      <button class="pill" data-category="aceites">Aceites de oliva</button>
-      <button class="pill" data-category="aceitunas-mesa">Aceitunas de mesa</button>
-      <button class="pill" data-category="aceitunas-premium">Aceitunas premium</button>
-      <button class="pill" data-category="aceitunas-especiales">Especiales</button>
-      <button class="pill" data-category="packs">Packs</button>
-      <button class="pill" data-category="ofertas">Ofertas</button>
-      <button class="pill" data-category="regalos">Regalar</button>
     </div>
     <div class="filters-secondary">
       <div class="search-box">
@@ -371,17 +364,8 @@
 <script src="cart.js"></script>
 <script src="subscribe.js"></script>
 <script>
-  const CATEGORY_LABELS = {
-    'aceites': 'Aceites de oliva',
-    'aceitunas-mesa': 'Aceitunas de mesa',
-    'aceitunas-premium': 'Aceitunas premium',
-    'aceitunas-especiales': 'Especiales',
-    'packs': 'Packs',
-    'ofertas': 'Ofertas',
-    'regalos': 'Regalar'
-  };
-
   let allProducts = [];
+  let allCategories = [];
   let activeCategory = 'all';
   let activeOrigin = 'all';
   let searchTerm = '';
@@ -396,7 +380,7 @@
 
   function renderProducts(){
     const filtered = allProducts.filter(p => {
-      const matchCategory = activeCategory === 'all' || p.category === activeCategory;
+      const matchCategory = activeCategory === 'all' || (p.categoryList || []).some(c => c.slug === activeCategory);
       const matchOrigin = activeOrigin === 'all' || p.origin === activeOrigin;
       const matchSearch = !searchTerm || p.name.toLowerCase().includes(searchTerm.toLowerCase());
       return matchCategory && matchOrigin && matchSearch;
@@ -420,7 +404,7 @@
             ${p.featured ? '<span class="prod-badge">Destacado</span>' : ''}
           </div>
           <div class="prod-body">
-            <span class="prod-cat">${CATEGORY_LABELS[p.category] || p.category}</span>
+            <span class="prod-cat">${(p.categoryList || []).map(c => c.name).join(' · ') || p.category || ''}</span>
             <h3>${p.name}</h3>
             <span class="prod-meta">${[p.format, p.origin].filter(Boolean).join(' · ')}</span>
             <div class="prod-price">${formatCLP(p.price)}</div>
@@ -438,10 +422,24 @@
     `).join('');
   }
 
+  async function loadCategories(){
+    const { data } = await supabaseClient.from('categories').select('*').order('sort_order').order('name');
+    allCategories = data || [];
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const catParam = urlParams.get('cat');
+    const matchesParam = catParam && allCategories.some(c => c.slug === catParam);
+    if (matchesParam) activeCategory = catParam;
+
+    const container = document.getElementById('categoryFilters');
+    container.innerHTML = `<button class="pill ${activeCategory === 'all' ? 'active' : ''}" data-category="all">Todos</button>` +
+      allCategories.map(c => `<button class="pill ${activeCategory === c.slug ? 'active' : ''}" data-category="${c.slug}">${c.name}</button>`).join('');
+  }
+
   async function loadProducts(){
     const { data, error } = await supabaseClient
       .from('products')
-      .select('*')
+      .select('*, product_categories(categories(name, slug))')
       .eq('active', true)
       .order('created_at', { ascending: false });
 
@@ -452,18 +450,11 @@
       return;
     }
 
-    allProducts = data || [];
+    allProducts = (data || []).map(p => ({
+      ...p,
+      categoryList: (p.product_categories || []).map(pc => pc.categories).filter(Boolean)
+    }));
     renderProducts();
-  }
-
-  // Si llegamos desde un link tipo productos.html?cat=packs, preseleccionamos ese filtro
-  const urlParams = new URLSearchParams(window.location.search);
-  const catParam = urlParams.get('cat');
-  if (catParam && CATEGORY_LABELS[catParam]){
-    activeCategory = catParam;
-    document.querySelectorAll('#categoryFilters .pill').forEach(p => {
-      p.classList.toggle('active', p.dataset.category === catParam);
-    });
   }
 
   document.getElementById('categoryFilters').addEventListener('click', (e) => {
@@ -485,6 +476,7 @@
     renderProducts();
   });
 
+  loadCategories().then(loadProducts);
   // ---------- Contador de cantidad + agregar al carrito, por tarjeta ----------
   grid.addEventListener('click', (e) => {
     const minus = e.target.closest('.qty-minus');
@@ -513,8 +505,6 @@
       setTimeout(() => { addBtn.textContent = original; }, 1100);
     }
   });
-
-  loadProducts();
 
   // ---------- Botón "Descargar catálogo" ----------
   (async () => {

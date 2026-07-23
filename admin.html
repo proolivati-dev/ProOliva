@@ -171,6 +171,14 @@
   .config-grid{ display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px; align-items:start;}
   .config-panel h3{ font-size:15px; margin-bottom:16px;}
   .free-zones-list{ display:flex; flex-direction:column; gap:8px;}
+  .btn-link{ background:none; border:none; color:var(--olive-deep); font-weight:700; text-decoration:underline; cursor:pointer; padding:0;}
+  .category-checklist{ display:flex; flex-wrap:wrap; gap:8px; max-height:160px; overflow-y:auto; padding:2px;}
+  .category-check-pill{ display:flex; align-items:center; gap:6px; background:var(--linen); border:1.5px solid var(--line); border-radius:20px; padding:7px 14px; font-size:13px; cursor:pointer; user-select:none;}
+  .category-check-pill input{ cursor:pointer;}
+  .category-check-pill.checked{ background:var(--olive-deep); border-color:var(--olive-deep); color:#fff;}
+  .category-manage-row{ display:flex; align-items:center; gap:10px; background:var(--linen); border-radius:8px; padding:9px 12px; font-size:13px;}
+  .category-manage-row input[type="text"]{ flex:1; border:1.5px solid var(--line); border-radius:6px; padding:6px 10px; font-size:13px; background:#fff;}
+  .category-manage-row .zone-remove{ background:none; border:none; cursor:pointer; color:var(--danger); font-size:16px; line-height:1; padding:2px 4px;}
   .free-zone-row{ display:flex; align-items:center; gap:10px; background:var(--linen); border-radius:8px; padding:9px 12px; font-size:13px;}
   .free-zone-row .zone-comuna{ font-weight:700; flex:1;}
   .free-zone-row .zone-min{ opacity:0.7; font-family:'IBM Plex Mono',monospace; font-size:12px;}
@@ -902,6 +910,14 @@
         </div>
       </div>
       <div class="site-images-grid" id="siteImagesGrid"></div>
+
+      <div class="panel" style="margin-top:32px;">
+        <h3 style="margin-bottom:4px;">Categorías en la barra de navegación</h3>
+        <p class="hint" style="margin-bottom:16px;">Elige qué categorías aparecen en el menú principal de index.html, productos.html y producto.html, y en qué orden (arriba = primero).</p>
+        <div class="category-checklist" id="navCategoriesPicker" style="max-height:none;"></div>
+        <button type="button" class="btn btn-primary" id="saveNavCategoriesBtn" style="width:auto; margin-top:14px;">Guardar barra de navegación</button>
+        <div class="site-image-status" id="navCategoriesStatus"></div>
+      </div>
     </div>
 
     <!-- ---------- TAB: CONFIGURACIÓN ---------- -->
@@ -1023,28 +1039,22 @@
         <input type="text" id="fieldSku" placeholder="Ej: ACE-1L-CL">
       </div>
 
-      <div class="field-row">
-        <div class="field">
-          <label>Categoría</label>
-          <select id="fieldCategory" required>
-            <option value="aceites">Aceites de oliva</option>
-            <option value="aceitunas-mesa">Aceitunas de mesa</option>
-            <option value="aceitunas-premium">Aceitunas premium</option>
-            <option value="aceitunas-especiales">Especiales</option>
-            <option value="packs">Packs</option>
-            <option value="ofertas">Ofertas</option>
-            <option value="regalos">Regalar</option>
-          </select>
+      <div class="field">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+          <label style="margin-bottom:0;">Categorías</label>
+          <button type="button" class="btn-link" id="manageCategoriesBtn" style="font-size:12px;">Gestionar categorías</button>
         </div>
-        <div class="field">
-          <label>Origen</label>
-          <select id="fieldOrigin">
-            <option value="Chile">Chile</option>
-            <option value="Perú">Perú</option>
-            <option value="España">España</option>
-            <option value="Argentina">Argentina</option>
-          </select>
-        </div>
+        <div class="category-checklist" id="fieldCategoriesList"></div>
+      </div>
+
+      <div class="field">
+        <label>Origen</label>
+        <select id="fieldOrigin">
+          <option value="Chile">Chile</option>
+          <option value="Perú">Perú</option>
+          <option value="España">España</option>
+          <option value="Argentina">Argentina</option>
+        </select>
       </div>
 
       <div class="field-row">
@@ -1078,6 +1088,28 @@
         <button type="submit" class="btn btn-primary" id="saveProductBtn">Guardar producto</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- ===================== MODAL: gestionar categorías ===================== -->
+<div class="modal-backdrop" id="categoriesModalBackdrop">
+  <div class="modal">
+    <h3>Categorías</h3>
+    <div class="error-msg" id="categoriesError"></div>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Nueva categoría</label>
+        <input type="text" id="newCategoryName" placeholder="Ej: Sin gluten">
+      </div>
+    </div>
+    <button type="button" class="btn btn-outline" id="addCategoryBtn" style="width:auto; margin-bottom:18px;">+ Agregar categoría</button>
+
+    <div class="free-zones-list" id="categoriesManageList"></div>
+
+    <div class="modal-actions">
+      <button type="button" class="btn btn-primary" id="closeCategoriesModalBtn">Listo</button>
+    </div>
   </div>
 </div>
 
@@ -1300,6 +1332,146 @@
 
   const REGIONS = ['Valparaíso','Metropolitana','Biobío','La Araucanía','Los Lagos','Coquimbo',"O'Higgins",'Maule','Ñuble','Antofagasta','Otra región'];
 
+  // ---------- Categorías dinámicas ----------
+  let allCategories = [];
+
+  async function loadCategories(){
+    const { data, error } = await supabaseClient.from('categories').select('*').order('sort_order').order('name');
+    if (error){ console.error(error); return; }
+    allCategories = data || [];
+    renderFieldCategoriesList(currentCheckedCategoryIds());
+    renderCategoriesManageList();
+    if (typeof renderNavCategoriesPicker === 'function') renderNavCategoriesPicker();
+  }
+
+  function currentCheckedCategoryIds(){
+    return Array.from(document.querySelectorAll('#fieldCategoriesList input:checked')).map(el => el.value);
+  }
+
+  function renderFieldCategoriesList(selectedIds){
+    const container = document.getElementById('fieldCategoriesList');
+    if (!container) return;
+    if (allCategories.length === 0){
+      container.innerHTML = '<p class="hint">Todavía no hay categorías — crea una con "Gestionar categorías".</p>';
+      return;
+    }
+    container.innerHTML = allCategories.map(c => `
+      <label class="category-check-pill ${selectedIds.includes(c.id) ? 'checked' : ''}">
+        <input type="checkbox" value="${c.id}" ${selectedIds.includes(c.id) ? 'checked' : ''} onchange="this.closest('.category-check-pill').classList.toggle('checked', this.checked)">
+        ${escapeAttr(c.name)}
+      </label>
+    `).join('');
+  }
+
+  function renderCategoriesManageList(){
+    const container = document.getElementById('categoriesManageList');
+    if (!container) return;
+    if (allCategories.length === 0){
+      container.innerHTML = '<p class="free-zones-empty">Todavía no hay categorías creadas.</p>';
+      return;
+    }
+    container.innerHTML = allCategories.map(c => `
+      <div class="category-manage-row">
+        <input type="text" value="${escapeAttr(c.name)}" onchange="renameCategory('${c.id}', this.value)">
+        <button type="button" class="zone-remove" onclick="deleteCategory('${c.id}', '${escapeAttr(c.name)}')" title="Borrar">✕</button>
+      </div>
+    `).join('');
+  }
+
+  document.getElementById('manageCategoriesBtn').addEventListener('click', () => openModal(document.getElementById('categoriesModalBackdrop')));
+  document.getElementById('closeCategoriesModalBtn').addEventListener('click', () => {
+    closeModal(document.getElementById('categoriesModalBackdrop'));
+    renderFieldCategoriesList(currentCheckedCategoryIds());
+  });
+
+  document.getElementById('addCategoryBtn').addEventListener('click', async () => {
+    const input = document.getElementById('newCategoryName');
+    const name = input.value.trim();
+    const errorEl = document.getElementById('categoriesError');
+    errorEl.style.display = 'none';
+    if (!name){
+      errorEl.textContent = 'Escribe un nombre para la categoría.';
+      errorEl.style.display = 'block';
+      return;
+    }
+    const slug = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    const { error } = await supabaseClient.from('categories').insert({ name, slug: slug || crypto.randomUUID(), sort_order: allCategories.length });
+    if (error){
+      errorEl.textContent = 'No se pudo crear la categoría: ' + error.message;
+      errorEl.style.display = 'block';
+      return;
+    }
+    input.value = '';
+    loadCategories();
+  });
+
+  window.renameCategory = async function(id, newName){
+    newName = newName.trim();
+    if (!newName) return;
+    const { error } = await supabaseClient.from('categories').update({ name: newName }).eq('id', id);
+    if (error){ alert('No se pudo renombrar la categoría.'); console.error(error); return; }
+    loadCategories();
+  };
+
+  window.deleteCategory = async function(id, name){
+    if (!confirm(`¿Borrar la categoría "${name}"? Se va a quitar de todos los productos que la tengan, y de la barra de navegación si está ahí.`)) return;
+    const { error } = await supabaseClient.from('categories').delete().eq('id', id);
+    if (error){ alert('No se pudo borrar la categoría.'); console.error(error); return; }
+    loadCategories();
+    loadProducts();
+  };
+
+  // ---------- Categorías de la barra de navegación (Home Editor) ----------
+  let navCategorySelectedIds = [];
+  let navCategoriesLoaded = false;
+
+  async function loadNavCategories(){
+    navCategoriesLoaded = true;
+    const { data } = await supabaseClient.from('nav_categories').select('category_id').order('sort_order');
+    navCategorySelectedIds = (data || []).map(r => r.category_id);
+    renderNavCategoriesPicker();
+  }
+
+  function renderNavCategoriesPicker(){
+    const container = document.getElementById('navCategoriesPicker');
+    if (!container) return;
+    if (allCategories.length === 0){
+      container.innerHTML = '<p class="hint">Todavía no hay categorías creadas — créalas primero en la pestaña Productos.</p>';
+      return;
+    }
+    container.innerHTML = allCategories.map(c => `
+      <label class="category-check-pill ${navCategorySelectedIds.includes(c.id) ? 'checked' : ''}">
+        <input type="checkbox" value="${c.id}" ${navCategorySelectedIds.includes(c.id) ? 'checked' : ''} onchange="this.closest('.category-check-pill').classList.toggle('checked', this.checked)">
+        ${escapeAttr(c.name)}
+      </label>
+    `).join('');
+  }
+
+  document.getElementById('saveNavCategoriesBtn').addEventListener('click', async () => {
+    const ids = Array.from(document.querySelectorAll('#navCategoriesPicker input:checked')).map(el => el.value);
+    const statusEl = document.getElementById('navCategoriesStatus');
+    const btn = document.getElementById('saveNavCategoriesBtn');
+    btn.disabled = true;
+    btn.textContent = 'Guardando...';
+    try {
+      await supabaseClient.from('nav_categories').delete().gte('sort_order', 0);
+      if (ids.length > 0){
+        const { error } = await supabaseClient.from('nav_categories').insert(ids.map((id, i) => ({ category_id: id, sort_order: i })));
+        if (error) throw error;
+      }
+      navCategorySelectedIds = ids;
+      statusEl.textContent = 'Barra de navegación guardada ✓';
+      statusEl.className = 'site-image-status ok';
+    } catch (err){
+      statusEl.textContent = 'No se pudo guardar: ' + err.message;
+      statusEl.className = 'site-image-status error';
+      console.error(err);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Guardar barra de navegación';
+    }
+  });
+
   const loginView = document.getElementById('loginView');
   const dashboardView = document.getElementById('dashboardView');
   const loginForm = document.getElementById('loginForm');
@@ -1324,6 +1496,7 @@
     dashboardView.style.display = 'block';
     whoLabel.textContent = session.user.email;
     loadProducts();
+    loadCategories();
     checkCatalog();
     loadOrders();
     loadWholesaleInquiries();
@@ -1394,7 +1567,10 @@
         clearInterval(despachoInterval);
         despachoInterval = null;
       }
-      if (btn.dataset.tab === 'home-editor' && !siteImagesLoaded) loadSiteImages();
+      if (btn.dataset.tab === 'home-editor'){
+        if (!siteImagesLoaded) loadSiteImages();
+        if (!navCategoriesLoaded) loadNavCategories();
+      }
       if (btn.dataset.tab === 'config' && !shippingConfigLoaded) loadShippingConfig();
     });
   });
@@ -1425,7 +1601,10 @@
 
   // ---------- Cargar productos ----------
   async function loadProducts(){
-    const { data, error } = await supabaseClient.from('products').select('*').order('created_at', { ascending: false });
+    const { data, error } = await supabaseClient
+      .from('products')
+      .select('*, product_categories(categories(id, name, slug))')
+      .order('created_at', { ascending: false });
     const tbody = document.getElementById('productsTableBody');
     const emptyState = document.getElementById('emptyState');
     const countLabel = document.getElementById('countLabel');
@@ -1436,7 +1615,10 @@
       return;
     }
 
-    currentProducts = data || [];
+    currentProducts = (data || []).map(p => ({
+      ...p,
+      categoryList: (p.product_categories || []).map(pc => pc.categories).filter(Boolean)
+    }));
     countLabel.textContent = `${currentProducts.length} producto${currentProducts.length === 1 ? '' : 's'} en total`;
 
     if (currentProducts.length === 0){
@@ -1450,7 +1632,7 @@
       <tr>
         <td class="td-media">${p.image_url ? `<img class="cell-img" src="${p.image_url}" alt="">` : `<div class="cell-img"></div>`}</td>
         <td class="cell-name" data-label="Nombre">${p.name}${p.sku ? `<div style="font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:400; opacity:0.5; margin-top:2px;">${p.sku}</div>` : ''}</td>
-        <td data-label="Categoría">${CATEGORY_LABELS[p.category] || p.category}</td>
+        <td data-label="Categoría">${p.categoryList.length > 0 ? p.categoryList.map(c => escapeAttr(c.name)).join(', ') : '<span style="opacity:0.4;">Sin categoría</span>'}</td>
         <td data-label="Precio">${new Intl.NumberFormat('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits:0 }).format(p.price || 0)}</td>
         <td data-label="Destacado">${p.featured ? '<span class="badge badge-on">Sí</span>' : '<span class="badge badge-off">No</span>'}</td>
         <td data-label="Estado">${p.active ? '<span class="badge badge-on">Visible</span>' : '<span class="badge badge-off">Oculto</span>'}</td>
@@ -1482,6 +1664,7 @@
     selectedFile = null;
     formError.style.display = 'none';
     document.getElementById('fieldActive').checked = true;
+    renderFieldCategoriesList([]);
   }
 
   document.getElementById('newProductBtn').addEventListener('click', () => {
@@ -1502,7 +1685,6 @@
     document.getElementById('productId').value = p.id;
     document.getElementById('fieldName').value = p.name || '';
     document.getElementById('fieldSku').value = p.sku || '';
-    document.getElementById('fieldCategory').value = p.category || 'aceites';
     document.getElementById('fieldOrigin').value = p.origin || 'Chile';
     document.getElementById('fieldFormat').value = p.format || '';
     document.getElementById('fieldPrice').value = p.price || 0;
@@ -1510,6 +1692,7 @@
     document.getElementById('fieldDescription').value = p.description || '';
     document.getElementById('fieldFeatured').checked = !!p.featured;
     document.getElementById('fieldActive').checked = !!p.active;
+    renderFieldCategoriesList((p.categoryList || []).map(c => c.id));
     if (p.image_url){
       imagePreview.innerHTML = `<img src="${p.image_url}" alt="">`;
     }
@@ -1564,10 +1747,17 @@
         imageUrl = publicData.publicUrl;
       }
 
+      const selectedCategoryIds = Array.from(document.querySelectorAll('#fieldCategoriesList input:checked')).map(el => el.value);
+      const selectedCategorySlugs = allCategories.filter(c => selectedCategoryIds.includes(c.id)).map(c => c.slug);
+
+      if (selectedCategoryIds.length === 0){
+        throw new Error('Selecciona al menos una categoría.');
+      }
+
       const payload = {
         name: document.getElementById('fieldName').value,
         sku: document.getElementById('fieldSku').value || null,
-        category: document.getElementById('fieldCategory').value,
+        category: selectedCategorySlugs[0] || null, // respaldo por compatibilidad con producto.html
         origin: document.getElementById('fieldOrigin').value,
         format: document.getElementById('fieldFormat').value,
         weight_kg: parseFloat(document.getElementById('fieldWeight').value) || 0.5,
@@ -1578,13 +1768,23 @@
         image_url: imageUrl
       };
 
-      let saveError;
+      let saveError, productId = id;
       if (id){
         ({ error: saveError } = await supabaseClient.from('products').update(payload).eq('id', id));
       } else {
-        ({ error: saveError } = await supabaseClient.from('products').insert(payload));
+        const { data: inserted, error: insertError } = await supabaseClient.from('products').insert(payload).select().single();
+        saveError = insertError;
+        if (inserted) productId = inserted.id;
       }
       if (saveError) throw saveError;
+
+      // Sincroniza las categorías: borra las anteriores y guarda las seleccionadas ahora
+      await supabaseClient.from('product_categories').delete().eq('product_id', productId);
+      if (selectedCategoryIds.length > 0){
+        await supabaseClient.from('product_categories').insert(
+          selectedCategoryIds.map(catId => ({ product_id: productId, category_id: catId }))
+        );
+      }
 
       closeModal(modalBackdrop);
       loadProducts();
@@ -3013,7 +3213,7 @@
     const y = pdfHeader(doc, 'Catálogo de productos', `${currentProducts.length} productos`);
     pdfTable(doc, y, ['Nombre', 'SKU', 'Categoría', 'Precio', 'Destacado', 'Visible'],
       currentProducts.map(p => [
-        p.name, p.sku || '—', CATEGORY_LABELS[p.category] || p.category,
+        p.name, p.sku || '—', (p.categoryList && p.categoryList.length ? p.categoryList.map(c => c.name).join(', ') : (CATEGORY_LABELS[p.category] || p.category)),
         formatCLPShort(p.price), p.featured ? 'Sí' : 'No', p.active ? 'Sí' : 'No'
       ])
     );
