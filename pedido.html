@@ -260,7 +260,7 @@
             </label>
             <label class="field-check">
               <input type="checkbox" id="fieldReady" ${o.ready ? 'checked' : ''}>
-              Preparado (listo para despachar) ${o.ready_at ? `<span style="font-weight:400; opacity:0.6; font-size:12px; margin-left:6px;">(${formatDate(o.ready_at, true)})</span>` : ''}
+              Preparado (listo para despachar) ${o.ready_at ? `<span style="font-weight:400; opacity:0.6; font-size:12px; margin-left:6px;">(${o.prepared_by ? o.prepared_by + ' · ' : ''}${formatDate(o.ready_at, true)})</span>` : ''}
             </label>
 
             <div class="field" style="margin-top:6px;">
@@ -288,7 +288,7 @@
 
             <label class="field-check" style="margin-top:18px; border-top:1px solid var(--line); padding-top:16px;">
               <input type="checkbox" id="fieldDispatched" ${o.dispatched ? 'checked' : ''}>
-              Despachado ${o.dispatched_at ? `<span style="font-weight:400; opacity:0.6; font-size:12px; margin-left:6px;">(${formatDate(o.dispatched_at, true)})</span>` : ''}
+              Despachado ${o.dispatched_at ? `<span style="font-weight:400; opacity:0.6; font-size:12px; margin-left:6px;">(${o.dispatched_by ? o.dispatched_by + ' · ' : ''}${formatDate(o.dispatched_at, true)})</span>` : ''}
             </label>
 
             <label class="field-check" style="margin-top:10px;">
