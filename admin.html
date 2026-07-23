@@ -142,13 +142,28 @@
   .modal-actions{ display:flex; gap:10px; margin-top:24px;}
   .modal-actions .btn{ width:auto; flex:1;}
   .image-preview{ width:100%; height:140px; border-radius:8px; background:var(--linen); border:1.5px dashed var(--line); display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:6px; position:relative;}
-  .site-images-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:18px;}
-  .site-image-card{ background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:16px;}
-  .site-image-card h4{ font-size:14px; margin-bottom:2px;}
+  .site-images-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:20px;}
+  .site-image-card{ background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:18px;}
+  .site-image-card h4{ font-size:14.5px; margin-bottom:2px;}
   .site-image-card .hint{ font-size:11.5px; opacity:0.55; margin-bottom:10px;}
-  .site-image-preview{ width:100%; height:130px; border-radius:8px; background:var(--linen); border:1.5px dashed var(--line); display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:10px; position:relative;}
-  .site-image-preview img{ width:100%; height:100%; object-fit:cover;}
-  .site-image-preview span{ font-size:12px; opacity:0.5;}
+  .site-image-upload-btn{ width:100%; margin-top:12px; cursor:pointer;}
+
+  .site-image-mockup{
+    width:100%; border-radius:10px; overflow:hidden; position:relative;
+    background:var(--linen); box-shadow:0 10px 26px -16px rgba(32,40,26,0.4);
+  }
+  .site-image-mockup img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:none;}
+  .mockup-empty{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:12px; opacity:0.4;}
+  .site-image-mockup.category::after{ content:''; position:absolute; inset:0; background:linear-gradient(180deg, rgba(20,24,15,0.6) 0%, rgba(20,24,15,0.08) 42%, transparent 60%);}
+  .mockup-cat-label{
+    position:absolute; top:0; left:0; right:0; z-index:2; padding:14px 16px;
+    color:#fff; font-family:'Archivo',sans-serif; font-weight:700; font-size:13px;
+    text-transform:uppercase; letter-spacing:0.02em; text-shadow:0 1px 3px rgba(0,0,0,0.3);
+  }
+  .site-image-link-badge{
+    position:absolute; bottom:8px; right:8px; z-index:3; width:24px; height:24px; border-radius:50%;
+    background:rgba(20,24,15,0.65); color:#fff; font-size:11px; align-items:center; justify-content:center;
+  }
   .site-image-status{ font-size:11.5px; margin-top:6px; min-height:14px;}
   .site-image-status.ok{ color:var(--olive-deep);}
   .site-image-status.error{ color:var(--danger);}
@@ -2861,18 +2876,38 @@
     closeModal(orderModalBackdrop);
   });
 
-  // ---------- Home Editor (index.html): imagen + título + enlace ----------
+  // ---------- Home Editor (index.html): imagen + título + enlace, con preview en vivo ----------
   const SITE_IMAGE_SLOTS = [
-    { key: 'fotopromo1', label: 'Foto promo 1', hint: 'Carrusel de promociones, debajo del banner', size: '1920 × 1080 px (16:9)' },
-    { key: 'fotopromo2', label: 'Foto promo 2', hint: 'Carrusel de promociones, debajo del banner', size: '1920 × 1080 px (16:9)' },
-    { key: 'fotopromo3', label: 'Foto promo 3', hint: 'Carrusel de promociones, debajo del banner', size: '1920 × 1080 px (16:9)' },
-    { key: 'aceitunas-mesa', label: 'Aceitunas de mesa', hint: 'Tarjeta de categoría en el inicio', size: '700 × 1000 px (vertical)' },
-    { key: 'aceitunas-premium', label: 'Aceitunas premium', hint: 'Tarjeta de categoría en el inicio', size: '900 × 950 px (casi cuadrada)' },
-    { key: 'especiales', label: 'Especiales', hint: 'Tarjeta de categoría en el inicio', size: '700 × 500 px (horizontal)' },
-    { key: 'packs', label: 'Venta por mayor', hint: 'Tarjeta de categoría — enlaza a ventas-mayor.html por defecto', size: '700 × 500 px (horizontal)' }
+    { key: 'fotopromo1', label: 'Foto promo 1', hint: 'Carrusel de promociones, debajo del banner', size: '1920 × 1080 px (16:9)', type: 'promo', aspect: '21/9' },
+    { key: 'fotopromo2', label: 'Foto promo 2', hint: 'Carrusel de promociones, debajo del banner', size: '1920 × 1080 px (16:9)', type: 'promo', aspect: '21/9' },
+    { key: 'fotopromo3', label: 'Foto promo 3', hint: 'Carrusel de promociones, debajo del banner', size: '1920 × 1080 px (16:9)', type: 'promo', aspect: '21/9' },
+    { key: 'aceitunas-mesa', label: 'Aceitunas de mesa', hint: 'Tarjeta de categoría en el inicio', size: '700 × 1000 px (vertical)', type: 'category', aspect: '310/460' },
+    { key: 'aceitunas-premium', label: 'Aceitunas premium', hint: 'Tarjeta de categoría en el inicio', size: '900 × 950 px (casi cuadrada)', type: 'category', aspect: '435/460' },
+    { key: 'especiales', label: 'Especiales', hint: 'Tarjeta de categoría en el inicio', size: '700 × 500 px (horizontal)', type: 'category', aspect: '310/220' },
+    { key: 'packs', label: 'Venta por mayor', hint: 'Tarjeta de categoría — enlaza a ventas-mayor.html por defecto', size: '700 × 500 px (horizontal)', type: 'category', aspect: '310/220' }
   ];
   let siteImagesLoaded = false;
   let homeContentMap = {};
+  const siteImageObjectUrls = {}; // previews locales instantáneas antes de terminar de subir
+
+  function siteImagePreviewHtml(slot){
+    const linkBadge = `<span class="site-image-link-badge" id="siteImgLinkBadge-${slot.key}" style="display:none;">🔗</span>`;
+    if (slot.type === 'promo'){
+      return `
+        <div class="site-image-mockup promo" style="aspect-ratio:${slot.aspect};" id="siteImgMockup-${slot.key}">
+          <img id="siteImgMockupImg-${slot.key}" alt="">
+          <span class="mockup-empty" id="siteImgMockupEmpty-${slot.key}">Sin imagen</span>
+          ${linkBadge}
+        </div>`;
+    }
+    return `
+      <div class="site-image-mockup category" style="aspect-ratio:${slot.aspect};" id="siteImgMockup-${slot.key}">
+        <img id="siteImgMockupImg-${slot.key}" alt="">
+        <span class="mockup-empty" id="siteImgMockupEmpty-${slot.key}">Sin imagen</span>
+        <span class="mockup-cat-label" id="siteImgMockupLabel-${slot.key}"></span>
+        ${linkBadge}
+      </div>`;
+  }
 
   function renderSiteImagesGrid(){
     const grid = document.getElementById('siteImagesGrid');
@@ -2880,27 +2915,53 @@
       <div class="site-image-card">
         <h4>${slot.label}</h4>
         <p class="hint">${slot.hint}</p>
-        <div class="site-image-preview" id="siteImgPreview-${slot.key}"><span>Cargando...</span></div>
-        <input type="file" accept="image/*" id="siteImgFile-${slot.key}">
-        <p class="hint" style="margin-top:6px; margin-bottom:0;">Tamaño recomendado: ${slot.size}</p>
+
+        ${siteImagePreviewHtml(slot)}
+
+        <label class="btn btn-outline site-image-upload-btn" for="siteImgFile-${slot.key}">Elegir imagen</label>
+        <input type="file" accept="image/*" id="siteImgFile-${slot.key}" style="display:none;">
+        <p class="hint" style="margin-top:8px; margin-bottom:0;">Tamaño recomendado: ${slot.size}</p>
         <div class="site-image-status" id="siteImgStatus-${slot.key}"></div>
 
-        <div class="field" style="margin-top:14px;">
-          <label>Título sobre la imagen <span style="opacity:0.5; font-weight:400;">(opcional)</span></label>
-          <input type="text" id="siteImgTitle-${slot.key}" placeholder="Ej: 20% de descuento esta semana">
-        </div>
-        <div class="field">
+        ${slot.type === 'category' ? `
+          <div class="field" style="margin-top:14px;">
+            <label>Título sobre la imagen</label>
+            <input type="text" id="siteImgTitle-${slot.key}" placeholder="Ej: ACEITUNAS DE MESA">
+          </div>
+        ` : ''}
+        <div class="field" style="${slot.type === 'promo' ? 'margin-top:14px;' : ''}">
           <label>Enlace al hacer clic <span style="opacity:0.5; font-weight:400;">(opcional)</span></label>
           <input type="text" id="siteImgLink-${slot.key}" placeholder="Ej: productos.html?cat=ofertas">
         </div>
-        <button type="button" class="btn btn-outline" id="siteImgSaveMeta-${slot.key}">Guardar título y enlace</button>
+        <button type="button" class="btn btn-primary" id="siteImgSaveMeta-${slot.key}">Guardar cambios</button>
       </div>
     `).join('');
 
     SITE_IMAGE_SLOTS.forEach(slot => {
       document.getElementById(`siteImgFile-${slot.key}`).addEventListener('change', () => uploadSiteImage(slot.key));
       document.getElementById(`siteImgSaveMeta-${slot.key}`).addEventListener('click', () => saveSiteImageMeta(slot.key));
+      if (slot.type === 'category'){
+        document.getElementById(`siteImgTitle-${slot.key}`).addEventListener('input', (e) => {
+          document.getElementById(`siteImgMockupLabel-${slot.key}`).textContent = e.target.value;
+        });
+      }
+      document.getElementById(`siteImgLink-${slot.key}`).addEventListener('input', (e) => {
+        document.getElementById(`siteImgLinkBadge-${slot.key}`).style.display = e.target.value.trim() ? 'flex' : 'none';
+      });
     });
+  }
+
+  function setMockupImage(key, url){
+    const img = document.getElementById(`siteImgMockupImg-${key}`);
+    const empty = document.getElementById(`siteImgMockupEmpty-${key}`);
+    if (url){
+      img.src = url;
+      img.style.display = 'block';
+      empty.style.display = 'none';
+    } else {
+      img.style.display = 'none';
+      empty.style.display = 'flex';
+    }
   }
 
   async function getSiteImageUrl(key){
@@ -2922,23 +2983,29 @@
 
     SITE_IMAGE_SLOTS.forEach(slot => {
       const content = homeContentMap[slot.key];
+      const linkInput = document.getElementById(`siteImgLink-${slot.key}`);
       if (content){
-        document.getElementById(`siteImgTitle-${slot.key}`).value = content.title || '';
-        document.getElementById(`siteImgLink-${slot.key}`).value = content.link_url || '';
+        if (slot.type === 'category'){
+          const titleInput = document.getElementById(`siteImgTitle-${slot.key}`);
+          titleInput.value = content.title || '';
+          document.getElementById(`siteImgMockupLabel-${slot.key}`).textContent = content.title || '';
+        }
+        linkInput.value = content.link_url || '';
+        document.getElementById(`siteImgLinkBadge-${slot.key}`).style.display = content.link_url ? 'flex' : 'none';
       }
     });
 
     await Promise.all(SITE_IMAGE_SLOTS.map(async (slot) => {
       const url = await getSiteImageUrl(slot.key);
-      const preview = document.getElementById(`siteImgPreview-${slot.key}`);
-      preview.innerHTML = url ? `<img src="${url}" alt="">` : '<span>Sin imagen</span>';
+      setMockupImage(slot.key, url);
     }));
   }
 
   async function saveSiteImageMeta(key){
+    const slot = SITE_IMAGE_SLOTS.find(s => s.key === key);
     const statusEl = document.getElementById(`siteImgStatus-${key}`);
     const btn = document.getElementById(`siteImgSaveMeta-${key}`);
-    const title = document.getElementById(`siteImgTitle-${key}`).value.trim();
+    const title = slot.type === 'category' ? document.getElementById(`siteImgTitle-${key}`).value.trim() : null;
     const linkUrl = document.getElementById(`siteImgLink-${key}`).value.trim();
 
     btn.disabled = true;
@@ -2951,7 +3018,7 @@
         updated_at: new Date().toISOString()
       });
       if (error) throw error;
-      statusEl.textContent = 'Título y enlace guardados ✓';
+      statusEl.textContent = 'Guardado ✓';
       statusEl.className = 'site-image-status ok';
     } catch (err){
       statusEl.textContent = 'No se pudo guardar: ' + err.message;
@@ -2959,7 +3026,7 @@
       console.error(err);
     } finally {
       btn.disabled = false;
-      btn.textContent = 'Guardar título y enlace';
+      btn.textContent = 'Guardar cambios';
     }
   }
 
@@ -2968,11 +3035,14 @@
     const file = fileInput.files[0];
     if (!file) return;
 
-    const preview = document.getElementById(`siteImgPreview-${key}`);
     const statusEl = document.getElementById(`siteImgStatus-${key}`);
-    statusEl.textContent = '';
+    statusEl.textContent = 'Subiendo...';
     statusEl.className = 'site-image-status';
-    preview.innerHTML = '<span>Subiendo...</span>';
+
+    // Preview local instantánea, antes de que termine de subir
+    if (siteImageObjectUrls[key]) URL.revokeObjectURL(siteImageObjectUrls[key]);
+    siteImageObjectUrls[key] = URL.createObjectURL(file);
+    setMockupImage(key, siteImageObjectUrls[key]);
 
     try {
       // Borra cualquier versión anterior del mismo slot (por si cambia la extensión)
@@ -2986,12 +3056,9 @@
       const { error } = await supabaseClient.storage.from('site-files').upload(path, file, { upsert: true });
       if (error) throw error;
 
-      const url = await getSiteImageUrl(key);
-      preview.innerHTML = url ? `<img src="${url}" alt="">` : '<span>Sin imagen</span>';
       statusEl.textContent = 'Imagen guardada ✓';
       statusEl.className = 'site-image-status ok';
     } catch (err){
-      preview.innerHTML = '<span>Error</span>';
       statusEl.textContent = 'No se pudo subir: ' + err.message;
       statusEl.className = 'site-image-status error';
       console.error(err);

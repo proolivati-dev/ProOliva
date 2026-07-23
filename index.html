@@ -124,13 +124,7 @@
   .promo-photo-link{ display:block; width:100%; height:100%; position:relative;}
   .promo-photo-link.no-link{ cursor:default;}
   .promo-photo-slide img{ width:100%; height:100%; object-fit:cover; display:block; background:var(--ink);}
-  .promo-photo-title{
-    position:absolute; left:0; right:0; bottom:0; padding:60px 36px 60px;
-    background:linear-gradient(0deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 100%);
-    color:#fff; font-family:'Archivo', sans-serif; font-weight:700; font-size:clamp(20px, 3vw, 32px);
-    display:none;
-  }
-  .promo-photo-title.show{ display:block;}
+
   .promo-photo-nav{ position:absolute; left:0; right:0; bottom:20px; display:flex; justify-content:center; gap:8px; z-index:4;}
   .promo-photo-bar{ width:34px; height:4px; border-radius:2px; background:rgba(255,255,255,0.45); cursor:pointer; transition:background .25s, width .25s; border:none; padding:0;}
   .promo-photo-bar.active{ background:#fff; width:52px;}
@@ -294,19 +288,16 @@
         <div class="promo-photo-slide" data-index="0">
           <a id="fotopromo1Link" href="#" class="promo-photo-link" tabindex="-1">
             <img id="fotopromo1Img" src="fotopromo1.png" alt="Promoción ProOliva">
-            <span class="promo-photo-title" id="fotopromo1Title"></span>
           </a>
         </div>
         <div class="promo-photo-slide" data-index="1">
           <a id="fotopromo2Link" href="#" class="promo-photo-link" tabindex="-1">
             <img id="fotopromo2Img" src="fotopromo2.png" alt="Promoción ProOliva">
-            <span class="promo-photo-title" id="fotopromo2Title"></span>
           </a>
         </div>
         <div class="promo-photo-slide" data-index="2">
           <a id="fotopromo3Link" href="#" class="promo-photo-link" tabindex="-1">
             <img id="fotopromo3Img" src="fotopromo3.png" alt="Promoción ProOliva">
-            <span class="promo-photo-title" id="fotopromo3Title"></span>
           </a>
         </div>
       </div>
@@ -661,9 +652,9 @@
   // ---------- Imágenes, títulos y enlaces del Home Editor (admin.html) ----------
   (async () => {
     const slots = [
-      { key: 'fotopromo1', imgId: 'fotopromo1Img', linkId: 'fotopromo1Link', titleId: 'fotopromo1Title' },
-      { key: 'fotopromo2', imgId: 'fotopromo2Img', linkId: 'fotopromo2Link', titleId: 'fotopromo2Title' },
-      { key: 'fotopromo3', imgId: 'fotopromo3Img', linkId: 'fotopromo3Link', titleId: 'fotopromo3Title' },
+      { key: 'fotopromo1', imgId: 'fotopromo1Img', linkId: 'fotopromo1Link' },
+      { key: 'fotopromo2', imgId: 'fotopromo2Img', linkId: 'fotopromo2Link' },
+      { key: 'fotopromo3', imgId: 'fotopromo3Img', linkId: 'fotopromo3Link' },
       { key: 'aceitunas-mesa', imgId: 'catMesaImg', linkId: 'catMesaLink', labelId: 'catMesaLabel' },
       { key: 'aceitunas-premium', imgId: 'catPremiumImg', linkId: 'catPremiumLink', labelId: 'catPremiumLabel' },
       { key: 'especiales', imgId: 'catEspecialesImg', linkId: 'catEspecialesLink', labelId: 'catEspecialesLabel' },
