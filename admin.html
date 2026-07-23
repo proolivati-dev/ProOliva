@@ -308,6 +308,10 @@
     border:1.5px solid var(--line); border-radius:6px; padding:9px 12px; font-size:13px; flex:1; max-width:240px;
     background:#fff; color:var(--ink); outline:none;
   }
+  .live-batch-bar input[type="time"]{
+    border:1.5px solid var(--line); border-radius:6px; padding:8px 10px; font-size:13px;
+    background:#fff; color:var(--ink); outline:none; flex-shrink:0;
+  }
   .live-history{ flex-shrink:0; margin-top:12px; max-height:320px; overflow-y:auto; background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:14px 16px;}
   .live-history h3{ font-size:11.5px; text-transform:uppercase; letter-spacing:0.05em; color:var(--gold-deep); font-family:'IBM Plex Mono',monospace; margin-bottom:8px;}
   .live-history-day{ font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--olive-deep); background:var(--linen); padding:5px 10px; border-radius:5px; margin:10px 0 6px;}
@@ -822,6 +826,10 @@
 
         <div class="live-batch-bar">
           <input type="text" id="despachoDispatcherName" placeholder="Nombre del repartidor">
+          <label style="display:flex; align-items:center; gap:6px; font-size:12.5px; font-weight:600; opacity:0.7;">
+            Sale a las
+            <input type="time" id="despachoDepartureTime">
+          </label>
           <span id="despachoSelectCount">0 seleccionados</span>
           <button class="btn btn-outline" id="despachoCalcRouteBtn" style="width:auto;">📍 Calcular ruta óptima</button>
         </div>
@@ -1297,6 +1305,11 @@
       if (btn.dataset.tab === 'despacho'){
         loadDespachoOrders();
         loadDespachoHistory();
+        if (!document.getElementById('despachoDepartureTime').value){
+          const now = new Date();
+          document.getElementById('despachoDepartureTime').value =
+            `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        }
         if (despachoInterval) clearInterval(despachoInterval);
         despachoInterval = setInterval(loadDespachoOrders, 5000);
       } else if (despachoInterval){
@@ -3287,6 +3300,16 @@
   let despachoMap = null;
   let despachoRenderer = null;
 
+  function getDespachoDepartureDate(){
+    const timeValue = document.getElementById('despachoDepartureTime').value; // "HH:MM"
+    const now = new Date();
+    if (!timeValue) return now;
+    const [h, m] = timeValue.split(':').map(Number);
+    const departure = new Date();
+    departure.setHours(h, m, 0, 0);
+    return departure;
+  }
+
   function updateDespachoBar(){
     document.getElementById('despachoSelectCount').textContent = `${despachoSelectedIds.size} seleccionado${despachoSelectedIds.size === 1 ? '' : 's'}`;
     // Cualquier cambio en la selección invalida una ruta ya calculada
@@ -3295,6 +3318,7 @@
   }
 
   document.getElementById('despachoDispatcherName').addEventListener('input', updateDespachoBar);
+  document.getElementById('despachoDepartureTime').addEventListener('change', updateDespachoBar);
 
   document.getElementById('despachoCalcRouteBtn').addEventListener('click', async () => {
     const errorEl = document.getElementById('despachoRouteError');
@@ -3332,13 +3356,17 @@
     btn.disabled = true;
     btn.textContent = 'Calculando...';
 
+    const departureDate = getDespachoDepartureDate();
+    const trafficDepartureDate = departureDate > new Date() ? departureDate : new Date();
+
     const directionsService = new google.maps.DirectionsService();
     directionsService.route({
       origin,
       destination: origin,
       waypoints,
       optimizeWaypoints: true,
-      travelMode: google.maps.TravelMode.DRIVING
+      travelMode: google.maps.TravelMode.DRIVING,
+      drivingOptions: { departureTime: trafficDepartureDate, trafficModel: 'bestguess' }
     }, (result, status) => {
       btn.disabled = false;
       btn.textContent = '📍 Calcular ruta óptima';
@@ -3406,7 +3434,7 @@
 
       const { data: run, error: runError } = await supabaseClient.from('dispatch_runs').insert({
         repartidor: name,
-        departed_at: new Date().toISOString(),
+        departed_at: getDespachoDepartureDate().toISOString(),
         notified_customers: notify,
         route_distance_km: computedRoute.distanceKm,
         route_duration_min: computedRoute.durationMin,
