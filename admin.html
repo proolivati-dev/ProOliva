@@ -142,6 +142,16 @@
   .modal-actions{ display:flex; gap:10px; margin-top:24px;}
   .modal-actions .btn{ width:auto; flex:1;}
   .image-preview{ width:100%; height:140px; border-radius:8px; background:var(--linen); border:1.5px dashed var(--line); display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:6px; position:relative;}
+  .site-images-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:18px;}
+  .site-image-card{ background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:16px;}
+  .site-image-card h4{ font-size:14px; margin-bottom:2px;}
+  .site-image-card .hint{ font-size:11.5px; opacity:0.55; margin-bottom:10px;}
+  .site-image-preview{ width:100%; height:130px; border-radius:8px; background:var(--linen); border:1.5px dashed var(--line); display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:10px; position:relative;}
+  .site-image-preview img{ width:100%; height:100%; object-fit:cover;}
+  .site-image-preview span{ font-size:12px; opacity:0.5;}
+  .site-image-status{ font-size:11.5px; margin-top:6px; min-height:14px;}
+  .site-image-status.ok{ color:var(--olive-deep);}
+  .site-image-status.error{ color:var(--danger);}
   .image-preview img{ width:100%; height:100%; object-fit:cover;}
   .image-preview span{ font-size:12.5px; opacity:0.5;}
 
@@ -340,6 +350,7 @@
       <button class="tab-btn" data-tab="difusion">Difusión</button>
       <button class="tab-btn" data-tab="analitica">Analítica</button>
       <button class="tab-btn" data-tab="live">LIVE</button>
+      <button class="tab-btn" data-tab="imagenes">Imágenes</button>
     </div>
 
     <!-- ---------- TAB: PRODUCTOS ---------- -->
@@ -683,6 +694,17 @@
 
         <div class="live-overflow-strip" id="liveOverflowStrip"></div>
       </div>
+    </div>
+
+    <!-- ---------- TAB: IMÁGENES ---------- -->
+    <div class="tab-panel" id="tab-imagenes">
+      <div class="admin-toolbar">
+        <div>
+          <h2>Imágenes del sitio</h2>
+          <p>Sube o reemplaza las fotos que se muestran en index.html — quedan guardadas en Supabase, ya no hace falta subirlas directo a GitHub.</p>
+        </div>
+      </div>
+      <div class="site-images-grid" id="siteImagesGrid"></div>
     </div>
   </div>
 </div>
@@ -1057,6 +1079,7 @@
         clearInterval(liveInterval);
         liveInterval = null;
       }
+      if (btn.dataset.tab === 'imagenes' && !siteImagesLoaded) loadSiteImages();
     });
   });
 
@@ -2837,6 +2860,89 @@
   document.getElementById('closeLinkResultBtn').addEventListener('click', () => {
     closeModal(orderModalBackdrop);
   });
+
+  // ---------- Imágenes del sitio (index.html) ----------
+  const SITE_IMAGE_SLOTS = [
+    { key: 'fotopromo1', label: 'Foto promo 1', hint: 'Carrusel de promociones, debajo del banner' },
+    { key: 'fotopromo2', label: 'Foto promo 2', hint: 'Carrusel de promociones, debajo del banner' },
+    { key: 'fotopromo3', label: 'Foto promo 3', hint: 'Carrusel de promociones, debajo del banner' },
+    { key: 'aceitunas-mesa', label: 'Aceitunas de mesa', hint: 'Tarjeta de categoría en el inicio' },
+    { key: 'aceitunas-premium', label: 'Aceitunas premium', hint: 'Tarjeta de categoría en el inicio' },
+    { key: 'especiales', label: 'Especiales', hint: 'Tarjeta de categoría en el inicio' },
+    { key: 'packs', label: 'Venta por mayor', hint: 'Tarjeta de categoría — enlaza a ventas-mayor.html' }
+  ];
+  let siteImagesLoaded = false;
+
+  function renderSiteImagesGrid(){
+    const grid = document.getElementById('siteImagesGrid');
+    grid.innerHTML = SITE_IMAGE_SLOTS.map(slot => `
+      <div class="site-image-card">
+        <h4>${slot.label}</h4>
+        <p class="hint">${slot.hint}</p>
+        <div class="site-image-preview" id="siteImgPreview-${slot.key}"><span>Cargando...</span></div>
+        <input type="file" accept="image/*" id="siteImgFile-${slot.key}">
+        <div class="site-image-status" id="siteImgStatus-${slot.key}"></div>
+      </div>
+    `).join('');
+
+    SITE_IMAGE_SLOTS.forEach(slot => {
+      document.getElementById(`siteImgFile-${slot.key}`).addEventListener('change', () => uploadSiteImage(slot.key));
+    });
+  }
+
+  async function getSiteImageUrl(key){
+    const { data, error } = await supabaseClient.storage.from('site-files').list('site-images', { search: key });
+    if (error || !data || data.length === 0) return null;
+    const { data: urlData } = supabaseClient.storage.from('site-files').getPublicUrl(`site-images/${data[0].name}`);
+    return urlData.publicUrl;
+  }
+
+  async function loadSiteImages(){
+    renderSiteImagesGrid();
+    siteImagesLoaded = true;
+    await Promise.all(SITE_IMAGE_SLOTS.map(async (slot) => {
+      const url = await getSiteImageUrl(slot.key);
+      const preview = document.getElementById(`siteImgPreview-${slot.key}`);
+      preview.innerHTML = url ? `<img src="${url}" alt="">` : '<span>Sin imagen</span>';
+    }));
+  }
+
+  async function uploadSiteImage(key){
+    const fileInput = document.getElementById(`siteImgFile-${key}`);
+    const file = fileInput.files[0];
+    if (!file) return;
+
+    const preview = document.getElementById(`siteImgPreview-${key}`);
+    const statusEl = document.getElementById(`siteImgStatus-${key}`);
+    statusEl.textContent = '';
+    statusEl.className = 'site-image-status';
+    preview.innerHTML = '<span>Subiendo...</span>';
+
+    try {
+      // Borra cualquier versión anterior del mismo slot (por si cambia la extensión)
+      const { data: existing } = await supabaseClient.storage.from('site-files').list('site-images', { search: key });
+      if (existing && existing.length > 0){
+        await supabaseClient.storage.from('site-files').remove(existing.map(f => `site-images/${f.name}`));
+      }
+
+      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const path = `site-images/${key}.${ext}`;
+      const { error } = await supabaseClient.storage.from('site-files').upload(path, file, { upsert: true });
+      if (error) throw error;
+
+      const url = await getSiteImageUrl(key);
+      preview.innerHTML = url ? `<img src="${url}" alt="">` : '<span>Sin imagen</span>';
+      statusEl.textContent = 'Guardado ✓';
+      statusEl.className = 'site-image-status ok';
+    } catch (err){
+      preview.innerHTML = '<span>Error</span>';
+      statusEl.textContent = 'No se pudo subir: ' + err.message;
+      statusEl.className = 'site-image-status error';
+      console.error(err);
+    } finally {
+      fileInput.value = '';
+    }
+  }
 
   checkSession();
 </script>
