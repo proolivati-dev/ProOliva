@@ -91,7 +91,10 @@
   .qty-value{ width:26px; text-align:center; font-size:13px; font-weight:600;}
 
   /* ---------- page header ---------- */
-  .page-hero{ padding:56px 0 36px; text-align:center;}
+  .page-hero{ padding:0 0 24px; text-align:center;}
+  .sr-only{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;}
+  .products-banner-img{ width:100%; height:200px; object-fit:cover; border-radius:12px; display:block; background:var(--paper);}
+  .products-banner-subtitle{ font-family:'Archivo',sans-serif; font-weight:700; font-size:20px; color:var(--ink); margin-top:18px;}
   .page-hero .eyebrow{ margin-bottom:10px; display:block;}
   .page-hero h1{ font-size:38px; margin-bottom:12px;}
   .page-hero p{ opacity:0.72; max-width:480px; margin:0 auto;}
@@ -137,7 +140,16 @@
 
   /* ---------- footer ---------- */
   footer{ background:var(--paper); border-top:1px solid var(--line); padding:56px 0 24px;}
-  .foot-grid{ display:grid; grid-template-columns:1.4fr 1fr 1fr; gap:40px; padding-bottom:32px;}
+  .foot-grid{ display:grid; grid-template-columns:1.25fr 0.85fr 0.85fr 1.15fr; gap:36px; padding-bottom:32px;}
+  .foot-divider-col{ border-left:1px solid var(--line); padding-left:36px;}
+  .foot-block{ margin-bottom:24px;}
+  .foot-block:last-child{ margin-bottom:0;}
+  .foot-badges{ display:flex; flex-wrap:wrap; align-items:center; gap:12px;}
+  .foot-badges img{ height:48px; width:auto; display:block;}
+  .foot-social{ display:flex; align-items:center; gap:14px;}
+  .foot-social a{ display:flex; align-items:center; justify-content:center; opacity:0.85; transition:opacity .15s, transform .15s;}
+  .foot-social a:hover{ opacity:1; transform:translateY(-2px);}
+  .foot-social img{ height:22px; width:22px; object-fit:contain; display:block;}
   .foot-logo{ display:flex; align-items:center; margin-bottom:14px;}
   .foot-logo img{ height:64px;}
   .foot-grid h4{ font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--gold-deep); margin-bottom:14px;}
@@ -165,9 +177,11 @@
 
   @media (max-width:960px){ .prod-grid{ grid-template-columns:repeat(2,1fr);} }
   @media (max-width:860px){
+    .products-banner-img{ height:130px;}
     .nav{ grid-template-columns:auto 1fr auto;}
     .nav-links{ display:none;}
     .foot-grid{ grid-template-columns:1fr;}
+    .foot-divider-col{ border-left:none; padding-left:0; border-top:1px solid var(--line); padding-top:24px; margin-top:8px;}
     .filters{ top:85px; padding:14px 0;}
     .filters-row{ flex-direction:column; align-items:stretch; gap:12px;}
     .filters-secondary{ width:100%;}
@@ -211,9 +225,9 @@
 </header>
 
 <div class="page-hero wrap">
-  <span class="eyebrow">Catálogo completo</span>
-  <h1>Nuestros productos</h1>
-  <p>Aceites de oliva y aceitunas de mesa con trazabilidad de origen. Filtra por categoría y origen, o agrégalos al carrito y cotiza todo junto por WhatsApp.</p>
+  <h1 class="sr-only">Nuestros productos</h1>
+  <img class="products-banner-img" src="bannerproductos.png" alt="Catálogo ProOliva">
+  <p class="products-banner-subtitle">Todos los productos</p>
 </div>
 
 <div class="filters">
@@ -274,18 +288,57 @@
   <div class="wrap">
     <div class="foot-grid">
       <div>
-        <div class="foot-logo"><img src="logo.png" alt="ProOlivas Chile"></div>
+        <div class="foot-logo">
+          <img class="logo-mark foot" src="logo.png" alt="ProOlivas Chile">
+        </div>
         <p style="opacity:0.7; font-size:13.5px; max-width:260px;">Aceite de oliva y aceitunas de mesa con tradición familiar desde 1998.</p>
       </div>
+
+      <div>
+        <h4>Centro de ayuda</h4>
+        <a href="https://wa.me/56988256980?text=Hola%2C%20tengo%20un%20problema%20con%20mi%20pedido" target="_blank" rel="noopener">Problemas con tu pedido</a>
+        <a href="politicas.html">Envío y medios de pago</a>
+        <a href="ventas-mayor.html">Ventas por mayor</a>
+        <a href="mailto:proolivachile@gmail.com">Escríbenos</a>
+      </div>
+
       <div>
         <h4>Menú</h4>
         <a href="index.html">Home</a><a href="productos.html">Productos</a><a href="index.html#nosotros">Quienes somos</a><a href="index.html#contacto">Contáctanos</a><a href="politicas.html">Políticas y términos</a>
       </div>
-      <div>
-        <h4>Enlaces útiles</h4>
-        <div class="row">+56 9 8825 6980</div>
-        <div class="row">proolivachile@gmail.com</div>
-        <div class="row">@proolivachile</div>
+
+      <div class="foot-divider-col">
+        <div class="foot-block">
+          <h4>Métodos de envío en Chile</h4>
+          <div class="foot-badges">
+            <img src="logoenvios.png" alt="Métodos de envío: Chilexpress y envío local">
+          </div>
+        </div>
+
+        <div class="foot-block">
+          <h4>Síguenos</h4>
+          <div class="foot-social">
+            <a href="https://instagram.com/proolivachile" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram">
+              <img src="logoinstagram.png" alt="Instagram">
+            </a>
+            <a href="https://facebook.com/ProOlivasChile" target="_blank" rel="noopener" aria-label="Facebook" title="Facebook">
+              <img src="logofacebook.png" alt="Facebook">
+            </a>
+            <a href="https://linkedin.com/company/proolivas-chile" target="_blank" rel="noopener" aria-label="LinkedIn" title="LinkedIn">
+              <img src="logolinkedin.png" alt="LinkedIn">
+            </a>
+            <a href="https://wa.me/56988256980" target="_blank" rel="noopener" aria-label="WhatsApp" title="WhatsApp">
+              <img src="logowhatsapp.png" alt="WhatsApp">
+            </a>
+          </div>
+        </div>
+
+        <div class="foot-block">
+          <h4>Medios de pago</h4>
+          <div class="foot-badges">
+            <img src="logopagos.png" alt="Medios de pago: Visa, Mastercard, Webpay, transferencia y efectivo">
+          </div>
+        </div>
       </div>
     </div>
     <div class="foot-bottom"><span>Copyright © 2026 ProOliva. Todos los derechos reservados.</span><a href="politicas.html" style="opacity:1;">Políticas y términos</a></div>
