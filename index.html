@@ -162,10 +162,17 @@
   .prod-card:hover{ transform:translateY(-3px); box-shadow:0 14px 26px -16px rgba(32,40,26,0.35);}
   .prod-visual{ aspect-ratio:1144/1200; display:flex; align-items:center; justify-content:center; background:var(--linen); border-bottom:1px solid var(--line); overflow:hidden;}
   .prod-visual img{ width:100%; height:100%; object-fit:cover;}
-  .prod-body{ padding:18px;}
+  .prod-body{ padding:18px 18px 0;}
   .prod-cat-label{ font-family:'IBM Plex Mono',monospace; font-size:10px; text-transform:uppercase; letter-spacing:0.06em; color:var(--gold-deep);}
   .prod-body h4{ font-family:'Archivo', sans-serif; font-weight:600; font-size:15px; margin:6px 0 4px;}
   .prod-price{ font-family:'Archivo', sans-serif; font-weight:700; color:var(--olive-deep); font-size:15.5px; margin-top:6px;}
+  .prod-actions{ display:flex; gap:8px; padding:14px 18px 18px; align-items:center;}
+  .qty-stepper{ display:inline-flex; align-items:center; border:1.5px solid var(--line); border-radius:6px; overflow:hidden; flex-shrink:0; background:var(--paper);}
+  .qty-btn{ width:28px; height:32px; background:transparent; border:none; cursor:pointer; font-size:15px; font-weight:600; color:var(--ink); transition:background .15s;}
+  .qty-btn:hover{ background:var(--linen);}
+  .qty-value{ width:26px; text-align:center; font-size:13px; font-weight:600;}
+  .btn-add-cart{ flex:1; background:var(--olive-deep); color:#fff; border:none; border-radius:6px; padding:0 10px; height:34px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.02em; cursor:pointer; transition:background .15s;}
+  .btn-add-cart:hover{ background:var(--ink);}
   .products-more{ text-align:center; margin-top:32px;}
 
   /* ---------- destacado (carousel) ---------- */
@@ -195,7 +202,7 @@
   .foot-block{ margin-bottom:24px;}
   .foot-block:last-child{ margin-bottom:0;}
   .foot-badges{ display:flex; flex-wrap:wrap; align-items:center; gap:12px;}
-  .foot-badges img{ height:34px; width:auto; display:block;}
+  .foot-badges img{ height:48px; width:auto; display:block;}
   .foot-social{ display:flex; align-items:center; gap:14px;}
   .foot-social a{ display:flex; align-items:center; justify-content:center; opacity:0.85; transition:opacity .15s, transform .15s;}
   .foot-social a:hover{ opacity:1; transform:translateY(-2px);}
@@ -240,6 +247,8 @@
     .nav{ grid-template-columns:auto 1fr auto;}
     .nav-links{ display:none;}
     .subscribe-bar-inner{ flex-direction:column; align-items:stretch;}
+    .qty-btn{ width:38px; height:40px;}
+    .btn-add-cart{ height:42px;}
   }
 </style>
 </head>
@@ -493,6 +502,8 @@
   }
 
   // ---------- Grilla "Nuestros productos" (dinámica desde Supabase) ----------
+  let homeProducts = [];
+
   async function loadHomeProducts(){
     const grid = document.getElementById('homeProductGrid');
     const { data, error } = await supabaseClient
@@ -507,17 +518,58 @@
       return;
     }
 
+    homeProducts = data;
+
     grid.innerHTML = data.map(p => `
-      <a class="prod-card" href="producto.html?id=${p.id}" style="display:block;">
-        <div class="prod-visual">${p.image_url ? `<img src="${p.image_url}" alt="${p.name}" loading="lazy">` : ''}</div>
-        <div class="prod-body">
-          <span class="prod-cat-label">${CATEGORY_LABELS[p.category] || p.category}</span>
-          <h4>${p.name}</h4>
-          <span class="prod-price">${formatCLP(p.price)}</span>
+      <div class="prod-card">
+        <a href="producto.html?id=${p.id}" style="display:block; color:inherit;">
+          <div class="prod-visual">${p.image_url ? `<img src="${p.image_url}" alt="${p.name}" loading="lazy">` : ''}</div>
+          <div class="prod-body">
+            <span class="prod-cat-label">${CATEGORY_LABELS[p.category] || p.category}</span>
+            <h4>${p.name}</h4>
+            <span class="prod-price">${formatCLP(p.price)}</span>
+          </div>
+        </a>
+        <div class="prod-actions">
+          <div class="qty-stepper">
+            <button class="qty-btn qty-minus">−</button>
+            <span class="qty-value">1</span>
+            <button class="qty-btn qty-plus">+</button>
+          </div>
+          <button class="btn-add-cart" data-add-id="${p.id}">Agregar</button>
         </div>
-      </a>
+      </div>
     `).join('');
   }
+
+  // ---------- Contador de cantidad + agregar al carrito, por tarjeta (grilla del home) ----------
+  document.getElementById('homeProductGrid').addEventListener('click', (e) => {
+    const minus = e.target.closest('.qty-minus');
+    const plus = e.target.closest('.qty-plus');
+    const addBtn = e.target.closest('.btn-add-cart');
+
+    if (minus || plus){
+      const stepper = e.target.closest('.qty-stepper');
+      const valueEl = stepper.querySelector('.qty-value');
+      let val = parseInt(valueEl.textContent);
+      val = plus ? val + 1 : Math.max(1, val - 1);
+      valueEl.textContent = val;
+    }
+
+    if (addBtn){
+      const id = addBtn.dataset.addId;
+      const product = homeProducts.find(p => p.id === id);
+      if (!product) return;
+      const card = addBtn.closest('.prod-card');
+      const stepperValue = card.querySelector('.qty-value');
+      const qty = parseInt(stepperValue.textContent);
+      addToCart(product, qty);
+      stepperValue.textContent = '1';
+      const original = addBtn.textContent;
+      addBtn.textContent = '✓';
+      setTimeout(() => { addBtn.textContent = original; }, 1100);
+    }
+  });
 
   // ---------- Producto destacado (rota entre todos los marcados "featured") ----------
   let featuredProducts = [];
