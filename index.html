@@ -286,9 +286,7 @@
     <nav class="nav-links" id="navLinks">
       <div class="nav-item-wrap">
         <a href="productos.html">Productos</a>
-        <div class="nav-dropdown" id="productosDropdown">
-          <div class="nav-dropdown-links" id="productosDropdownLinks"></div>
-        </div>
+        <div class="nav-dropdown" id="productosDropdown"></div>
       </div>
     </nav>
     <a class="logo" href="index.html"><img class="logo-mark" src="logo.png" alt="ProOlivas Chile"></a>
@@ -752,17 +750,41 @@
       featMap[r.category_id].push(r.products);
     });
 
-    // El link "Productos" también despliega un acceso directo a todas las categorías del menú
-    const productosLinksContainer = document.getElementById('productosDropdownLinks');
-    if (productosLinksContainer && navRows && navRows.length > 0){
-      productosLinksContainer.innerHTML = '';
-      navRows.forEach(row => {
-        if (!row.categories) return;
-        const a = document.createElement('a');
-        a.href = `productos.html?cat=${encodeURIComponent(row.categories.slug)}`;
-        a.textContent = row.categories.name;
-        productosLinksContainer.appendChild(a);
-      });
+    // El link "Productos" tiene su propio desplegable editable (categoría especial __productos_root__)
+    const productosRoot = (allCats || []).find(c => c.slug === '__productos_root__');
+    const productosDropdown = document.getElementById('productosDropdown');
+    if (productosRoot && productosDropdown){
+      const rootRelated = (relMap[productosRoot.id] || []).map(id => catById[id]).filter(Boolean);
+      const rootFeatured = featMap[productosRoot.id] || [];
+
+      if (rootRelated.length > 0){
+        const col = document.createElement('div');
+        col.className = 'nav-dropdown-links';
+        rootRelated.forEach(rc => {
+          const ra = document.createElement('a');
+          ra.href = `productos.html?cat=${encodeURIComponent(rc.slug)}`;
+          ra.textContent = rc.name;
+          col.appendChild(ra);
+        });
+        productosDropdown.appendChild(col);
+      }
+
+      if (rootFeatured.length > 0){
+        const prodCol = document.createElement('div');
+        prodCol.className = 'nav-dropdown-products';
+        rootFeatured.forEach(p => {
+          const pa = document.createElement('a');
+          pa.href = `producto.html?id=${p.id}`;
+          pa.className = 'nav-dropdown-product';
+          pa.innerHTML = `
+            <span class="ndp-img">${p.image_url ? `<img src="${p.image_url}" alt="">` : ''}</span>
+            <span class="ndp-name">${p.name}</span>
+            <span class="ndp-price">${formatCLP(p.price)}</span>
+          `;
+          prodCol.appendChild(pa);
+        });
+        productosDropdown.appendChild(prodCol);
+      }
     }
 
     const nav = document.getElementById('navLinks');

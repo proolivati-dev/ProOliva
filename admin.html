@@ -180,6 +180,8 @@
   .category-manage-row input[type="text"]{ flex:1; border:1.5px solid var(--line); border-radius:6px; padding:6px 10px; font-size:13px; background:#fff;}
   .category-manage-row .zone-remove{ background:none; border:none; cursor:pointer; color:var(--danger); font-size:16px; line-height:1; padding:2px 4px;}
   .nav-manager-row{ border:1px solid var(--line); border-radius:8px; padding:12px 14px; margin-bottom:8px; background:var(--paper);}
+  .nav-manager-row-fixed{ background:var(--linen); border-color:var(--olive-light); margin-bottom:16px;}
+  .nav-manager-fixed-badge{ font-family:'IBM Plex Mono',monospace; font-size:9.5px; text-transform:uppercase; letter-spacing:0.05em; background:var(--olive-deep); color:#fff; padding:2px 7px; border-radius:8px; margin-right:8px;}
   .nav-manager-main{ display:flex; align-items:center; gap:12px;}
   .nav-manager-arrows{ display:flex; flex-direction:column; gap:2px;}
   .nav-manager-arrows button{ width:22px; height:18px; border:1px solid var(--line); background:var(--linen); border-radius:4px; cursor:pointer; font-size:9px; line-height:1; padding:0;}
@@ -1347,10 +1349,13 @@
   // ---------- Categorías dinámicas ----------
   let allCategories = [];
 
+  let productosRootCategory = null;
+
   async function loadCategories(){
     const { data, error } = await supabaseClient.from('categories').select('*').order('sort_order').order('name');
     if (error){ console.error(error); return; }
-    allCategories = data || [];
+    productosRootCategory = (data || []).find(c => c.is_special) || null;
+    allCategories = (data || []).filter(c => !c.is_special);
     renderFieldCategoriesList(currentCheckedCategoryIds());
     renderCategoriesManageList();
     if (typeof renderNavCategoriesManager === 'function') renderNavCategoriesManager();
@@ -1461,6 +1466,36 @@
     renderNavCategoriesManager();
   }
 
+  function categoryEditorBlockHtml(categoryId, categoryName, excludeIds){
+    const related = categoryRelations[categoryId] || [];
+    const featured = categoryFeaturedProducts[categoryId] || [];
+    return `
+      <div class="nav-manager-related">
+        <span class="hint">Categorías relacionadas que se despliegan al pasar el mouse por "${escapeAttr(categoryName)}":</span>
+        <div class="category-checklist" style="max-height:none;">
+          ${allCategories.filter(oc => !excludeIds.includes(oc.id)).map(oc => `
+            <label class="category-check-pill ${related.includes(oc.id) ? 'checked' : ''}">
+              <input type="checkbox" ${related.includes(oc.id) ? 'checked' : ''} onchange="toggleRelatedCategory('${categoryId}', '${oc.id}', this.checked); this.closest('.category-check-pill').classList.toggle('checked', this.checked)">
+              ${escapeAttr(oc.name)}
+            </label>
+          `).join('')}
+        </div>
+      </div>
+      <div class="nav-manager-related">
+        <span class="hint">Productos destacados en ese menú (foto, ideal 3-4):</span>
+        <div class="nav-featured-picker">
+          ${(currentProducts || []).filter(p => p.active).map(p => `
+            <label class="nav-featured-pill ${featured.includes(p.id) ? 'checked' : ''}">
+              <input type="checkbox" ${featured.includes(p.id) ? 'checked' : ''} onchange="toggleFeaturedProduct('${categoryId}', '${p.id}', this.checked); this.closest('.nav-featured-pill').classList.toggle('checked', this.checked)">
+              ${p.image_url ? `<img src="${p.image_url}" alt="">` : '<div class="nav-featured-noimg"></div>'}
+              <span>${escapeAttr(p.name)}</span>
+            </label>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
   function renderNavCategoriesManager(){
     const container = document.getElementById('navCategoriesManager');
     if (!container) return;
@@ -1469,16 +1504,34 @@
       return;
     }
 
+    // Fila fija: el link "Productos" siempre está en el menú, pero también se puede editar
+    let html = '';
+    if (productosRootCategory){
+      html += `
+        <div class="nav-manager-row nav-manager-row-fixed">
+          <div class="nav-manager-main">
+            <div class="nav-manager-arrows" style="visibility:hidden;">
+              <button type="button" disabled>▲</button>
+              <button type="button" disabled>▼</button>
+            </div>
+            <label class="field-check" style="margin-bottom:0; flex:1; opacity:1;">
+              <span class="nav-manager-fixed-badge">Fijo</span>
+              Productos
+            </label>
+          </div>
+          ${categoryEditorBlockHtml(productosRootCategory.id, 'Productos', [])}
+        </div>
+      `;
+    }
+
     // Primero las que ya están en el menú (en su orden), después el resto disponible
     const selected = navCategoryOrder.map(id => allCategories.find(c => c.id === id)).filter(Boolean);
     const unselected = allCategories.filter(c => !navCategoryOrder.includes(c.id));
     const ordered = [...selected, ...unselected];
 
-    container.innerHTML = ordered.map(c => {
+    html += ordered.map(c => {
       const isSelected = navCategoryOrder.includes(c.id);
       const idx = navCategoryOrder.indexOf(c.id);
-      const related = categoryRelations[c.id] || [];
-      const featured = categoryFeaturedProducts[c.id] || [];
       return `
         <div class="nav-manager-row">
           <div class="nav-manager-main">
@@ -1491,34 +1544,12 @@
               ${escapeAttr(c.name)}
             </label>
           </div>
-          ${isSelected ? `
-            <div class="nav-manager-related">
-              <span class="hint">Categorías relacionadas que se despliegan al pasar el mouse por "${escapeAttr(c.name)}":</span>
-              <div class="category-checklist" style="max-height:none;">
-                ${allCategories.filter(oc => oc.id !== c.id).map(oc => `
-                  <label class="category-check-pill ${related.includes(oc.id) ? 'checked' : ''}">
-                    <input type="checkbox" ${related.includes(oc.id) ? 'checked' : ''} onchange="toggleRelatedCategory('${c.id}', '${oc.id}', this.checked); this.closest('.category-check-pill').classList.toggle('checked', this.checked)">
-                    ${escapeAttr(oc.name)}
-                  </label>
-                `).join('')}
-              </div>
-            </div>
-            <div class="nav-manager-related">
-              <span class="hint">Productos destacados en ese menú (foto, ideal 3-4):</span>
-              <div class="nav-featured-picker">
-                ${(currentProducts || []).filter(p => p.active).map(p => `
-                  <label class="nav-featured-pill ${featured.includes(p.id) ? 'checked' : ''}">
-                    <input type="checkbox" ${featured.includes(p.id) ? 'checked' : ''} onchange="toggleFeaturedProduct('${c.id}', '${p.id}', this.checked); this.closest('.nav-featured-pill').classList.toggle('checked', this.checked)">
-                    ${p.image_url ? `<img src="${p.image_url}" alt="">` : '<div class="nav-featured-noimg"></div>'}
-                    <span>${escapeAttr(p.name)}</span>
-                  </label>
-                `).join('')}
-              </div>
-            </div>
-          ` : ''}
+          ${isSelected ? categoryEditorBlockHtml(c.id, c.name, [c.id]) : ''}
         </div>
       `;
     }).join('');
+
+    container.innerHTML = html;
   }
 
   window.toggleNavCategory = function(id, checked){
