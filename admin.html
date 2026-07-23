@@ -167,6 +167,9 @@
   .site-image-status{ font-size:11.5px; margin-top:6px; min-height:14px;}
   .site-image-status.ok{ color:var(--olive-deep);}
   .site-image-status.error{ color:var(--danger);}
+  .config-grid{ display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px; align-items:start;}
+  .config-panel h3{ font-size:15px; margin-bottom:16px;}
+  @media (max-width:900px){ .config-grid{ grid-template-columns:1fr;} }
   .image-preview img{ width:100%; height:100%; object-fit:cover;}
   .image-preview span{ font-size:12.5px; opacity:0.5;}
 
@@ -366,6 +369,7 @@
       <button class="tab-btn" data-tab="analitica">Analítica</button>
       <button class="tab-btn" data-tab="live">LIVE</button>
       <button class="tab-btn" data-tab="home-editor">Home Editor</button>
+      <button class="tab-btn" data-tab="config">Configuración</button>
     </div>
 
     <!-- ---------- TAB: PRODUCTOS ---------- -->
@@ -720,6 +724,53 @@
         </div>
       </div>
       <div class="site-images-grid" id="siteImagesGrid"></div>
+    </div>
+
+    <!-- ---------- TAB: CONFIGURACIÓN ---------- -->
+    <div class="tab-panel" id="tab-config">
+      <div class="admin-toolbar">
+        <div>
+          <h2>Configuración de envío</h2>
+          <p>Estas reglas se aplican automáticamente en checkout.html — sin tocar código.</p>
+        </div>
+      </div>
+
+      <div class="config-grid">
+        <div class="panel config-panel">
+          <h3>Envío gratis</h3>
+          <label class="field-check" style="margin-bottom:16px;">
+            <input type="checkbox" id="cfgFreeShippingEnabled"> Activar envío gratis por comuna + monto mínimo
+          </label>
+          <div class="field-row">
+            <div class="field">
+              <label>Comuna con envío gratis</label>
+              <input type="text" id="cfgFreeShippingComuna" placeholder="Ej: Viña del Mar">
+            </div>
+            <div class="field">
+              <label>Monto mínimo de compra (CLP)</label>
+              <input type="number" id="cfgFreeShippingMin" min="0" step="1000">
+            </div>
+          </div>
+          <p class="hint">Se compara contra el <b>subtotal de productos</b> (sin contar el envío), y la comuna se compara sin distinguir mayúsculas/tildes.</p>
+        </div>
+
+        <div class="panel config-panel">
+          <h3>Métodos de envío disponibles</h3>
+          <label class="field-check" style="margin-bottom:12px;">
+            <input type="checkbox" id="cfgChilexpressEnabled"> Chilexpress (cotización en vivo)
+          </label>
+          <label class="field-check" style="margin-bottom:12px;">
+            <input type="checkbox" id="cfgBlueExpressEnabled"> Blue Express
+          </label>
+          <p class="hint" style="margin-bottom:12px; margin-left:29px;">Aparece el botón pero deshabilitado hasta que actives esta casilla — así puedes dejarlo visible desde ya sin que los clientes lo usen todavía.</p>
+          <label class="field-check">
+            <input type="checkbox" id="cfgLocalEnabled"> Envío local
+          </label>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" id="saveShippingConfigBtn" style="width:auto;">Guardar configuración</button>
+      <div class="site-image-status" id="shippingConfigStatus"></div>
     </div>
   </div>
 </div>
@@ -1095,6 +1146,7 @@
         liveInterval = null;
       }
       if (btn.dataset.tab === 'home-editor' && !siteImagesLoaded) loadSiteImages();
+      if (btn.dataset.tab === 'config' && !shippingConfigLoaded) loadShippingConfig();
     });
   });
 
@@ -3066,6 +3118,54 @@
       fileInput.value = '';
     }
   }
+
+  // ---------- Configuración de envío ----------
+  let shippingConfigLoaded = false;
+
+  async function loadShippingConfig(){
+    shippingConfigLoaded = true;
+    const { data, error } = await supabaseClient.from('shipping_settings').select('*').eq('id', 1).single();
+    if (error || !data){
+      document.getElementById('shippingConfigStatus').textContent = 'No se pudo cargar la configuración.';
+      document.getElementById('shippingConfigStatus').className = 'site-image-status error';
+      console.error(error);
+      return;
+    }
+    document.getElementById('cfgFreeShippingEnabled').checked = data.free_shipping_enabled;
+    document.getElementById('cfgFreeShippingComuna').value = data.free_shipping_comuna || '';
+    document.getElementById('cfgFreeShippingMin').value = data.free_shipping_min_amount;
+    document.getElementById('cfgChilexpressEnabled').checked = data.chilexpress_enabled;
+    document.getElementById('cfgBlueExpressEnabled').checked = data.blue_express_enabled;
+    document.getElementById('cfgLocalEnabled').checked = data.local_enabled;
+  }
+
+  document.getElementById('saveShippingConfigBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('saveShippingConfigBtn');
+    const statusEl = document.getElementById('shippingConfigStatus');
+    btn.disabled = true;
+    btn.textContent = 'Guardando...';
+    try {
+      const { error } = await supabaseClient.from('shipping_settings').update({
+        free_shipping_enabled: document.getElementById('cfgFreeShippingEnabled').checked,
+        free_shipping_comuna: document.getElementById('cfgFreeShippingComuna').value.trim(),
+        free_shipping_min_amount: parseFloat(document.getElementById('cfgFreeShippingMin').value) || 0,
+        chilexpress_enabled: document.getElementById('cfgChilexpressEnabled').checked,
+        blue_express_enabled: document.getElementById('cfgBlueExpressEnabled').checked,
+        local_enabled: document.getElementById('cfgLocalEnabled').checked,
+        updated_at: new Date().toISOString()
+      }).eq('id', 1);
+      if (error) throw error;
+      statusEl.textContent = 'Configuración guardada ✓';
+      statusEl.className = 'site-image-status ok';
+    } catch (err){
+      statusEl.textContent = 'No se pudo guardar: ' + err.message;
+      statusEl.className = 'site-image-status error';
+      console.error(err);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Guardar configuración';
+    }
+  });
 
   checkSession();
 </script>

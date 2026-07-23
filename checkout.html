@@ -58,6 +58,7 @@
   .totals-row.grand span:last-child{ color:var(--olive-deep); font-family:'Archivo',sans-serif;}
 
   .shipping-quote-result{ background:var(--linen); border-radius:8px; padding:14px 16px; margin-top:14px; font-size:13.5px; display:none;}
+  .free-shipping-banner{ background:#e4ede0; border:1.5px solid var(--olive-deep); color:var(--olive-deep); font-size:13.5px; font-weight:600; padding:12px 16px; border-radius:8px; margin-bottom:14px;}
   .shipping-quote-result.show{ display:block;}
   .shipping-quote-result b{ color:var(--olive-deep);}
 
@@ -144,7 +145,14 @@
             </div>
           </div>
 
-          <button class="btn btn-outline" id="quoteShippingBtn" type="button">Cotizar envío con Chilexpress</button>
+          <div class="free-shipping-banner" id="freeShippingBanner" style="display:none;">
+            🎉 ¡Tu pedido califica para <b>envío gratis</b>!
+          </div>
+
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button class="btn btn-outline" id="quoteShippingBtn" type="button" style="flex:1;">Cotizar envío con Chilexpress</button>
+            <button class="btn btn-outline" id="quoteBlueExpressBtn" type="button" style="flex:1;" disabled title="Próximamente">Blue Express (próximamente)</button>
+          </div>
           <div class="shipping-quote-result" id="shippingQuoteResult"></div>
           <div class="error-msg" id="shippingError"></div>
         </div>
@@ -182,7 +190,8 @@
           <div class="totals-row grand"><span>Total</span><span id="totalValue">$0</span></div>
         </div>
 
-        <button class="btn btn-primary" id="payBtn" disabled>Pagar con Webpay</button>
+        <button class="btn btn-primary" id="payWebpayBtn" disabled>Pagar con Webpay</button>
+        <button class="btn btn-primary" id="payMercadoPagoBtn" disabled style="background:#009ee3; margin-top:10px;">Pagar con Mercado Pago</button>
         <div class="error-msg" id="payError"></div>
       </div>
     </div>
@@ -202,13 +211,75 @@
   const cart = getCart();
   let shippingCost = 0;
   let shippingQuoted = false;
+  let shippingSettings = null;
 
   if (cart.length === 0){
     document.getElementById('checkoutContent').style.display = 'none';
     document.getElementById('emptyCartMsg').style.display = 'block';
   } else {
     renderCheckout();
+    loadShippingSettings();
   }
+
+  async function loadShippingSettings(){
+    const { data } = await supabaseClient.from('shipping_settings').select('*').eq('id', 1).single();
+    shippingSettings = data || {
+      free_shipping_enabled: false, free_shipping_comuna: '', free_shipping_min_amount: 0,
+      chilexpress_enabled: true, blue_express_enabled: false, local_enabled: true
+    };
+
+    if (!shippingSettings.chilexpress_enabled){
+      document.getElementById('quoteShippingBtn').style.display = 'none';
+    }
+    const blueBtn = document.getElementById('quoteBlueExpressBtn');
+    if (shippingSettings.blue_express_enabled){
+      blueBtn.disabled = false;
+      blueBtn.title = '';
+      blueBtn.textContent = 'Cotizar con Blue Express';
+    }
+
+    checkFreeShipping();
+  }
+
+  function normalizeText(str){
+    return (str || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
+
+  // Revisa si el pedido ya califica para envío gratis con los datos actuales.
+  // Devuelve true si aplicó envío gratis (y ya deja todo listo para pagar).
+  function checkFreeShipping(){
+    const banner = document.getElementById('freeShippingBanner');
+    if (!shippingSettings || !shippingSettings.free_shipping_enabled){
+      banner.style.display = 'none';
+      return false;
+    }
+
+    const comuna = document.getElementById('custComuna').value.trim();
+    const subtotal = cartTotal(cart);
+    const matchesComuna = comuna && normalizeText(comuna) === normalizeText(shippingSettings.free_shipping_comuna);
+    const meetsMinimum = subtotal >= (shippingSettings.free_shipping_min_amount || 0);
+
+    if (matchesComuna && meetsMinimum){
+      shippingCost = 0;
+      shippingQuoted = true;
+      document.getElementById('shippingValue').textContent = 'Gratis';
+      document.getElementById('shippingQuoteResult').classList.remove('show');
+      document.getElementById('shippingError').style.display = 'none';
+      updateTotals();
+      banner.style.display = 'block';
+      document.getElementById('payWebpayBtn').disabled = false;
+      document.getElementById('payMercadoPagoBtn').disabled = false;
+      return true;
+    }
+    banner.style.display = 'none';
+    return false;
+  }
+
+  document.getElementById('custComuna').addEventListener('blur', checkFreeShipping);
+
+  document.getElementById('quoteBlueExpressBtn').addEventListener('click', () => {
+    alert('Blue Express todavía está en preparación — pronto vas a poder cotizar y despachar con ellos también.');
+  });
 
   function renderCheckout(){
     document.getElementById('cartLines').innerHTML = cart.map(i => `
@@ -243,6 +314,8 @@
       errorEl.style.display = 'block';
       return;
     }
+
+    if (checkFreeShipping()) return; // ya califica gratis, no hace falta cotizar con Chilexpress
 
     const btn = document.getElementById('quoteShippingBtn');
     btn.disabled = true;
@@ -293,7 +366,8 @@
       shippingQuoted = true;
       document.getElementById('shippingValue').textContent = formatCLP(shippingCost);
       updateTotals();
-      document.getElementById('payBtn').disabled = false;
+      document.getElementById('payWebpayBtn').disabled = false;
+      document.getElementById('payMercadoPagoBtn').disabled = false;
 
     } catch (err) {
       errorEl.textContent = 'No se pudo cotizar el envío: ' + err.message;
@@ -315,7 +389,7 @@
     });
   });
 
-  document.getElementById('payBtn').addEventListener('click', async () => {
+  function validateCheckoutForm(){
     const name = document.getElementById('custName').value.trim();
     const email = document.getElementById('custEmail').value.trim();
     const address = document.getElementById('custAddress').value.trim();
@@ -326,7 +400,7 @@
     if (!name || !email || !address || !comuna){
       errorEl.textContent = 'Completa nombre, correo, dirección y comuna antes de pagar.';
       errorEl.style.display = 'block';
-      return;
+      return null;
     }
 
     const billingError = document.getElementById('billingError');
@@ -339,16 +413,38 @@
       if (!billingRut || !billingBusinessName || !billingGiro){
         billingError.textContent = 'Para factura necesitamos el RUT de la empresa, la razón social y el giro.';
         billingError.style.display = 'block';
-        return;
+        return null;
       }
     }
 
-    const payBtn = document.getElementById('payBtn');
-    payBtn.disabled = true;
-    payBtn.textContent = 'Conectando con Webpay...';
-
     const subtotal = cartTotal(cart);
     const total = subtotal + shippingCost;
+
+    return {
+      subtotal, total,
+      shipping: {
+        name, email,
+        phone: document.getElementById('custPhone').value.trim(),
+        address, comuna,
+        region: document.getElementById('custRegion').value
+      },
+      billing: {
+        documentType,
+        rut: documentType === 'factura' ? billingRut : null,
+        businessName: documentType === 'factura' ? billingBusinessName : null,
+        giro: documentType === 'factura' ? billingGiro : null
+      }
+    };
+  }
+
+  document.getElementById('payWebpayBtn').addEventListener('click', async () => {
+    const formData = validateCheckoutForm();
+    if (!formData) return;
+
+    const payBtn = document.getElementById('payWebpayBtn');
+    const errorEl = document.getElementById('payError');
+    payBtn.disabled = true;
+    payBtn.textContent = 'Conectando con Webpay...';
 
     try {
       const res = await fetch(`${SUPABASE_URL}/functions/v1/webpay-create`, {
@@ -358,26 +454,7 @@
           'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
           'apikey': SUPABASE_ANON_KEY
         },
-        body: JSON.stringify({
-          items: cart,
-          subtotal,
-          shippingCost,
-          total,
-          shipping: {
-            name,
-            email,
-            phone: document.getElementById('custPhone').value.trim(),
-            address,
-            comuna,
-            region: document.getElementById('custRegion').value
-          },
-          billing: {
-            documentType,
-            rut: documentType === 'factura' ? billingRut : null,
-            businessName: documentType === 'factura' ? billingBusinessName : null,
-            giro: documentType === 'factura' ? billingGiro : null
-          }
-        })
+        body: JSON.stringify({ items: cart, subtotal: formData.subtotal, shippingCost, total: formData.total, shipping: formData.shipping, billing: formData.billing })
       });
       const data = await res.json();
 
@@ -402,6 +479,42 @@
       errorEl.style.display = 'block';
       payBtn.disabled = false;
       payBtn.textContent = 'Pagar con Webpay';
+    }
+  });
+
+  document.getElementById('payMercadoPagoBtn').addEventListener('click', async () => {
+    const formData = validateCheckoutForm();
+    if (!formData) return;
+
+    const payBtn = document.getElementById('payMercadoPagoBtn');
+    const errorEl = document.getElementById('payError');
+    payBtn.disabled = true;
+    payBtn.textContent = 'Conectando con Mercado Pago...';
+
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/mercadopago-create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'apikey': SUPABASE_ANON_KEY
+        },
+        body: JSON.stringify({ items: cart, subtotal: formData.subtotal, shippingCost, total: formData.total, shipping: formData.shipping, billing: formData.billing })
+      });
+      const data = await res.json();
+
+      if (!res.ok || data.error){
+        throw new Error(data.error || 'No se pudo iniciar el pago.');
+      }
+
+      // Mercado Pago es un simple redirect (no necesita el truco del form POST de Webpay)
+      window.location.href = data.initPoint;
+
+    } catch (err) {
+      errorEl.textContent = 'No se pudo conectar con Mercado Pago: ' + err.message + ' — revisa que mercadopago-create esté desplegada en Supabase.';
+      errorEl.style.display = 'block';
+      payBtn.disabled = false;
+      payBtn.textContent = 'Pagar con Mercado Pago';
     }
   });
 </script>
