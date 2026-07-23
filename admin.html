@@ -179,6 +179,13 @@
   .category-manage-row{ display:flex; align-items:center; gap:10px; background:var(--linen); border-radius:8px; padding:9px 12px; font-size:13px;}
   .category-manage-row input[type="text"]{ flex:1; border:1.5px solid var(--line); border-radius:6px; padding:6px 10px; font-size:13px; background:#fff;}
   .category-manage-row .zone-remove{ background:none; border:none; cursor:pointer; color:var(--danger); font-size:16px; line-height:1; padding:2px 4px;}
+  .nav-manager-row{ border:1px solid var(--line); border-radius:8px; padding:12px 14px; margin-bottom:8px; background:var(--paper);}
+  .nav-manager-main{ display:flex; align-items:center; gap:12px;}
+  .nav-manager-arrows{ display:flex; flex-direction:column; gap:2px;}
+  .nav-manager-arrows button{ width:22px; height:18px; border:1px solid var(--line); background:var(--linen); border-radius:4px; cursor:pointer; font-size:9px; line-height:1; padding:0;}
+  .nav-manager-arrows button:disabled{ opacity:0.25; cursor:default;}
+  .nav-manager-related{ margin-top:10px; padding-top:10px; border-top:1px solid var(--line); margin-left:34px;}
+  .nav-manager-related .hint{ display:block; margin-bottom:8px;}
   .free-zone-row{ display:flex; align-items:center; gap:10px; background:var(--linen); border-radius:8px; padding:9px 12px; font-size:13px;}
   .free-zone-row .zone-comuna{ font-weight:700; flex:1;}
   .free-zone-row .zone-min{ opacity:0.7; font-family:'IBM Plex Mono',monospace; font-size:12px;}
@@ -912,9 +919,9 @@
       <div class="site-images-grid" id="siteImagesGrid"></div>
 
       <div class="panel" style="margin-top:32px;">
-        <h3 style="margin-bottom:4px;">Categorías en la barra de navegación</h3>
-        <p class="hint" style="margin-bottom:16px;">Elige qué categorías aparecen en el menú principal de index.html, productos.html y producto.html, y en qué orden (arriba = primero).</p>
-        <div class="category-checklist" id="navCategoriesPicker" style="max-height:none;"></div>
+        <h3 style="margin-bottom:4px;">Categorías y barra de navegación</h3>
+        <p class="hint" style="margin-bottom:16px;">Marca qué categorías aparecen en el menú principal de index.html, productos.html y producto.html — la primera de la lista es la que sale primero. Para cada una, elige qué categorías relacionadas se despliegan al pasar el mouse por encima.</p>
+        <div id="navCategoriesManager"></div>
         <button type="button" class="btn btn-primary" id="saveNavCategoriesBtn" style="width:auto; margin-top:14px;">Guardar barra de navegación</button>
         <div class="site-image-status" id="navCategoriesStatus"></div>
       </div>
@@ -1341,7 +1348,7 @@
     allCategories = data || [];
     renderFieldCategoriesList(currentCheckedCategoryIds());
     renderCategoriesManageList();
-    if (typeof renderNavCategoriesPicker === 'function') renderNavCategoriesPicker();
+    if (typeof renderNavCategoriesManager === 'function') renderNavCategoriesManager();
   }
 
   function currentCheckedCategoryIds(){
@@ -1422,44 +1429,121 @@
   };
 
   // ---------- Categorías de la barra de navegación (Home Editor) ----------
-  let navCategorySelectedIds = [];
+  let navCategoryOrder = []; // ids de categorías en el menú, en orden
+  let categoryRelations = {}; // { category_id: [related_category_id, ...] }
   let navCategoriesLoaded = false;
 
   async function loadNavCategories(){
     navCategoriesLoaded = true;
     const { data } = await supabaseClient.from('nav_categories').select('category_id').order('sort_order');
-    navCategorySelectedIds = (data || []).map(r => r.category_id);
-    renderNavCategoriesPicker();
+    navCategoryOrder = (data || []).map(r => r.category_id);
+
+    const { data: relData } = await supabaseClient.from('category_relations').select('*').order('sort_order');
+    categoryRelations = {};
+    (relData || []).forEach(r => {
+      if (!categoryRelations[r.category_id]) categoryRelations[r.category_id] = [];
+      categoryRelations[r.category_id].push(r.related_category_id);
+    });
+
+    renderNavCategoriesManager();
   }
 
-  function renderNavCategoriesPicker(){
-    const container = document.getElementById('navCategoriesPicker');
+  function renderNavCategoriesManager(){
+    const container = document.getElementById('navCategoriesManager');
     if (!container) return;
     if (allCategories.length === 0){
       container.innerHTML = '<p class="hint">Todavía no hay categorías creadas — créalas primero en la pestaña Productos.</p>';
       return;
     }
-    container.innerHTML = allCategories.map(c => `
-      <label class="category-check-pill ${navCategorySelectedIds.includes(c.id) ? 'checked' : ''}">
-        <input type="checkbox" value="${c.id}" ${navCategorySelectedIds.includes(c.id) ? 'checked' : ''} onchange="this.closest('.category-check-pill').classList.toggle('checked', this.checked)">
-        ${escapeAttr(c.name)}
-      </label>
-    `).join('');
+
+    // Primero las que ya están en el menú (en su orden), después el resto disponible
+    const selected = navCategoryOrder.map(id => allCategories.find(c => c.id === id)).filter(Boolean);
+    const unselected = allCategories.filter(c => !navCategoryOrder.includes(c.id));
+    const ordered = [...selected, ...unselected];
+
+    container.innerHTML = ordered.map(c => {
+      const isSelected = navCategoryOrder.includes(c.id);
+      const idx = navCategoryOrder.indexOf(c.id);
+      const related = categoryRelations[c.id] || [];
+      return `
+        <div class="nav-manager-row">
+          <div class="nav-manager-main">
+            <div class="nav-manager-arrows">
+              <button type="button" ${!isSelected || idx === 0 ? 'disabled' : ''} onclick="moveNavCategory('${c.id}', -1)" title="Subir">▲</button>
+              <button type="button" ${!isSelected || idx === navCategoryOrder.length - 1 ? 'disabled' : ''} onclick="moveNavCategory('${c.id}', 1)" title="Bajar">▼</button>
+            </div>
+            <label class="field-check" style="margin-bottom:0; flex:1;">
+              <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleNavCategory('${c.id}', this.checked)">
+              ${escapeAttr(c.name)}
+            </label>
+          </div>
+          ${isSelected ? `
+            <div class="nav-manager-related">
+              <span class="hint">Categorías relacionadas que se despliegan al pasar el mouse por "${escapeAttr(c.name)}":</span>
+              <div class="category-checklist" style="max-height:none;">
+                ${allCategories.filter(oc => oc.id !== c.id).map(oc => `
+                  <label class="category-check-pill ${related.includes(oc.id) ? 'checked' : ''}">
+                    <input type="checkbox" ${related.includes(oc.id) ? 'checked' : ''} onchange="toggleRelatedCategory('${c.id}', '${oc.id}', this.checked); this.closest('.category-check-pill').classList.toggle('checked', this.checked)">
+                    ${escapeAttr(oc.name)}
+                  </label>
+                `).join('')}
+              </div>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }).join('');
   }
 
+  window.toggleNavCategory = function(id, checked){
+    if (checked){
+      if (!navCategoryOrder.includes(id)) navCategoryOrder.push(id);
+    } else {
+      navCategoryOrder = navCategoryOrder.filter(x => x !== id);
+      delete categoryRelations[id];
+    }
+    renderNavCategoriesManager();
+  };
+
+  window.moveNavCategory = function(id, dir){
+    const idx = navCategoryOrder.indexOf(id);
+    const newIdx = idx + dir;
+    if (idx === -1 || newIdx < 0 || newIdx >= navCategoryOrder.length) return;
+    [navCategoryOrder[idx], navCategoryOrder[newIdx]] = [navCategoryOrder[newIdx], navCategoryOrder[idx]];
+    renderNavCategoriesManager();
+  };
+
+  window.toggleRelatedCategory = function(categoryId, relatedId, checked){
+    if (!categoryRelations[categoryId]) categoryRelations[categoryId] = [];
+    if (checked){
+      if (!categoryRelations[categoryId].includes(relatedId)) categoryRelations[categoryId].push(relatedId);
+    } else {
+      categoryRelations[categoryId] = categoryRelations[categoryId].filter(x => x !== relatedId);
+    }
+  };
+
   document.getElementById('saveNavCategoriesBtn').addEventListener('click', async () => {
-    const ids = Array.from(document.querySelectorAll('#navCategoriesPicker input:checked')).map(el => el.value);
     const statusEl = document.getElementById('navCategoriesStatus');
     const btn = document.getElementById('saveNavCategoriesBtn');
     btn.disabled = true;
     btn.textContent = 'Guardando...';
     try {
       await supabaseClient.from('nav_categories').delete().gte('sort_order', 0);
-      if (ids.length > 0){
-        const { error } = await supabaseClient.from('nav_categories').insert(ids.map((id, i) => ({ category_id: id, sort_order: i })));
+      if (navCategoryOrder.length > 0){
+        const { error } = await supabaseClient.from('nav_categories').insert(navCategoryOrder.map((id, i) => ({ category_id: id, sort_order: i })));
         if (error) throw error;
       }
-      navCategorySelectedIds = ids;
+
+      await supabaseClient.from('category_relations').delete().gte('sort_order', 0);
+      const relRows = [];
+      Object.entries(categoryRelations).forEach(([catId, relatedIds]) => {
+        relatedIds.forEach((relId, i) => relRows.push({ category_id: catId, related_category_id: relId, sort_order: i }));
+      });
+      if (relRows.length > 0){
+        const { error } = await supabaseClient.from('category_relations').insert(relRows);
+        if (error) throw error;
+      }
+
       statusEl.textContent = 'Barra de navegación guardada ✓';
       statusEl.className = 'site-image-status ok';
     } catch (err){

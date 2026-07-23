@@ -42,6 +42,16 @@
   .nav-links a{ opacity:0.8; transition:opacity .15s; white-space:nowrap;}
   .nav-links a:hover{ opacity:1; color:var(--olive-deep);}
   .nav-links a.active{ opacity:1; color:var(--olive-deep);}
+  .nav-item-wrap{ position:relative; display:flex; align-items:center;}
+  .nav-dropdown{
+    position:absolute; top:100%; left:50%; transform:translateX(-50%); margin-top:14px;
+    background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:8px;
+    min-width:190px; box-shadow:0 16px 32px -16px rgba(32,40,26,0.35);
+    display:none; flex-direction:column; z-index:70;
+  }
+  .nav-item-wrap:hover .nav-dropdown{ display:flex;}
+  .nav-dropdown a{ padding:8px 12px; border-radius:6px; font-size:13px; font-weight:500; text-transform:none; letter-spacing:normal; opacity:0.85; white-space:nowrap;}
+  .nav-dropdown a:hover{ background:var(--linen); opacity:1;}
   .nav-actions{ display:flex; align-items:center; justify-content:flex-end; gap:18px;}
   .nav-actions-link{ font-size:13.5px; font-weight:600; text-transform:uppercase; letter-spacing:0.02em; opacity:0.8; transition:opacity .15s; white-space:nowrap;}
   .nav-actions-link:hover{ opacity:1; color:var(--olive-deep);}
@@ -206,11 +216,8 @@
 
 <header>
   <div class="wrap nav">
-    <nav class="nav-links">
+    <nav class="nav-links" id="navLinks">
       <a href="productos.html" class="active">Productos</a>
-      <a href="productos.html?cat=packs">Packs</a>
-      <a href="productos.html?cat=ofertas">Ofertas</a>
-      <a href="productos.html?cat=regalos">Regalar</a>
     </nav>
     <a class="logo" href="index.html"><img class="logo-mark" src="logo.png" alt="ProOlivas Chile"></a>
     <div class="nav-actions">
@@ -477,6 +484,51 @@
   });
 
   loadCategories().then(loadProducts);
+
+  // ---------- Barra de navegación dinámica (categorías elegidas en Home Editor) ----------
+  (async () => {
+    const [{ data: navRows }, { data: relRows }, { data: allCats }] = await Promise.all([
+      supabaseClient.from('nav_categories').select('sort_order, categories(id, name, slug)').order('sort_order'),
+      supabaseClient.from('category_relations').select('*').order('sort_order'),
+      supabaseClient.from('categories').select('id, name, slug')
+    ]);
+
+    const catById = {};
+    (allCats || []).forEach(c => { catById[c.id] = c; });
+    const relMap = {};
+    (relRows || []).forEach(r => {
+      if (!relMap[r.category_id]) relMap[r.category_id] = [];
+      relMap[r.category_id].push(r.related_category_id);
+    });
+
+    const nav = document.getElementById('navLinks');
+    (navRows || []).forEach(row => {
+      if (!row.categories) return;
+      const related = (relMap[row.categories.id] || []).map(id => catById[id]).filter(Boolean);
+
+      const wrap = document.createElement('div');
+      wrap.className = 'nav-item-wrap';
+
+      const a = document.createElement('a');
+      a.href = `productos.html?cat=${encodeURIComponent(row.categories.slug)}`;
+      a.textContent = row.categories.name;
+      wrap.appendChild(a);
+
+      if (related.length > 0){
+        const dropdown = document.createElement('div');
+        dropdown.className = 'nav-dropdown';
+        related.forEach(rc => {
+          const ra = document.createElement('a');
+          ra.href = `productos.html?cat=${encodeURIComponent(rc.slug)}`;
+          ra.textContent = rc.name;
+          dropdown.appendChild(ra);
+        });
+        wrap.appendChild(dropdown);
+      }
+
+      nav.appendChild(wrap);
+    });
+  })();
   // ---------- Contador de cantidad + agregar al carrito, por tarjeta ----------
   grid.addEventListener('click', (e) => {
     const minus = e.target.closest('.qty-minus');
