@@ -179,7 +179,7 @@
 
   function estadoLabel(o){
     if (o.delivered) return { text: 'Entregado', cls: 'badge-on' };
-    if (o.shipped_notified_at) return { text: 'Despachado', cls: '', style: 'background:#f3e6c9; color:#9c7326;' };
+    if (o.dispatched) return { text: 'Despachado', cls: '', style: 'background:#f3e6c9; color:#9c7326;' };
     if (o.ready) return { text: 'Preparado', cls: '', style: 'background:#e0e6d6; color:#55643b;' };
     return { text: 'Por preparar', cls: 'badge-off' };
   }
@@ -210,6 +210,7 @@
             <div class="info-row"><span>Teléfono</span><span>${o.customer_phone || '—'}</span></div>
             <div class="info-row"><span>Dirección</span><span>${o.shipping_address || '—'}</span></div>
             <div class="info-row"><span>Comuna / Región</span><span>${[o.shipping_comuna, o.shipping_region].filter(Boolean).join(' / ') || '—'}</span></div>
+            ${o.sold_by ? `<div class="info-row"><span>Vendedor</span><span>${o.sold_by}</span></div>` : ''}
           </div>
 
           <div class="panel">
@@ -259,7 +260,7 @@
             </label>
             <label class="field-check">
               <input type="checkbox" id="fieldReady" ${o.ready ? 'checked' : ''}>
-              Preparado (listo para despachar)
+              Preparado (listo para despachar) ${o.ready_at ? `<span style="font-weight:400; opacity:0.6; font-size:12px; margin-left:6px;">(${formatDate(o.ready_at, true)})</span>` : ''}
             </label>
 
             <div class="field" style="margin-top:6px;">
@@ -267,7 +268,8 @@
               <select id="fieldShippingMethod">
                 <option value="" ${!o.shipping_method ? 'selected' : ''}>Sin definir</option>
                 <option value="chilexpress" ${o.shipping_method === 'chilexpress' ? 'selected' : ''}>Chilexpress</option>
-                <option value="local" ${o.shipping_method === 'local' ? 'selected' : ''}>Envío local</option>
+                <option value="blueexpress" ${o.shipping_method === 'blueexpress' ? 'selected' : ''}>Blue Express</option>
+                <option value="local" ${o.shipping_method === 'local' ? 'selected' : ''}>Envío propio</option>
               </select>
             </div>
 
@@ -285,6 +287,11 @@
             ${o.shipped_notified_at ? `<div class="field-hint" style="text-align:center; margin-top:8px;">Último aviso enviado: ${formatDate(o.shipped_notified_at, true)}</div>` : `<div class="field-hint" style="text-align:center; margin-top:8px;">Necesitas método de envío y N° de seguimiento guardados primero.</div>`}
 
             <label class="field-check" style="margin-top:18px; border-top:1px solid var(--line); padding-top:16px;">
+              <input type="checkbox" id="fieldDispatched" ${o.dispatched ? 'checked' : ''}>
+              Despachado ${o.dispatched_at ? `<span style="font-weight:400; opacity:0.6; font-size:12px; margin-left:6px;">(${formatDate(o.dispatched_at, true)})</span>` : ''}
+            </label>
+
+            <label class="field-check" style="margin-top:10px;">
               <input type="checkbox" id="fieldDelivered" ${o.delivered ? 'checked' : ''}>
               Entregado ${o.delivered_at ? `<span style="font-weight:400; opacity:0.6; font-size:12px; margin-left:6px;">(${formatDate(o.delivered_at)})</span>` : ''}
             </label>
@@ -308,7 +315,14 @@
 
   function wireEvents(){
     document.getElementById('fieldPaid').addEventListener('change', (e) => quickUpdate({ paid: e.target.checked }));
-    document.getElementById('fieldReady').addEventListener('change', (e) => quickUpdate({ ready: e.target.checked }));
+    document.getElementById('fieldReady').addEventListener('change', (e) => quickUpdate({
+      ready: e.target.checked,
+      ready_at: e.target.checked ? new Date().toISOString() : null
+    }));
+    document.getElementById('fieldDispatched').addEventListener('change', (e) => quickUpdate({
+      dispatched: e.target.checked,
+      dispatched_at: e.target.checked ? new Date().toISOString() : null
+    }));
     document.getElementById('fieldDelivered').addEventListener('change', (e) => quickUpdate({
       delivered: e.target.checked,
       delivered_at: e.target.checked ? new Date().toISOString() : null

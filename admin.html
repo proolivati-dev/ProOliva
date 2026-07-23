@@ -43,6 +43,7 @@
   .btn-danger{ background:transparent; border-color:var(--danger); color:var(--danger); width:auto; padding:8px 14px; font-size:13px;}
   .btn-danger:hover{ background:var(--danger); color:#fff;}
   .error-msg{ background:#fbe9e7; border:1px solid var(--danger); color:var(--danger); font-size:13px; padding:10px 12px; border-radius:6px; margin-bottom:16px; display:none;}
+  .local-delivery-banner{ background:#eef3e6; border:1.5px solid var(--olive); color:var(--olive-deep); font-size:12.5px; font-weight:600; padding:11px 14px; border-radius:8px;}
 
   /* ---------- dashboard shell ---------- */
   #dashboardView{ display:none;}
@@ -236,8 +237,10 @@
   .live-order-card.urgent .live-card-num{ background:linear-gradient(155deg, #d16257 0%, var(--danger) 100%); box-shadow:0 3px 10px -2px rgba(163,57,47,0.6);}
   .live-card-info{ flex:1; min-width:0;}
   .live-card-name{ font-weight:700; font-size:14.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-  .live-card-meta{ font-size:11px; opacity:0.6; font-family:'IBM Plex Mono',monospace; margin-top:1px;}
+  .live-card-meta{ font-size:11px; opacity:0.6; font-family:'IBM Plex Mono',monospace; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .live-order-card.urgent .live-card-meta{ color:var(--danger); opacity:1; font-weight:700;}
+  .live-card-ready{ display:flex; align-items:center; gap:8px; padding-top:10px; margin-top:10px; border-top:1px solid var(--line); font-size:12.5px; font-weight:700; flex-shrink:0; cursor:pointer;}
+  .live-card-ready input{ width:17px; height:17px; flex-shrink:0; cursor:pointer;}
   .live-card-source{ font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; padding:4px 8px; border-radius:10px; background:var(--linen); color:var(--ink); opacity:0.7; flex-shrink:0; margin-top:2px;}
   .live-card-items{ overflow-y:auto; flex:1; min-height:0;}
   .live-item{ display:flex; align-items:center; gap:8px; font-size:12.5px; padding:4px 0;}
@@ -267,10 +270,39 @@
   .live-overflow-name{ font-size:12.5px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .live-overflow-meta{ font-size:10px; opacity:0.6;}
 
+  /* ---------- Despacho ---------- */
+  .despacho-columns{ display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; flex:1; min-height:0;}
+  .despacho-column{ display:flex; flex-direction:column; min-height:0; border-radius:12px; padding:16px; overflow:hidden;}
+  .despacho-column h3{ font-family:'Archivo',sans-serif; font-weight:700; font-size:14px; text-transform:uppercase; letter-spacing:0.03em; margin-bottom:12px; flex-shrink:0; display:flex; align-items:center; gap:8px;}
+  .despacho-column h3::before{ content:''; width:11px; height:11px; border-radius:50%; display:inline-block; flex-shrink:0;}
+  .despacho-column.blueexpress{ background:#eaf2fb; border:1.5px solid #2f6fb3;}
+  .despacho-column.blueexpress h3{ color:#1c4a80;}
+  .despacho-column.blueexpress h3::before{ background:#2f6fb3;}
+  .despacho-column.chilexpress{ background:#fdf6e3; border:1.5px solid var(--gold-deep);}
+  .despacho-column.chilexpress h3{ color:var(--gold-deep);}
+  .despacho-column.chilexpress h3::before{ background:var(--gold);}
+  .despacho-column.local{ background:#eef3e6; border:1.5px solid var(--olive-deep);}
+  .despacho-column.local h3{ color:var(--olive-deep);}
+  .despacho-column.local h3::before{ background:var(--olive-deep);}
+  .despacho-column.unassigned{ background:var(--linen); border:1.5px solid var(--line);}
+  .despacho-column.unassigned h3{ color:var(--ink); opacity:0.7;}
+  .despacho-column.unassigned h3::before{ background:var(--line);}
+  .despacho-cards{ overflow-y:auto; flex:1; min-height:0; display:flex; flex-direction:column; gap:10px;}
+  .despacho-card{ background:var(--paper); border:1px solid var(--line); border-radius:9px; padding:12px 14px; box-shadow:0 4px 12px -8px rgba(32,40,26,0.25);}
+  .despacho-card-header{ display:flex; justify-content:space-between; align-items:baseline; gap:8px; margin-bottom:6px;}
+  .despacho-card-name{ font-weight:700; font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .despacho-card-meta{ font-size:10.5px; opacity:0.55; font-family:'IBM Plex Mono',monospace; flex-shrink:0; white-space:nowrap;}
+  .despacho-card-items{ font-size:12px; opacity:0.75; margin-bottom:10px; line-height:1.4;}
+  .despacho-card-dispatch{ display:flex; align-items:center; gap:8px; font-size:12px; font-weight:700; padding-top:8px; border-top:1px solid var(--line); cursor:pointer;}
+  .despacho-card-dispatch input{ width:16px; height:16px; cursor:pointer;}
+  .despacho-empty-col{ text-align:center; font-size:12px; opacity:0.45; padding:20px 0;}
+
   @media (max-width:1100px){
     .live-orders-grid{ grid-template-columns:repeat(2,1fr); grid-template-rows:repeat(4,1fr);}
     .live-main{ flex-direction:column;}
     .live-inventory-panel{ width:auto; max-height:220px;}
+    .despacho-columns{ grid-template-columns:1fr; overflow-y:auto;}
+    .despacho-column{ min-height:220px; flex:none;}
   }
 
   /* ---------- Mobile ---------- */
@@ -368,6 +400,7 @@
       <button class="tab-btn" data-tab="difusion">Difusión</button>
       <button class="tab-btn" data-tab="analitica">Analítica</button>
       <button class="tab-btn" data-tab="live">LIVE</button>
+      <button class="tab-btn" data-tab="despacho">Despacho</button>
       <button class="tab-btn" data-tab="home-editor">Home Editor</button>
       <button class="tab-btn" data-tab="config">Configuración</button>
     </div>
@@ -715,6 +748,38 @@
       </div>
     </div>
 
+    <!-- ---------- TAB: DESPACHO ---------- -->
+    <div class="tab-panel" id="tab-despacho">
+      <div class="live-board" id="despachoBoard">
+        <div class="live-topbar">
+          <div>
+            <h2>Despacho — Pedidos preparados</h2>
+            <p id="despachoUpdatedLabel">Cargando...</p>
+          </div>
+          <button class="btn btn-outline" id="despachoFullscreenBtn">⛶ Pantalla completa</button>
+        </div>
+
+        <div class="despacho-columns">
+          <div class="despacho-column blueexpress">
+            <h3>Blue Express</h3>
+            <div class="despacho-cards" id="despachoCol-blueexpress"></div>
+          </div>
+          <div class="despacho-column chilexpress">
+            <h3>Chilexpress</h3>
+            <div class="despacho-cards" id="despachoCol-chilexpress"></div>
+          </div>
+          <div class="despacho-column local">
+            <h3>Envío propio</h3>
+            <div class="despacho-cards" id="despachoCol-local"></div>
+          </div>
+          <div class="despacho-column unassigned" id="despachoColUnassignedWrap" style="display:none;">
+            <h3>Sin método asignado</h3>
+            <div class="despacho-cards" id="despachoCol-unassigned"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- ---------- TAB: HOME EDITOR ---------- -->
     <div class="tab-panel" id="tab-home-editor">
       <div class="admin-toolbar">
@@ -931,6 +996,10 @@
     <div class="error-msg" id="orderFormError"></div>
     <form id="orderForm">
       <div class="field">
+        <label>Vendedor *</label>
+        <input type="text" id="orderSoldBy" required placeholder="Nombre de quién tomó el pedido">
+      </div>
+      <div class="field">
         <label>Nombre del cliente *</label>
         <input type="text" id="orderCustName" required placeholder="Ej: Rodrigo Muñoz">
       </div>
@@ -973,6 +1042,9 @@
         <label>Notas adicionales <span style="opacity:0.5; font-weight:400;">(opcional)</span></label>
         <textarea id="orderDetail" rows="2" placeholder="Ej: sin cebolla, envolver para regalo"></textarea>
       </div>
+      <div class="local-delivery-banner" id="orderLocalDeliveryBanner" style="display:none; margin-bottom:14px;">
+        🚐 Viña del Mar / Valparaíso — se asignó <b>transporte propio</b> automáticamente, sin costo.
+      </div>
       <div class="field-row">
         <div class="field">
           <label>Costo de envío (CLP)</label>
@@ -983,7 +1055,8 @@
           <select id="orderShippingMethod">
             <option value="">Sin definir todavía</option>
             <option value="chilexpress">Chilexpress</option>
-            <option value="local">Envío local</option>
+            <option value="blueexpress">Blue Express</option>
+            <option value="local">Envío propio</option>
           </select>
         </div>
       </div>
@@ -1144,6 +1217,14 @@
       } else if (liveInterval){
         clearInterval(liveInterval);
         liveInterval = null;
+      }
+      if (btn.dataset.tab === 'despacho'){
+        loadDespachoOrders();
+        if (despachoInterval) clearInterval(despachoInterval);
+        despachoInterval = setInterval(loadDespachoOrders, 5000);
+      } else if (despachoInterval){
+        clearInterval(despachoInterval);
+        despachoInterval = null;
       }
       if (btn.dataset.tab === 'home-editor' && !siteImagesLoaded) loadSiteImages();
       if (btn.dataset.tab === 'config' && !shippingConfigLoaded) loadShippingConfig();
@@ -1677,6 +1758,32 @@
     document.getElementById('orderChilexpressQuoteWrap').style.display = e.target.value === 'chilexpress' ? 'block' : 'none';
   });
 
+  const ORDER_LOCAL_DELIVERY_REGION = 'Valparaíso';
+  const ORDER_LOCAL_DELIVERY_COMUNAS = ['viña del mar', 'valparaiso'];
+  function normalizeTextOrder(str){
+    return (str || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
+
+  function checkOrderLocalDelivery(){
+    const comuna = document.getElementById('orderCustComuna').value.trim();
+    const region = document.getElementById('orderCustRegion').value;
+    const banner = document.getElementById('orderLocalDeliveryBanner');
+    const isLocal = comuna && region === ORDER_LOCAL_DELIVERY_REGION && ORDER_LOCAL_DELIVERY_COMUNAS.includes(normalizeTextOrder(comuna));
+
+    if (isLocal){
+      document.getElementById('orderShippingMethod').value = 'local';
+      document.getElementById('orderShippingCost').value = 0;
+      document.getElementById('orderChilexpressQuoteWrap').style.display = 'none';
+      updateOrderTotalDisplay();
+      banner.style.display = 'block';
+    } else {
+      banner.style.display = 'none';
+    }
+  }
+
+  document.getElementById('orderCustComuna').addEventListener('blur', checkOrderLocalDelivery);
+  document.getElementById('orderCustRegion').addEventListener('change', checkOrderLocalDelivery);
+
   document.getElementById('orderQuoteShippingBtn').addEventListener('click', async () => {
     const region = document.getElementById('orderCustRegion').value;
     const comuna = document.getElementById('orderCustComuna').value.trim();
@@ -1758,6 +1865,7 @@
     document.getElementById('orderShippingQuoteResult').classList.remove('show');
     document.getElementById('orderShippingQuoteError').style.display = 'none';
     document.getElementById('orderPaid').disabled = false;
+    document.getElementById('orderLocalDeliveryBanner').style.display = 'none';
     orderDocType = 'boleta';
     document.querySelectorAll('#orderDocTypeToggle .doc-type-btn').forEach(b => b.classList.toggle('active', b.dataset.doc === 'boleta'));
     document.getElementById('orderFacturaFields').style.display = 'none';
@@ -1813,6 +1921,7 @@
         ready: false,
         delivered: false,
         customer_name: document.getElementById('orderCustName').value.trim(),
+        sold_by: document.getElementById('orderSoldBy').value.trim(),
         customer_email: document.getElementById('orderCustEmail').value.trim() || null,
         customer_phone: document.getElementById('orderCustPhone').value.trim() || null,
         shipping_address: document.getElementById('orderCustAddress').value.trim() || null,
@@ -2770,6 +2879,7 @@
       .select('*')
       .eq('paid', true)
       .eq('delivered', false)
+      .eq('ready', false)
       .order('created_at', { ascending: true });
 
     if (error){
@@ -2787,6 +2897,13 @@
   function liveAgeMinutes(createdAt){
     if (!createdAt) return 0;
     return Math.max(0, Math.floor((Date.now() - new Date(createdAt).getTime()) / 60000));
+  }
+
+  function liveAgeLabel(mins){
+    if (mins < 60) return `${mins} min`;
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return `${h}h ${m}m`;
   }
 
   function liveAgeClass(mins){
@@ -2814,21 +2931,35 @@
   function liveCardHtml(o, num){
     const mins = liveAgeMinutes(o.created_at);
     const cls = liveAgeClass(mins);
-    const time = o.created_at ? new Date(o.created_at).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }) : '—';
+    const time = o.created_at ? new Date(o.created_at).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', hour12: false }) : '—';
     return `
       <div class="live-order-card ${cls}">
         <div class="live-card-header">
           <span class="live-card-num">${num}</span>
           <div class="live-card-info">
-            <div class="live-card-name">${escapeAttr(o.customer_name || 'Cliente')}</div>
-            <div class="live-card-meta">${time} · hace ${mins} min</div>
+            <div class="live-card-name" title="${escapeAttr(o.customer_name || 'Cliente')}">${escapeAttr(o.customer_name || 'Cliente')}</div>
+            <div class="live-card-meta">${time} · hace ${liveAgeLabel(mins)}</div>
           </div>
           <span class="live-card-source">${o.source === 'manual' ? 'Manual' : 'Web'}</span>
         </div>
         <div class="live-card-items">${liveItemsListHtml(o)}</div>
+        <label class="live-card-ready">
+          <input type="checkbox" onchange="liveMarkReady('${o.id}', this.checked)"> Preparado
+        </label>
       </div>
     `;
   }
+
+  window.liveMarkReady = async function(orderId, checked){
+    if (!checked) return;
+    const { error } = await supabaseClient.from('orders').update({ ready: true, ready_at: new Date().toISOString() }).eq('id', orderId);
+    if (error){
+      alert('No se pudo marcar como preparado.');
+      console.error(error);
+      return;
+    }
+    loadLiveOrders();
+  };
 
   function liveOverflowCardHtml(o, num){
     const mins = liveAgeMinutes(o.created_at);
@@ -2841,7 +2972,7 @@
         ${firstImg ? `<img class="live-overflow-img" src="${firstImg}" alt="">` : ''}
         <div style="min-width:0;">
           <div class="live-overflow-name">${escapeAttr(o.customer_name || 'Cliente')}</div>
-          <div class="live-overflow-meta">${itemCount} items · hace ${mins} min</div>
+          <div class="live-overflow-meta">${itemCount} items · hace ${liveAgeLabel(mins)}</div>
         </div>
       </div>
     `;
@@ -2897,10 +3028,103 @@
     }
   });
 
+  document.getElementById('despachoFullscreenBtn').addEventListener('click', () => {
+    const el = document.getElementById('despachoBoard');
+    if (document.fullscreenElement){
+      document.exitFullscreen();
+    } else if (el.requestFullscreen){
+      el.requestFullscreen();
+    } else if (el.webkitRequestFullscreen){
+      el.webkitRequestFullscreen();
+    }
+  });
+
   document.addEventListener('fullscreenchange', () => {
     const isFs = !!document.fullscreenElement;
-    document.getElementById('liveFullscreenBtn').textContent = isFs ? '✕ Salir de pantalla completa' : '⛶ Pantalla completa';
+    const isLive = document.fullscreenElement && document.fullscreenElement.id === 'liveBoard';
+    const isDespacho = document.fullscreenElement && document.fullscreenElement.id === 'despachoBoard';
+    document.getElementById('liveFullscreenBtn').textContent = isLive ? '✕ Salir de pantalla completa' : '⛶ Pantalla completa';
+    document.getElementById('despachoFullscreenBtn').textContent = isDespacho ? '✕ Salir de pantalla completa' : '⛶ Pantalla completa';
   });
+
+  // ---------- Despacho ----------
+  let despachoInterval = null;
+  let despachoOrders = [];
+  const DESPACHO_METHODS = ['blueexpress', 'chilexpress', 'local'];
+  const DESPACHO_LABELS = { blueexpress: 'Blue Express', chilexpress: 'Chilexpress', local: 'Envío propio' };
+
+  async function loadDespachoOrders(){
+    const { data, error } = await supabaseClient
+      .from('orders')
+      .select('*')
+      .eq('paid', true)
+      .eq('ready', true)
+      .eq('dispatched', false)
+      .order('ready_at', { ascending: true });
+
+    if (error){
+      document.getElementById('despachoUpdatedLabel').innerHTML = 'Error cargando pedidos.';
+      console.error(error);
+      return;
+    }
+
+    despachoOrders = data || [];
+    renderDespachoBoard();
+    document.getElementById('despachoUpdatedLabel').innerHTML =
+      `<span class="live-pulse"></span>${despachoOrders.length} pedido${despachoOrders.length === 1 ? '' : 's'} preparado${despachoOrders.length === 1 ? '' : 's'} · actualizado ${new Date().toLocaleTimeString('es-CL')}`;
+  }
+
+  function despachoAgeMinutes(o){
+    const ref = o.ready_at || o.created_at;
+    return liveAgeMinutes(ref);
+  }
+
+  function despachoCardHtml(o){
+    const mins = despachoAgeMinutes(o);
+    const itemsText = Array.isArray(o.items) && o.items.length > 0
+      ? o.items.map(i => `${i.qty}× ${escapeAttr(i.name)}`).join(', ')
+      : (o.notes ? escapeAttr(o.notes) : 'Sin detalle');
+    return `
+      <div class="despacho-card">
+        <div class="despacho-card-header">
+          <span class="despacho-card-name" title="${escapeAttr(o.customer_name || 'Cliente')}">${escapeAttr(o.customer_name || 'Cliente')}</span>
+          <span class="despacho-card-meta">hace ${liveAgeLabel(mins)}</span>
+        </div>
+        <div class="despacho-card-items">${itemsText}</div>
+        <label class="despacho-card-dispatch">
+          <input type="checkbox" onchange="despachoMarkDispatched('${o.id}', this.checked)"> Despachado
+        </label>
+      </div>
+    `;
+  }
+
+  function renderDespachoBoard(){
+    const grouped = { blueexpress: [], chilexpress: [], local: [], unassigned: [] };
+    despachoOrders.forEach(o => {
+      const key = DESPACHO_METHODS.includes(o.shipping_method) ? o.shipping_method : 'unassigned';
+      grouped[key].push(o);
+    });
+
+    ['blueexpress', 'chilexpress', 'local', 'unassigned'].forEach(key => {
+      const col = document.getElementById(`despachoCol-${key}`);
+      col.innerHTML = grouped[key].length > 0
+        ? grouped[key].map(despachoCardHtml).join('')
+        : '<div class="despacho-empty-col">Sin pedidos</div>';
+    });
+
+    document.getElementById('despachoColUnassignedWrap').style.display = grouped.unassigned.length > 0 ? 'flex' : 'none';
+  }
+
+  window.despachoMarkDispatched = async function(orderId, checked){
+    if (!checked) return;
+    const { error } = await supabaseClient.from('orders').update({ dispatched: true, dispatched_at: new Date().toISOString() }).eq('id', orderId);
+    if (error){
+      alert('No se pudo marcar como despachado.');
+      console.error(error);
+      return;
+    }
+    loadDespachoOrders();
+  };
 
   document.getElementById('copyPaymentLinkBtn').addEventListener('click', async () => {
     const input = document.getElementById('orderPaymentLinkInput');

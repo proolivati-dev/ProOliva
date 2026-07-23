@@ -59,6 +59,7 @@
 
   .shipping-quote-result{ background:var(--linen); border-radius:8px; padding:14px 16px; margin-top:14px; font-size:13.5px; display:none;}
   .free-shipping-banner{ background:#e4ede0; border:1.5px solid var(--olive-deep); color:var(--olive-deep); font-size:13.5px; font-weight:600; padding:12px 16px; border-radius:8px; margin-bottom:14px;}
+  .local-delivery-banner{ background:#eef3e6; border:1.5px solid var(--olive); color:var(--olive-deep); font-size:13.5px; font-weight:600; padding:12px 16px; border-radius:8px; margin-bottom:14px;}
   .shipping-quote-result.show{ display:block;}
   .shipping-quote-result b{ color:var(--olive-deep);}
 
@@ -145,6 +146,9 @@
             </div>
           </div>
 
+          <div class="local-delivery-banner" id="localDeliveryBanner" style="display:none;">
+            🚐 Este pedido se despacha con <b>transporte propio de ProOliva</b> (Viña del Mar / Valparaíso) — sin costo de envío.
+          </div>
           <div class="free-shipping-banner" id="freeShippingBanner" style="display:none;">
             🎉 ¡Tu pedido califica para <b>envío gratis</b>!
           </div>
@@ -212,6 +216,10 @@
   let shippingCost = 0;
   let shippingQuoted = false;
   let shippingSettings = null;
+  let selectedShippingMethod = null;
+
+  const LOCAL_DELIVERY_REGION = 'Valparaíso';
+  const LOCAL_DELIVERY_COMUNAS = ['viña del mar', 'valparaiso'];
 
   if (cart.length === 0){
     document.getElementById('checkoutContent').style.display = 'none';
@@ -238,44 +246,72 @@
       blueBtn.textContent = 'Cotizar con Blue Express';
     }
 
-    checkFreeShipping();
+    evaluateShipping();
   }
 
   function normalizeText(str){
     return (str || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   }
 
-  // Revisa si el pedido ya califica para envío gratis con los datos actuales.
-  // Devuelve true si aplicó envío gratis (y ya deja todo listo para pagar).
-  function checkFreeShipping(){
-    const banner = document.getElementById('freeShippingBanner');
-    if (!shippingSettings || !shippingSettings.free_shipping_enabled){
-      banner.style.display = 'none';
-      return false;
-    }
-
+  // Revisa las reglas automáticas de envío con los datos actuales del formulario:
+  // 1) Viña del Mar / Valparaíso → siempre transporte propio, sin costo.
+  // 2) Si no, envío gratis configurado por comuna + monto mínimo.
+  // Devuelve true si alguna regla ya dejó todo listo para pagar (sin necesitar cotizar).
+  function evaluateShipping(){
+    const freeBanner = document.getElementById('freeShippingBanner');
+    const localBanner = document.getElementById('localDeliveryBanner');
     const comuna = document.getElementById('custComuna').value.trim();
+    const region = document.getElementById('custRegion').value;
     const subtotal = cartTotal(cart);
-    const matchesComuna = comuna && normalizeText(comuna) === normalizeText(shippingSettings.free_shipping_comuna);
-    const meetsMinimum = subtotal >= (shippingSettings.free_shipping_min_amount || 0);
 
-    if (matchesComuna && meetsMinimum){
+    freeBanner.style.display = 'none';
+    localBanner.style.display = 'none';
+
+    const isLocalDeliveryZone = comuna && region === LOCAL_DELIVERY_REGION && LOCAL_DELIVERY_COMUNAS.includes(normalizeText(comuna));
+
+    if (isLocalDeliveryZone){
+      selectedShippingMethod = 'local';
       shippingCost = 0;
       shippingQuoted = true;
-      document.getElementById('shippingValue').textContent = 'Gratis';
+      document.getElementById('shippingValue').textContent = 'Gratis (transporte propio)';
       document.getElementById('shippingQuoteResult').classList.remove('show');
       document.getElementById('shippingError').style.display = 'none';
+      document.getElementById('quoteShippingBtn').style.display = 'none';
+      document.getElementById('quoteBlueExpressBtn').style.display = 'none';
+      localBanner.style.display = 'block';
       updateTotals();
-      banner.style.display = 'block';
       document.getElementById('payWebpayBtn').disabled = false;
       document.getElementById('payMercadoPagoBtn').disabled = false;
       return true;
     }
-    banner.style.display = 'none';
+
+    // Fuera de la zona de transporte propio: restaurar los botones de cotización normales
+    if (shippingSettings){
+      document.getElementById('quoteShippingBtn').style.display = shippingSettings.chilexpress_enabled ? '' : 'none';
+    }
+    document.getElementById('quoteBlueExpressBtn').style.display = '';
+
+    if (shippingSettings && shippingSettings.free_shipping_enabled){
+      const matchesComuna = comuna && normalizeText(comuna) === normalizeText(shippingSettings.free_shipping_comuna);
+      const meetsMinimum = subtotal >= (shippingSettings.free_shipping_min_amount || 0);
+      if (matchesComuna && meetsMinimum){
+        shippingCost = 0;
+        shippingQuoted = true;
+        document.getElementById('shippingValue').textContent = 'Gratis';
+        document.getElementById('shippingQuoteResult').classList.remove('show');
+        document.getElementById('shippingError').style.display = 'none';
+        updateTotals();
+        freeBanner.style.display = 'block';
+        document.getElementById('payWebpayBtn').disabled = false;
+        document.getElementById('payMercadoPagoBtn').disabled = false;
+        return true;
+      }
+    }
     return false;
   }
 
-  document.getElementById('custComuna').addEventListener('blur', checkFreeShipping);
+  document.getElementById('custComuna').addEventListener('blur', evaluateShipping);
+  document.getElementById('custRegion').addEventListener('change', evaluateShipping);
 
   document.getElementById('quoteBlueExpressBtn').addEventListener('click', () => {
     alert('Blue Express todavía está en preparación — pronto vas a poder cotizar y despachar con ellos también.');
@@ -315,7 +351,7 @@
       return;
     }
 
-    if (checkFreeShipping()) return; // ya califica gratis, no hace falta cotizar con Chilexpress
+    if (evaluateShipping()) return; // ya resuelto (transporte propio o envío gratis), no hace falta cotizar con Chilexpress
 
     const btn = document.getElementById('quoteShippingBtn');
     btn.disabled = true;
@@ -364,6 +400,7 @@
       // Selecciona la primera opción por defecto
       shippingCost = data.options[0].price;
       shippingQuoted = true;
+      selectedShippingMethod = 'chilexpress';
       document.getElementById('shippingValue').textContent = formatCLP(shippingCost);
       updateTotals();
       document.getElementById('payWebpayBtn').disabled = false;
@@ -422,6 +459,7 @@
 
     return {
       subtotal, total,
+      shippingMethod: selectedShippingMethod,
       shipping: {
         name, email,
         phone: document.getElementById('custPhone').value.trim(),
@@ -454,7 +492,7 @@
           'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
           'apikey': SUPABASE_ANON_KEY
         },
-        body: JSON.stringify({ items: cart, subtotal: formData.subtotal, shippingCost, total: formData.total, shipping: formData.shipping, billing: formData.billing })
+        body: JSON.stringify({ items: cart, subtotal: formData.subtotal, shippingCost, shippingMethod: formData.shippingMethod, total: formData.total, shipping: formData.shipping, billing: formData.billing })
       });
       const data = await res.json();
 
@@ -499,7 +537,7 @@
           'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
           'apikey': SUPABASE_ANON_KEY
         },
-        body: JSON.stringify({ items: cart, subtotal: formData.subtotal, shippingCost, total: formData.total, shipping: formData.shipping, billing: formData.billing })
+        body: JSON.stringify({ items: cart, subtotal: formData.subtotal, shippingCost, shippingMethod: formData.shippingMethod, total: formData.total, shipping: formData.shipping, billing: formData.billing })
       });
       const data = await res.json();
 
