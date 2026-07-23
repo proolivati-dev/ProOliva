@@ -297,6 +297,25 @@
   .despacho-card-dispatch input{ width:16px; height:16px; cursor:pointer;}
   .despacho-empty-col{ text-align:center; font-size:12px; opacity:0.45; padding:20px 0;}
 
+  /* ---------- Barra de confirmación en lote + historial (Preparación y Despacho) ---------- */
+  .live-order-card.is-selected, .despacho-card.is-selected{ outline:2.5px solid var(--olive-deep); outline-offset:-1px;}
+  .live-batch-bar{
+    display:flex; align-items:center; gap:14px; flex-shrink:0; margin-top:14px; padding:12px 16px;
+    background:var(--paper); border:1px solid var(--line); border-radius:10px;
+  }
+  .live-batch-bar span{ font-size:12.5px; font-weight:600; opacity:0.7;}
+  .live-batch-bar input[type="text"]{
+    border:1.5px solid var(--line); border-radius:6px; padding:9px 12px; font-size:13px; flex:1; max-width:240px;
+    background:#fff; color:var(--ink); outline:none;
+  }
+  .live-history{ flex-shrink:0; margin-top:12px; max-height:150px; overflow-y:auto; background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:14px 16px;}
+  .live-history h3{ font-size:11.5px; text-transform:uppercase; letter-spacing:0.05em; color:var(--gold-deep); font-family:'IBM Plex Mono',monospace; margin-bottom:8px;}
+  .live-history-row{ display:flex; justify-content:space-between; gap:10px; padding:6px 0; border-bottom:1px solid var(--line); font-size:12.5px;}
+  .live-history-row:last-child{ border-bottom:none;}
+  .live-history-name{ font-weight:600;}
+  .live-history-time, .live-history-by{ opacity:0.6; font-family:'IBM Plex Mono',monospace; font-size:11.5px;}
+  .live-history-empty{ font-size:12px; opacity:0.5;}
+
   @media (max-width:1100px){
     .live-orders-grid{ grid-template-columns:repeat(2,1fr); grid-template-rows:repeat(4,1fr);}
     .live-main{ flex-direction:column;}
@@ -399,7 +418,7 @@
       <button class="tab-btn" data-tab="clientes">Mis Clientes</button>
       <button class="tab-btn" data-tab="difusion">Difusión</button>
       <button class="tab-btn" data-tab="analitica">Analítica</button>
-      <button class="tab-btn" data-tab="live">LIVE</button>
+      <button class="tab-btn" data-tab="live">Preparación</button>
       <button class="tab-btn" data-tab="despacho">Despacho</button>
       <button class="tab-btn" data-tab="home-editor">Home Editor</button>
       <button class="tab-btn" data-tab="config">Configuración</button>
@@ -729,7 +748,7 @@
       <div class="live-board" id="liveBoard">
         <div class="live-topbar">
           <div>
-            <h2>LIVE — Pedidos por preparar</h2>
+            <h2>Preparación — Pedidos por preparar</h2>
             <p id="liveUpdatedLabel">Cargando...</p>
           </div>
           <button class="btn btn-outline" id="liveFullscreenBtn">⛶ Pantalla completa</button>
@@ -745,6 +764,15 @@
         </div>
 
         <div class="live-overflow-strip" id="liveOverflowStrip"></div>
+
+        <div class="live-batch-bar">
+          <span id="livePrepareCount">0 seleccionados</span>
+          <button class="btn btn-primary" id="livePrepareBtn" disabled style="width:auto;">Marcar preparados</button>
+        </div>
+        <div class="live-history">
+          <h3>Historial de preparación</h3>
+          <div id="livePrepareHistory"></div>
+        </div>
       </div>
     </div>
 
@@ -776,6 +804,16 @@
             <h3>Sin método asignado</h3>
             <div class="despacho-cards" id="despachoCol-unassigned"></div>
           </div>
+        </div>
+
+        <div class="live-batch-bar">
+          <input type="text" id="despachoDispatcherName" placeholder="Nombre de quién despacha">
+          <span id="despachoSelectCount">0 seleccionados</span>
+          <button class="btn btn-primary" id="despachoDispatchBtn" disabled style="width:auto;">Despachar</button>
+        </div>
+        <div class="live-history">
+          <h3>Nómina de despachos</h3>
+          <div id="despachoHistory"></div>
         </div>
       </div>
     </div>
@@ -1212,6 +1250,7 @@
       if (btn.dataset.tab === 'analitica') renderAnalytics();
       if (btn.dataset.tab === 'live'){
         loadLiveOrders();
+        loadLivePrepareHistory();
         if (liveInterval) clearInterval(liveInterval);
         liveInterval = setInterval(loadLiveOrders, 5000);
       } else if (liveInterval){
@@ -1220,6 +1259,7 @@
       }
       if (btn.dataset.tab === 'despacho'){
         loadDespachoOrders();
+        loadDespachoHistory();
         if (despachoInterval) clearInterval(despachoInterval);
         despachoInterval = setInterval(loadDespachoOrders, 5000);
       } else if (despachoInterval){
@@ -2928,12 +2968,15 @@
     return '<div class="live-item" style="opacity:0.5;">Sin detalle</div>';
   }
 
+  let liveSelectedIds = new Set();
+
   function liveCardHtml(o, num){
     const mins = liveAgeMinutes(o.created_at);
     const cls = liveAgeClass(mins);
     const time = o.created_at ? new Date(o.created_at).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', hour12: false }) : '—';
+    const isSelected = liveSelectedIds.has(o.id);
     return `
-      <div class="live-order-card ${cls}">
+      <div class="live-order-card ${cls} ${isSelected ? 'is-selected' : ''}">
         <div class="live-card-header">
           <span class="live-card-num">${num}</span>
           <div class="live-card-info">
@@ -2944,22 +2987,53 @@
         </div>
         <div class="live-card-items">${liveItemsListHtml(o)}</div>
         <label class="live-card-ready">
-          <input type="checkbox" onchange="liveMarkReady('${o.id}', this.checked)"> Preparado
+          <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="liveToggleSelect('${o.id}', this.checked, this)"> Seleccionar para preparar
         </label>
       </div>
     `;
   }
 
-  window.liveMarkReady = async function(orderId, checked){
-    if (!checked) return;
-    const { error } = await supabaseClient.from('orders').update({ ready: true, ready_at: new Date().toISOString() }).eq('id', orderId);
+  window.liveToggleSelect = function(id, checked, checkboxEl){
+    if (checked) liveSelectedIds.add(id); else liveSelectedIds.delete(id);
+    if (checkboxEl) checkboxEl.closest('.live-order-card').classList.toggle('is-selected', checked);
+    updateLivePrepareBar();
+  };
+
+  function updateLivePrepareBar(){
+    document.getElementById('livePrepareCount').textContent = `${liveSelectedIds.size} seleccionado${liveSelectedIds.size === 1 ? '' : 's'}`;
+    document.getElementById('livePrepareBtn').disabled = liveSelectedIds.size === 0;
+  }
+
+  document.getElementById('livePrepareBtn').addEventListener('click', async () => {
+    if (liveSelectedIds.size === 0) return;
+    if (!confirm(`¿Marcar ${liveSelectedIds.size} pedido${liveSelectedIds.size === 1 ? '' : 's'} como preparado${liveSelectedIds.size === 1 ? '' : 's'}?`)) return;
+
+    const ids = [...liveSelectedIds];
+    const { error } = await supabaseClient.from('orders').update({ ready: true, ready_at: new Date().toISOString() }).in('id', ids);
     if (error){
       alert('No se pudo marcar como preparado.');
       console.error(error);
       return;
     }
+    liveSelectedIds.clear();
     loadLiveOrders();
-  };
+    loadLivePrepareHistory();
+  });
+
+  async function loadLivePrepareHistory(){
+    const container = document.getElementById('livePrepareHistory');
+    const { data, error } = await supabaseClient.from('orders').select('*').eq('ready', true).order('ready_at', { ascending: false }).limit(10);
+    if (error || !data || data.length === 0){
+      container.innerHTML = '<p class="live-history-empty">Todavía no hay pedidos preparados.</p>';
+      return;
+    }
+    container.innerHTML = data.map(o => `
+      <div class="live-history-row">
+        <span class="live-history-name">${escapeAttr(o.customer_name || 'Cliente')}</span>
+        <span class="live-history-time">${o.ready_at ? new Date(o.ready_at).toLocaleString('es-CL', { dateStyle: 'short', timeStyle: 'short' }) : '—'}</span>
+      </div>
+    `).join('');
+  }
 
   function liveOverflowCardHtml(o, num){
     const mins = liveAgeMinutes(o.created_at);
@@ -3079,20 +3153,23 @@
     return liveAgeMinutes(ref);
   }
 
+  let despachoSelectedIds = new Set();
+
   function despachoCardHtml(o){
     const mins = despachoAgeMinutes(o);
     const itemsText = Array.isArray(o.items) && o.items.length > 0
       ? o.items.map(i => `${i.qty}× ${escapeAttr(i.name)}`).join(', ')
       : (o.notes ? escapeAttr(o.notes) : 'Sin detalle');
+    const isSelected = despachoSelectedIds.has(o.id);
     return `
-      <div class="despacho-card">
+      <div class="despacho-card ${isSelected ? 'is-selected' : ''}">
         <div class="despacho-card-header">
           <span class="despacho-card-name" title="${escapeAttr(o.customer_name || 'Cliente')}">${escapeAttr(o.customer_name || 'Cliente')}</span>
           <span class="despacho-card-meta">hace ${liveAgeLabel(mins)}</span>
         </div>
         <div class="despacho-card-items">${itemsText}</div>
         <label class="despacho-card-dispatch">
-          <input type="checkbox" onchange="despachoMarkDispatched('${o.id}', this.checked)"> Despachado
+          <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="despachoToggleSelect('${o.id}', this.checked, this)"> Seleccionar para despachar
         </label>
       </div>
     `;
@@ -3115,16 +3192,54 @@
     document.getElementById('despachoColUnassignedWrap').style.display = grouped.unassigned.length > 0 ? 'flex' : 'none';
   }
 
-  window.despachoMarkDispatched = async function(orderId, checked){
-    if (!checked) return;
-    const { error } = await supabaseClient.from('orders').update({ dispatched: true, dispatched_at: new Date().toISOString() }).eq('id', orderId);
+  window.despachoToggleSelect = function(id, checked, checkboxEl){
+    if (checked) despachoSelectedIds.add(id); else despachoSelectedIds.delete(id);
+    if (checkboxEl) checkboxEl.closest('.despacho-card').classList.toggle('is-selected', checked);
+    updateDespachoBar();
+  };
+
+  function updateDespachoBar(){
+    document.getElementById('despachoSelectCount').textContent = `${despachoSelectedIds.size} seleccionado${despachoSelectedIds.size === 1 ? '' : 's'}`;
+    const name = document.getElementById('despachoDispatcherName').value.trim();
+    document.getElementById('despachoDispatchBtn').disabled = despachoSelectedIds.size === 0 || !name;
+  }
+
+  document.getElementById('despachoDispatcherName').addEventListener('input', updateDespachoBar);
+
+  document.getElementById('despachoDispatchBtn').addEventListener('click', async () => {
+    const name = document.getElementById('despachoDispatcherName').value.trim();
+    if (despachoSelectedIds.size === 0 || !name) return;
+    if (!confirm(`¿Despachar ${despachoSelectedIds.size} pedido${despachoSelectedIds.size === 1 ? '' : 's'} a nombre de ${name}?`)) return;
+
+    const ids = [...despachoSelectedIds];
+    const { error } = await supabaseClient.from('orders').update({
+      dispatched: true, dispatched_at: new Date().toISOString(), dispatched_by: name
+    }).in('id', ids);
     if (error){
-      alert('No se pudo marcar como despachado.');
+      alert('No se pudo despachar.');
       console.error(error);
       return;
     }
+    despachoSelectedIds.clear();
     loadDespachoOrders();
-  };
+    loadDespachoHistory();
+  });
+
+  async function loadDespachoHistory(){
+    const container = document.getElementById('despachoHistory');
+    const { data, error } = await supabaseClient.from('orders').select('*').eq('dispatched', true).order('dispatched_at', { ascending: false }).limit(10);
+    if (error || !data || data.length === 0){
+      container.innerHTML = '<p class="live-history-empty">Todavía no hay despachos registrados.</p>';
+      return;
+    }
+    container.innerHTML = data.map(o => `
+      <div class="live-history-row">
+        <span class="live-history-name">${escapeAttr(o.customer_name || 'Cliente')}</span>
+        <span class="live-history-by">${o.dispatched_by ? escapeAttr(o.dispatched_by) : '—'}</span>
+        <span class="live-history-time">${o.dispatched_at ? new Date(o.dispatched_at).toLocaleString('es-CL', { dateStyle: 'short', timeStyle: 'short' }) : '—'}</span>
+      </div>
+    `).join('');
+  }
 
   document.getElementById('copyPaymentLinkBtn').addEventListener('click', async () => {
     const input = document.getElementById('orderPaymentLinkInput');
