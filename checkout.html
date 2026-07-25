@@ -217,9 +217,6 @@
   let freeShippingZones = [];
   let selectedShippingMethod = null;
 
-  const LOCAL_DELIVERY_REGION = 'Valparaíso';
-  const LOCAL_DELIVERY_COMUNAS = ['viña del mar', 'valparaiso'];
-
   if (cart.length === 0){
     document.getElementById('checkoutContent').style.display = 'none';
     document.getElementById('emptyCartMsg').style.display = 'block';
@@ -232,7 +229,8 @@
     const { data } = await supabaseClient.from('shipping_settings').select('*').eq('id', 1).single();
     shippingSettings = data || {
       free_shipping_enabled: false, local_delivery_fee: 0,
-      chilexpress_enabled: true, blue_express_enabled: false, local_enabled: true
+      chilexpress_enabled: true, blue_express_enabled: false, local_enabled: true,
+      local_delivery_region: null, local_delivery_comunas: ''
     };
 
     const { data: zones } = await supabaseClient.from('free_shipping_zones').select('*');
@@ -257,7 +255,7 @@
 
   // Revisa las reglas automáticas de envío con los datos actuales del formulario:
   // 1) ¿La comuna tiene envío gratis configurado Y el pedido alcanza su mínimo? → gratis.
-  // 2) Si no, ¿es Viña del Mar/Valparaíso (transporte propio)? → se cobra la tarifa fija configurada (NO es gratis por defecto).
+  // 2) Si no, ¿está en la región/comunas configuradas como zona de transporte propio? → se cobra la tarifa fija configurada (NO es gratis por defecto).
   // 3) Si no, se cotiza normal con Chilexpress/Blue Express.
   // Devuelve true si alguna regla ya dejó todo listo para pagar (sin necesitar cotizar).
   function evaluateShipping(){
@@ -271,7 +269,8 @@
     freeBanner.style.display = 'none';
     localBanner.style.display = 'none';
 
-    const isLocalDeliveryZone = comuna && region === LOCAL_DELIVERY_REGION && LOCAL_DELIVERY_COMUNAS.includes(normComuna);
+    const localComunas = (shippingSettings?.local_delivery_comunas || '').split(',').map(c => normalizeText(c)).filter(Boolean);
+    const isLocalDeliveryZone = comuna && shippingSettings?.local_delivery_region && region === shippingSettings.local_delivery_region && localComunas.includes(normComuna);
 
     const freeZone = shippingSettings?.free_shipping_enabled
       ? freeShippingZones.find(z => normalizeText(z.comuna) === normComuna)

@@ -32,6 +32,26 @@
   .nav-links{ display:flex; align-items:center; gap:26px; font-size:14px; font-weight:600; text-transform:uppercase; letter-spacing:0.02em;}
   .nav-links a{ opacity:0.8; transition:opacity .15s; white-space:nowrap;}
   .nav-links a:hover{ opacity:1; color:var(--olive-deep);}
+  .nav-item-wrap{ position:relative; display:flex; align-items:center;}
+  .nav-item-wrap::after{ content:''; position:absolute; top:100%; left:50%; transform:translateX(-50%); width:340px; height:16px;}
+  .nav-dropdown{
+    position:absolute; top:100%; left:50%; transform:translateX(-50%); margin-top:16px;
+    background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:22px;
+    display:none; gap:28px; z-index:70; min-width:340px;
+    box-shadow:0 24px 48px -20px rgba(32,40,26,0.35);
+  }
+  .nav-item-wrap:hover .nav-dropdown{ display:flex;}
+  .nav-dropdown-links{ display:flex; flex-direction:column; gap:2px; min-width:150px; flex-shrink:0;}
+  .nav-dropdown-links a{ padding:8px 10px; border-radius:6px; font-size:13px; font-weight:600; text-transform:none; letter-spacing:normal; opacity:0.75;}
+  .nav-dropdown-links a:hover{ background:var(--linen); opacity:1;}
+  .nav-dropdown-products{ display:flex; gap:16px; padding-left:24px; border-left:1px solid var(--line);}
+  .nav-dropdown-products:only-child{ padding-left:0; border-left:none;}
+  .nav-dropdown-product{ display:flex; flex-direction:column; gap:8px; width:110px; opacity:1; text-transform:none; letter-spacing:normal;}
+  .ndp-img{ display:block; width:110px; height:110px; border-radius:10px; overflow:hidden; background:var(--linen);}
+  .ndp-img img{ width:100%; height:100%; object-fit:cover; transition:transform .3s;}
+  .nav-dropdown-product:hover .ndp-img img{ transform:scale(1.06);}
+  .ndp-name{ font-size:12px; font-weight:600; line-height:1.3; color:var(--ink); white-space:normal;}
+  .ndp-price{ font-size:12px; font-weight:700; color:var(--olive-deep); font-family:'Archivo',sans-serif;}
   .nav-actions{ display:flex; align-items:center; justify-content:flex-end; gap:18px;}
   .nav-actions-link{ font-size:13.5px; font-weight:600; text-transform:uppercase; letter-spacing:0.02em; opacity:0.8; transition:opacity .15s; white-space:nowrap;}
   .nav-actions-link:hover{ opacity:1; color:var(--olive-deep);}
@@ -185,11 +205,11 @@
 
 <header>
   <div class="wrap nav">
-    <nav class="nav-links">
-      <a href="productos.html">Productos</a>
-      <a href="productos.html?cat=packs">Packs</a>
-      <a href="productos.html?cat=ofertas">Ofertas</a>
-      <a href="productos.html?cat=regalos">Regalos</a>
+    <nav class="nav-links" id="navLinks">
+      <div class="nav-item-wrap">
+        <a href="productos.html">Productos</a>
+        <div class="nav-dropdown" id="productosDropdown"></div>
+      </div>
     </nav>
     <a class="logo" href="index.html"><img class="logo-mark" src="logo.png" alt="ProOlivas Chile"></a>
     <div class="nav-actions">
@@ -289,6 +309,11 @@
     'regalos': 'Regalos'
   };
 
+  function categoryNames(p){
+    if (p.categoryList && p.categoryList.length > 0) return p.categoryList.map(c => c.name).join(' · ');
+    return CATEGORY_LABELS[p.category] || p.category || '';
+  }
+
   function waLink(productName){
     const msg = encodeURIComponent(`Hola, quiero cotizar: ${productName}`);
     return `https://wa.me/56988256980?text=${msg}`;
@@ -307,13 +332,14 @@
 
     const { data: product, error } = await supabaseClient
       .from('products')
-      .select('*')
+      .select('*, product_categories(categories(id, name, slug))')
       .eq('id', productId)
       .eq('active', true)
       .single();
 
     if (error || !product){ showNotFound(); return; }
 
+    product.categoryList = (product.product_categories || []).map(pc => pc.categories).filter(Boolean);
     currentProduct = product;
     renderProduct(product);
     loadRelated(product);
@@ -343,7 +369,7 @@
           ${p.image_url ? `<img src="${p.image_url}" alt="${p.name}">` : ''}
         </div>
         <div class="product-info">
-          <span class="eyebrow">${CATEGORY_LABELS[p.category] || p.category}</span>
+          <span class="eyebrow">${categoryNames(p)}</span>
           <h1>${p.name}</h1>
           <p class="product-code">Código: ${productCode(p)}</p>
           <div class="price-block">
@@ -388,7 +414,7 @@
           <p>${p.description || 'Consulta por WhatsApp para más información sobre este producto.'}</p>
           <h3>Detalles del producto</h3>
           <ul>
-            <li>Categoría: ${CATEGORY_LABELS[p.category] || p.category}</li>
+            <li>Categoría: ${categoryNames(p)}</li>
             ${p.origin ? `<li>Origen: ${p.origin}</li>` : ''}
             ${p.format ? `<li>Formato: ${p.format}</li>` : ''}
             <li>Código: ${productCode(p)}</li>
@@ -444,24 +470,38 @@
   let relatedProducts = [];
 
   async function loadRelated(product){
+    const categoryIds = (product.categoryList || []).map(c => c.id);
+    if (categoryIds.length === 0) return;
+
+    const { data: pcRows } = await supabaseClient
+      .from('product_categories')
+      .select('product_id')
+      .in('category_id', categoryIds)
+      .neq('product_id', product.id);
+
+    const relatedIds = [...new Set((pcRows || []).map(r => r.product_id))];
+    if (relatedIds.length === 0) return;
+
     const { data, error } = await supabaseClient
       .from('products')
-      .select('*')
+      .select('*, product_categories(categories(id, name, slug))')
       .eq('active', true)
-      .eq('category', product.category)
-      .neq('id', product.id)
+      .in('id', relatedIds)
       .limit(8);
 
     if (error || !data || data.length === 0) return;
 
-    relatedProducts = data;
+    relatedProducts = data.map(p => ({
+      ...p,
+      categoryList: (p.product_categories || []).map(pc => pc.categories).filter(Boolean)
+    }));
     document.getElementById('relatedSection').style.display = 'block';
-    document.getElementById('relatedGrid').innerHTML = data.map(p => `
+    document.getElementById('relatedGrid').innerHTML = relatedProducts.map(p => `
       <div class="rel-card">
         <a href="producto.html?id=${p.id}">
           <div class="rel-visual">${p.image_url ? `<img src="${p.image_url}" alt="${p.name}" loading="lazy">` : ''}</div>
           <div class="rel-body">
-            <span class="rel-cat">${CATEGORY_LABELS[p.category] || p.category}</span>
+            <span class="rel-cat">${categoryNames(p)}</span>
             <h4>${p.name}</h4>
             <div class="rel-price">${formatCLP(p.price)}</div>
           </div>
@@ -498,6 +538,120 @@
     } else {
       catalogBtn.style.display = 'none';
     }
+  })();
+
+  // ---------- Barra de navegación dinámica (categorías elegidas en Home Editor) ----------
+  (async () => {
+    const [{ data: navRows }, { data: relRows }, { data: allCats }, { data: featRows }] = await Promise.all([
+      supabaseClient.from('nav_categories').select('sort_order, categories(id, name, slug)').order('sort_order'),
+      supabaseClient.from('category_relations').select('*').order('sort_order'),
+      supabaseClient.from('categories').select('id, name, slug'),
+      supabaseClient.from('category_featured_products').select('*, products(id, name, price, image_url)').order('sort_order')
+    ]);
+
+    const catById = {};
+    (allCats || []).forEach(c => { catById[c.id] = c; });
+    const relMap = {};
+    (relRows || []).forEach(r => {
+      if (!relMap[r.category_id]) relMap[r.category_id] = [];
+      relMap[r.category_id].push(r.related_category_id);
+    });
+    const featMap = {};
+    (featRows || []).forEach(r => {
+      if (!r.products) return;
+      if (!featMap[r.category_id]) featMap[r.category_id] = [];
+      featMap[r.category_id].push(r.products);
+    });
+
+    // El link "Productos" tiene su propio desplegable editable (categoría especial __productos_root__)
+    const productosRoot = (allCats || []).find(c => c.slug === '__productos_root__');
+    const productosDropdown = document.getElementById('productosDropdown');
+    if (productosRoot && productosDropdown){
+      const rootRelated = (relMap[productosRoot.id] || []).map(id => catById[id]).filter(Boolean);
+      const rootFeatured = featMap[productosRoot.id] || [];
+
+      if (rootRelated.length > 0){
+        const col = document.createElement('div');
+        col.className = 'nav-dropdown-links';
+        rootRelated.forEach(rc => {
+          const ra = document.createElement('a');
+          ra.href = `productos.html?cat=${encodeURIComponent(rc.slug)}`;
+          ra.textContent = rc.name;
+          col.appendChild(ra);
+        });
+        productosDropdown.appendChild(col);
+      }
+
+      if (rootFeatured.length > 0){
+        const prodCol = document.createElement('div');
+        prodCol.className = 'nav-dropdown-products';
+        rootFeatured.forEach(p => {
+          const pa = document.createElement('a');
+          pa.href = `producto.html?id=${p.id}`;
+          pa.className = 'nav-dropdown-product';
+          pa.innerHTML = `
+            <span class="ndp-img">${p.image_url ? `<img src="${p.image_url}" alt="">` : ''}</span>
+            <span class="ndp-name">${p.name}</span>
+            <span class="ndp-price">${formatCLP(p.price)}</span>
+          `;
+          prodCol.appendChild(pa);
+        });
+        productosDropdown.appendChild(prodCol);
+      }
+    }
+
+    const nav = document.getElementById('navLinks');
+    (navRows || []).forEach(row => {
+      if (!row.categories) return;
+      const related = (relMap[row.categories.id] || []).map(id => catById[id]).filter(Boolean);
+      const featured = featMap[row.categories.id] || [];
+
+      const wrap = document.createElement('div');
+      wrap.className = 'nav-item-wrap';
+
+      const a = document.createElement('a');
+      a.href = `productos.html?cat=${encodeURIComponent(row.categories.slug)}`;
+      a.textContent = row.categories.name;
+      wrap.appendChild(a);
+
+      if (related.length > 0 || featured.length > 0){
+        const dropdown = document.createElement('div');
+        dropdown.className = 'nav-dropdown';
+
+        if (related.length > 0){
+          const col = document.createElement('div');
+          col.className = 'nav-dropdown-links';
+          related.forEach(rc => {
+            const ra = document.createElement('a');
+            ra.href = `productos.html?cat=${encodeURIComponent(rc.slug)}`;
+            ra.textContent = rc.name;
+            col.appendChild(ra);
+          });
+          dropdown.appendChild(col);
+        }
+
+        if (featured.length > 0){
+          const prodCol = document.createElement('div');
+          prodCol.className = 'nav-dropdown-products';
+          featured.forEach(p => {
+            const pa = document.createElement('a');
+            pa.href = `producto.html?id=${p.id}`;
+            pa.className = 'nav-dropdown-product';
+            pa.innerHTML = `
+              <span class="ndp-img">${p.image_url ? `<img src="${p.image_url}" alt="">` : ''}</span>
+              <span class="ndp-name">${p.name}</span>
+              <span class="ndp-price">${formatCLP(p.price)}</span>
+            `;
+            prodCol.appendChild(pa);
+          });
+          dropdown.appendChild(prodCol);
+        }
+
+        wrap.appendChild(dropdown);
+      }
+
+      nav.appendChild(wrap);
+    });
   })();
 
   initCart();

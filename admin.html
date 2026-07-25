@@ -986,11 +986,21 @@
             <label>Dirección de origen (bodega/local)</label>
             <input type="text" id="cfgDispatchOrigin" placeholder="Ej: Av. Libertad 1348, Viña del Mar">
           </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Región de despacho propio</label>
+              <select id="cfgLocalDeliveryRegion"></select>
+            </div>
+            <div class="field">
+              <label>Comunas de despacho propio</label>
+              <input type="text" id="cfgLocalDeliveryComunas" placeholder="Ej: Viña del Mar, Valparaíso">
+            </div>
+          </div>
           <div class="field">
             <label>Tarifa de envío propio cuando NO alcanza el mínimo gratis (CLP)</label>
             <input type="number" id="cfgLocalDeliveryFee" min="0" step="500" placeholder="Ej: 3000">
           </div>
-          <p class="hint">Viña del Mar y Valparaíso (Región de Valparaíso) siempre se despachan con transporte propio — esto define cuánto se cobra cuando el pedido no llega al mínimo de la comuna.</p>
+          <p class="hint">Los pedidos de esas comunas, en esa región, se despachan automáticamente con transporte propio — separa varias comunas con coma. La tarifa de arriba define cuánto se cobra cuando el pedido no llega al mínimo de envío gratis de esa comuna.</p>
         </div>
       </div>
 
@@ -1248,7 +1258,7 @@
         <textarea id="orderDetail" rows="2" placeholder="Ej: sin cebolla, envolver para regalo"></textarea>
       </div>
       <div class="local-delivery-banner" id="orderLocalDeliveryBanner" style="display:none; margin-bottom:14px;">
-        🚐 Viña del Mar / Valparaíso — se asignó <b>transporte propio</b> automáticamente, sin costo.
+        🚐 Se asignó <b>transporte propio</b> automáticamente para esta comuna.
       </div>
       <div class="field-row">
         <div class="field">
@@ -2345,8 +2355,6 @@
     document.getElementById('orderChilexpressQuoteWrap').style.display = e.target.value === 'chilexpress' ? 'block' : 'none';
   });
 
-  const ORDER_LOCAL_DELIVERY_REGION = 'Valparaíso';
-  const ORDER_LOCAL_DELIVERY_COMUNAS = ['viña del mar', 'valparaiso'];
   function normalizeTextOrder(str){
     return (str || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   }
@@ -2356,7 +2364,10 @@
     const region = document.getElementById('orderCustRegion').value;
     const banner = document.getElementById('orderLocalDeliveryBanner');
     const normComuna = normalizeTextOrder(comuna);
-    const isLocal = comuna && region === ORDER_LOCAL_DELIVERY_REGION && ORDER_LOCAL_DELIVERY_COMUNAS.includes(normComuna);
+
+    const { data: settings } = await supabaseClient.from('shipping_settings').select('*').eq('id', 1).single();
+    const localComunas = (settings?.local_delivery_comunas || '').split(',').map(c => normalizeTextOrder(c)).filter(Boolean);
+    const isLocal = comuna && settings?.local_delivery_region && region === settings.local_delivery_region && localComunas.includes(normComuna);
 
     if (!isLocal){
       banner.style.display = 'none';
@@ -2368,7 +2379,6 @@
 
     // Revisa si esta venta ya califica gratis según la lista de comunas configurada
     const subtotal = Object.values(orderSelectedItems).reduce((s, i) => s + i.price * i.qty, 0);
-    const { data: settings } = await supabaseClient.from('shipping_settings').select('local_delivery_fee, free_shipping_enabled').eq('id', 1).single();
     const { data: zones } = await supabaseClient.from('free_shipping_zones').select('*');
     const freeZone = settings?.free_shipping_enabled ? (zones || []).find(z => normalizeTextOrder(z.comuna) === normComuna) : null;
     const qualifiesFree = freeZone && subtotal >= (freeZone.min_amount || 0);
@@ -2377,8 +2387,8 @@
     document.getElementById('orderShippingCost').value = fee;
     updateOrderTotalDisplay();
     banner.textContent = qualifiesFree
-      ? '🚐 Viña del Mar / Valparaíso — transporte propio, gratis (califica por la comuna).'
-      : `🚐 Viña del Mar / Valparaíso — transporte propio asignado, tarifa: ${new Intl.NumberFormat('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits:0 }).format(fee)}.`;
+      ? `🚐 ${comuna} — transporte propio, gratis (califica por la comuna).`
+      : `🚐 ${comuna} — transporte propio asignado, tarifa: ${new Intl.NumberFormat('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits:0 }).format(fee)}.`;
     banner.style.display = 'block';
   }
 
@@ -4243,6 +4253,13 @@
     document.getElementById('cfgDispatchOrigin').value = data.dispatch_origin_address || '';
     document.getElementById('cfgLocalDeliveryFee').value = data.local_delivery_fee || 0;
 
+    const localRegionSelect = document.getElementById('cfgLocalDeliveryRegion');
+    if (localRegionSelect.options.length === 0){
+      localRegionSelect.innerHTML = REGIONS.map(r => `<option>${r}</option>`).join('');
+    }
+    localRegionSelect.value = data.local_delivery_region || 'Valparaíso';
+    document.getElementById('cfgLocalDeliveryComunas').value = data.local_delivery_comunas || '';
+
     await loadFreeShippingZones();
 
     const regionSelect = document.getElementById('quoteRegion');
@@ -4307,6 +4324,8 @@
         local_enabled: document.getElementById('cfgLocalEnabled').checked,
         dispatch_origin_address: document.getElementById('cfgDispatchOrigin').value.trim() || null,
         local_delivery_fee: parseFloat(document.getElementById('cfgLocalDeliveryFee').value) || 0,
+        local_delivery_region: document.getElementById('cfgLocalDeliveryRegion').value || null,
+        local_delivery_comunas: document.getElementById('cfgLocalDeliveryComunas').value.trim() || null,
         updated_at: new Date().toISOString()
       }).eq('id', 1);
       if (error) throw error;
