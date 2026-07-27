@@ -168,16 +168,77 @@
   .color-swatch-field{ display:flex; align-items:center; gap:10px; background:var(--linen); border:1px solid var(--line); border-radius:8px; padding:8px 10px;}
   .color-swatch-field input[type="color"]{ width:34px; height:34px; border:none; border-radius:6px; cursor:pointer; padding:0; background:none; flex-shrink:0;}
   .color-swatch-field label{ font-size:12px; font-weight:700; margin:0;}
+  .he-accordion-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:14px;}
+
+  /* ---------- Home Editor: layout de 2 columnas ---------- */
+  .home-editor-layout{ display:grid; grid-template-columns:1fr 380px; gap:28px; align-items:start;}
+  .home-editor-controls{ display:flex; flex-direction:column; gap:14px; min-width:0;}
+  @media (max-width:1050px){
+    .home-editor-layout{ grid-template-columns:1fr;}
+    .home-preview-sticky{ position:static !important;}
+  }
+
+  .he-accordion{ border:1px solid var(--line); border-radius:12px; background:var(--paper); overflow:hidden;}
+  .he-accordion summary{ cursor:pointer; padding:16px 20px; font-weight:700; font-size:14px; list-style:none; display:flex; align-items:center; gap:10px; user-select:none; transition:background .15s;}
+  .he-accordion summary::-webkit-details-marker{ display:none;}
+  .he-accordion summary::after{ content:'▾'; margin-left:auto; opacity:0.35; transition:transform .2s; font-size:12px;}
+  .he-accordion[open] summary::after{ transform:rotate(180deg);}
+  .he-accordion summary:hover{ background:var(--linen);}
+  .he-accordion-icon{ font-size:16px;}
+  .he-accordion-tag{ font-family:'IBM Plex Mono',monospace; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; background:var(--linen); color:var(--olive-deep); padding:2px 8px; border-radius:10px; margin-left:2px;}
+  .he-accordion-body{ padding:2px 20px 20px;}
+
+  /* ---------- Vista previa en vivo ---------- */
+  .home-preview-sticky{ position:sticky; top:90px;}
+  .home-preview-toolbar{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;}
+  .home-preview-title{ font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; opacity:0.55;}
+  .preview-device-toggle{ display:flex; gap:3px; background:var(--linen); border-radius:8px; padding:3px;}
+  .preview-device-toggle button{ border:none; background:none; padding:5px 10px; border-radius:6px; cursor:pointer; font-size:13px; opacity:0.45; transition:all .15s;}
+  .preview-device-toggle button.active{ background:var(--paper); opacity:1; box-shadow:0 1px 4px rgba(0,0,0,0.18);}
+  .home-preview-frame{ background:var(--ink); border-radius:18px; padding:14px 10px; box-shadow:0 24px 48px -22px rgba(0,0,0,0.4); transition:max-width .25s ease;}
+  .home-preview-frame.mobile{ max-width:280px; margin:0 auto;}
+  .home-preview-mock{ border-radius:9px; overflow-y:auto; max-height:600px; background:var(--paper);}
+  .home-preview-mock::-webkit-scrollbar{ width:6px;}
+  .home-preview-mock::-webkit-scrollbar-thumb{ background:rgba(0,0,0,0.15); border-radius:3px;}
+
+  .hpm-block{ font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em;}
+  .hpm-header{ background:var(--hp-ink, var(--ink)); color:var(--hp-paper, var(--paper)); padding:12px 16px; display:flex; align-items:center; justify-content:space-between;}
+  .hpm-header-dots{ display:flex; gap:4px;}
+  .hpm-header-dots span{ width:4px; height:4px; border-radius:50%; background:currentColor; opacity:0.5;}
+  .hpm-hero{ background:var(--hp-olive-deep, var(--olive-deep)); color:var(--hp-paper, var(--paper)); padding:36px 16px; text-align:center;}
+  .hpm-hero .hpm-sub{ font-size:16px; text-transform:none; font-weight:700; letter-spacing:normal; font-family:'Georgia',serif;}
+  .hpm-lock-tag{ display:inline-block; font-size:9.5px; opacity:0.6; margin-bottom:6px; text-transform:none; letter-spacing:normal;}
+
+  .hpm-promo-strip{ background:var(--hp-linen, var(--linen)); padding:14px 16px;}
+  .hpm-promo-imgs{ display:flex; gap:6px;}
+  .hpm-promo-imgs > div{ flex:1; aspect-ratio:16/9; border-radius:6px; overflow:hidden; background:rgba(0,0,0,0.08); display:flex; align-items:center; justify-content:center;}
+  .hpm-promo-imgs img{ width:100%; height:100%; object-fit:cover;}
+  .hpm-promo-imgs .hpm-noimg{ font-size:9px; opacity:0.4; text-transform:none;}
+
+  .hpm-cat-grid{ background:var(--hp-linen, var(--linen)); padding:14px 16px;}
+  .hpm-cat-row{ display:grid; grid-template-columns:1fr 1.3fr 1fr; gap:6px;}
+  .hpm-cat-tile{ position:relative; border-radius:6px; overflow:hidden; aspect-ratio:1/1; background:rgba(0,0,0,0.08);}
+  .hpm-cat-tile img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover;}
+  .hpm-cat-tile::after{ content:''; position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,0.55), transparent 60%);}
+  .hpm-cat-tile span{ position:relative; z-index:1; color:#fff; font-size:8px; font-weight:700; text-transform:uppercase; padding:6px; display:block; text-shadow:0 1px 2px rgba(0,0,0,0.4);}
+  .hpm-cat-split{ display:flex; flex-direction:column; gap:6px;}
+  .hpm-cat-split .hpm-cat-tile{ aspect-ratio:auto; flex:1;}
+
+  .hpm-confidence{ background:var(--hp-paper, var(--paper)); color:var(--hp-ink, var(--ink)); padding:16px; display:flex; justify-content:space-around; text-align:center; gap:6px;}
+  .hpm-confidence-item{ flex:1;}
+  .hpm-confidence-item .icon{ font-size:14px; margin-bottom:4px;}
+  .hpm-confidence-item span{ font-size:8px; display:block; text-transform:none; font-weight:600; opacity:0.75;}
+
+  .hpm-products{ background:var(--hp-paper, var(--paper)); padding:16px; text-align:center;}
+  .hpm-product-cards{ display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-top:8px;}
+  .hpm-product-cards div{ aspect-ratio:1/1; background:var(--hp-linen, var(--linen)); border-radius:5px; border:1px solid rgba(0,0,0,0.06);}
+
+  .hpm-subscribe{ background:var(--hp-gold, var(--gold)); color:var(--hp-ink, var(--ink)); padding:14px 16px; text-align:center;}
+  .hpm-footer{ background:var(--hp-ink, var(--ink)); color:var(--hp-paper, var(--paper)); opacity:0.9; padding:16px; text-align:center;}
 
   .home-preview-mock{ border:1px solid var(--line); border-radius:12px; overflow:hidden; max-width:480px; margin:0 auto;}
   .hpm-block{ padding:14px 16px; font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; display:flex; align-items:center; gap:8px;}
-  .hpm-header{ background:var(--hp-ink, var(--ink)); color:var(--hp-paper, var(--paper));}
-  .hpm-hero{ background:var(--hp-olive-deep, var(--olive-deep)); color:var(--hp-paper, var(--paper)); padding:34px 16px; flex-direction:column; align-items:flex-start; gap:4px;}
-  .hpm-hero .hpm-sub{ font-size:15px; text-transform:none; font-weight:700; letter-spacing:normal;}
-  .hpm-section{ background:var(--hp-linen, var(--linen)); color:var(--hp-ink, var(--ink)); border-bottom:1px solid rgba(0,0,0,0.08); padding:22px 16px; cursor:default;}
   .hpm-fixed{ background:var(--hp-paper, var(--paper)); color:var(--hp-ink, var(--ink)); opacity:0.6; border-bottom:1px solid rgba(0,0,0,0.06);}
-  .hpm-subscribe{ background:var(--hp-gold, var(--gold)); color:var(--hp-ink, var(--ink));}
-  .hpm-footer{ background:var(--hp-ink, var(--ink)); color:var(--hp-paper, var(--paper)); opacity:0.85;}
   .site-image-card{ background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:18px;}
   .site-image-card h4{ font-size:14.5px; margin-bottom:2px;}
   .site-image-card .hint{ font-size:11.5px; opacity:0.55; margin-bottom:10px;}
@@ -996,48 +1057,73 @@
         </div>
       </div>
 
-      <div class="panel">
-        <h3 style="margin-bottom:4px;">Categorías y barra de navegación</h3>
-        <p class="hint" style="margin-bottom:16px;">Marca qué categorías aparecen en el menú principal de index.html, productos.html y producto.html — la primera de la lista es la que sale primero. Para cada una, elige qué categorías relacionadas se despliegan al pasar el mouse por encima.</p>
-        <div id="navCategoriesManager"></div>
-        <button type="button" class="btn btn-primary" id="saveNavCategoriesBtn" style="width:auto; margin-top:14px;">Guardar barra de navegación</button>
-        <div class="site-image-status" id="navCategoriesStatus"></div>
-      </div>
+      <div class="home-editor-layout">
+        <div class="home-editor-controls">
 
-      <div class="panel" style="margin-top:24px;">
-        <h3 style="margin-bottom:4px;">Orden de las secciones del inicio</h3>
-        <p class="hint" style="margin-bottom:16px;">El banner principal y la barra de "Suscríbete" quedan siempre fijos en su lugar — acá solo ordenas estos 2 bloques entre ellos.</p>
-        <div id="sectionOrderList"></div>
-      </div>
+          <details class="he-accordion" open>
+            <summary><span class="he-accordion-icon">🧭</span> Categorías y barra de navegación</summary>
+            <div class="he-accordion-body">
+              <p class="hint" style="margin-bottom:16px;">Marca qué categorías aparecen en el menú principal de index.html, productos.html y producto.html — la primera de la lista es la que sale primero. Para cada una, elige qué categorías relacionadas se despliegan al pasar el mouse por encima.</p>
+              <div id="navCategoriesManager"></div>
+              <button type="button" class="btn btn-primary" id="saveNavCategoriesBtn" style="width:auto; margin-top:14px;">Guardar barra de navegación</button>
+              <div class="site-image-status" id="navCategoriesStatus"></div>
+            </div>
+          </details>
 
-      <div class="panel" style="margin-top:24px;">
-        <h3 style="margin-bottom:4px;">Paleta de colores</h3>
-        <p class="hint" style="margin-bottom:16px;">Son los mismos colores que usa index.html — cámbialos acá y se actualizan en todo el sitio, sin tocar código.</p>
-        <div class="color-palette-grid" id="colorPaletteGrid"></div>
-        <button type="button" class="btn btn-primary" id="saveColorsBtn" style="width:auto; margin-top:14px;">Guardar paleta de colores</button>
-        <div class="site-image-status" id="colorsStatus"></div>
-      </div>
+          <details class="he-accordion">
+            <summary><span class="he-accordion-icon">↕️</span> Orden de las secciones</summary>
+            <div class="he-accordion-body">
+              <p class="hint" style="margin-bottom:16px;">El banner principal y la barra de "Suscríbete" quedan siempre fijos en su lugar — acá solo ordenas el resto de los bloques entre ellos.</p>
+              <div id="sectionOrderList"></div>
+            </div>
+          </details>
 
-      <div class="panel" style="margin-top:24px;">
-        <h3 style="margin-bottom:4px;">Vista previa del inicio</h3>
-        <p class="hint" style="margin-bottom:16px;">Se actualiza sola cuando cambias el orden o los colores. Los bloques con 🔒 quedan siempre fijos.</p>
-        <div class="home-preview-mock" id="homePreview"></div>
-      </div>
+          <details class="he-accordion">
+            <summary><span class="he-accordion-icon">🎨</span> Paleta de colores</summary>
+            <div class="he-accordion-body">
+              <p class="hint" style="margin-bottom:16px;">Son los mismos colores que usa index.html — cámbialos acá y se actualizan en todo el sitio, sin tocar código.</p>
+              <div class="color-palette-grid" id="colorPaletteGrid"></div>
+              <div class="he-accordion-actions">
+                <button type="button" class="btn btn-primary" id="saveColorsBtn" style="width:auto;">Guardar paleta de colores</button>
+                <button type="button" class="btn btn-outline" id="resetColorsBtn" style="width:auto;">Restaurar colores de fábrica</button>
+              </div>
+              <div class="site-image-status" id="colorsStatus"></div>
+            </div>
+          </details>
 
-      <div class="panel image-group-panel" style="margin-top:24px;">
-        <div class="image-group-header">
-          <h3>Fotos promocionales (carrusel)</h3>
-          <p class="hint">Las 3 fotos que rotan debajo del banner principal — se editan como un solo conjunto.</p>
+          <details class="he-accordion">
+            <summary><span class="he-accordion-icon">🖼️</span> Fotos promocionales <span class="he-accordion-tag">1 conjunto</span></summary>
+            <div class="he-accordion-body">
+              <p class="hint" style="margin-bottom:16px;">Las 3 fotos que rotan debajo del banner principal — se editan como un solo conjunto.</p>
+              <div class="site-images-grid" id="promoImagesGrid"></div>
+            </div>
+          </details>
+
+          <details class="he-accordion">
+            <summary><span class="he-accordion-icon">🗂️</span> Categorías destacadas <span class="he-accordion-tag">1 conjunto</span></summary>
+            <div class="he-accordion-body">
+              <p class="hint" style="margin-bottom:16px;">Las 4 tarjetas de categoría que aparecen debajo del carrusel de fotos — se editan como un solo conjunto.</p>
+              <div class="site-images-grid" id="categoryImagesGrid"></div>
+            </div>
+          </details>
+
         </div>
-        <div class="site-images-grid" id="promoImagesGrid"></div>
-      </div>
 
-      <div class="panel image-group-panel" style="margin-top:24px;">
-        <div class="image-group-header">
-          <h3>Categorías destacadas (grilla del inicio)</h3>
-          <p class="hint">Las 4 tarjetas de categoría que aparecen debajo del carrusel de fotos — se editan como un solo conjunto.</p>
+        <div class="home-editor-preview-col">
+          <div class="home-preview-sticky">
+            <div class="home-preview-toolbar">
+              <span class="home-preview-title">Vista previa en vivo</span>
+              <div class="preview-device-toggle" id="previewDeviceToggle">
+                <button type="button" class="active" data-device="desktop" title="Escritorio">🖥️</button>
+                <button type="button" data-device="mobile" title="Celular">📱</button>
+              </div>
+            </div>
+            <div class="home-preview-frame" id="homePreviewFrame">
+              <div class="home-preview-mock" id="homePreview"></div>
+            </div>
+            <p class="hint" style="margin-top:10px; text-align:center;">Se actualiza sola con cada cambio. Los bloques con 🔒 quedan siempre fijos.</p>
+          </div>
         </div>
-        <div class="site-images-grid" id="categoryImagesGrid"></div>
       </div>
     </div>
 
@@ -4341,6 +4427,7 @@
   let siteImagesLoaded = false;
   let homeContentMap = {};
   const siteImageObjectUrls = {}; // previews locales instantáneas antes de terminar de subir
+  const previewImageCache = {}; // últimas URLs conocidas, para dibujar la vista previa en vivo
 
   function siteImagePreviewHtml(slot){
     const linkBadge = `<span class="site-image-link-badge" id="siteImgLinkBadge-${slot.key}" style="display:none;">🔗</span>`;
@@ -4547,6 +4634,50 @@
   });
 
   // ---------- Vista previa del inicio ----------
+  function homePreviewSectionHtml(id){
+    if (id === 'promo-photos'){
+      const imgs = ['fotopromo1', 'fotopromo2', 'fotopromo3'].map(key => {
+        const url = previewImageCache[key];
+        return `<div>${url ? `<img src="${url}" alt="">` : '<span class="hpm-noimg">Sin imagen</span>'}</div>`;
+      }).join('');
+      return `<div class="hpm-promo-strip"><div class="hpm-promo-imgs">${imgs}</div></div>`;
+    }
+    if (id === 'category-grid'){
+      const tile = (key, fallback) => {
+        const url = previewImageCache[key];
+        const title = (homeContentMap[key] && homeContentMap[key].title) || fallback;
+        return `<div class="hpm-cat-tile">${url ? `<img src="${url}" alt="">` : ''}<span>${title}</span></div>`;
+      };
+      return `
+        <div class="hpm-cat-grid">
+          <div class="hpm-cat-row">
+            ${tile('aceitunas-mesa', 'Aceitunas de mesa')}
+            ${tile('aceitunas-premium', 'Aceitunas premium')}
+            <div class="hpm-cat-split">
+              ${tile('especiales', 'Especiales')}
+              ${tile('packs', 'Venta por mayor')}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    if (id === 'confidence-bar'){
+      return `
+        <div class="hpm-confidence">
+          <div class="hpm-confidence-item"><div class="icon">⭐</div><span>+25 años</span></div>
+          <div class="hpm-confidence-item"><div class="icon">🚚</div><span>Envío a todo Chile</span></div>
+          <div class="hpm-confidence-item"><div class="icon">💳</div><span>Medios de pago</span></div>
+        </div>
+      `;
+    }
+    if (id === 'catalog-grid' || id === 'featured-products'){
+      const label = id === 'catalog-grid' ? 'Nuestros productos' : 'Productos destacados';
+      return `<div class="hpm-products"><span class="hpm-lock-tag">${label}</span><div class="hpm-product-cards"><div></div><div></div><div></div><div></div></div></div>`;
+    }
+    const info = HOME_SECTION_LABELS[id] || { label: id };
+    return `<div class="hpm-block" style="background:var(--hp-linen, var(--linen)); color:var(--hp-ink, var(--ink)); padding:16px;">${info.label}</div>`;
+  }
+
   function renderHomePreview(){
     const container = document.getElementById('homePreview');
     if (!container) return;
@@ -4555,23 +4686,38 @@
       ? `--hp-ink:${c.ink}; --hp-paper:${c.paper}; --hp-linen:${c.linen}; --hp-olive-deep:${c.olive_deep}; --hp-gold:${c.gold};`
       : '';
 
-    const sectionsHtml = homeSectionOrder.map(id => {
-      const info = HOME_SECTION_LABELS[id] || { label: id };
-      return `<div class="hpm-block hpm-section">${info.label}</div>`;
-    }).join('');
+    const sectionsHtml = homeSectionOrder.map(id => homePreviewSectionHtml(id)).join('');
 
-    container.style = varStyle;
+    container.setAttribute('style', varStyle);
     container.innerHTML = `
-      <div class="hpm-block hpm-header">🔒 Header + menú</div>
-      <div class="hpm-block hpm-hero">
-        <span>🔒 Banner principal</span>
-        <span class="hpm-sub">Bienvenido a ProOliva</span>
+      <div class="hpm-block hpm-header">
+        <span>ProOliva</span>
+        <span class="hpm-header-dots"><span></span><span></span><span></span></span>
+      </div>
+      <div class="hpm-hero">
+        <span class="hpm-lock-tag">🔒 Banner principal</span>
+        <div class="hpm-sub">Bienvenido a ProOliva</div>
       </div>
       ${sectionsHtml}
-      <div class="hpm-block hpm-subscribe">🔒 Suscríbete a nuestras ofertas</div>
-      <div class="hpm-block hpm-footer">🔒 Pie de página</div>
+      <div class="hpm-subscribe">🔒 Suscríbete a nuestras ofertas</div>
+      <div class="hpm-footer">🔒 Pie de página</div>
     `;
   }
+
+  document.getElementById('previewDeviceToggle').addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    document.querySelectorAll('#previewDeviceToggle button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('homePreviewFrame').classList.toggle('mobile', btn.dataset.device === 'mobile');
+  });
+
+  document.getElementById('resetColorsBtn').addEventListener('click', () => {
+    if (!confirm('¿Restaurar los colores de fábrica? Se pierden los cambios sin guardar en esta pantalla (tendrás que hacer clic en "Guardar paleta de colores" después para que quede definitivo).')) return;
+    COLOR_FIELDS.forEach(f => { siteColorValues[f.key] = f.fallback; });
+    renderColorPalette();
+    renderHomePreview();
+  });
 
   function setMockupImage(key, url){
     const img = document.getElementById(`siteImgMockupImg-${key}`);
@@ -4620,7 +4766,9 @@
     await Promise.all(SITE_IMAGE_SLOTS.map(async (slot) => {
       const url = await getSiteImageUrl(slot.key);
       setMockupImage(slot.key, url);
+      previewImageCache[slot.key] = url;
     }));
+    renderHomePreview();
   }
 
   async function saveSiteImageMeta(key){
@@ -4640,6 +4788,8 @@
         updated_at: new Date().toISOString()
       });
       if (error) throw error;
+      homeContentMap[key] = { slot_key: key, title: title || null, link_url: linkUrl || null };
+      renderHomePreview();
       statusEl.textContent = 'Guardado ✓';
       statusEl.className = 'site-image-status ok';
     } catch (err){
@@ -4665,6 +4815,8 @@
     if (siteImageObjectUrls[key]) URL.revokeObjectURL(siteImageObjectUrls[key]);
     siteImageObjectUrls[key] = URL.createObjectURL(file);
     setMockupImage(key, siteImageObjectUrls[key]);
+    previewImageCache[key] = siteImageObjectUrls[key];
+    renderHomePreview();
 
     try {
       // Borra cualquier versión anterior del mismo slot (por si cambia la extensión)
