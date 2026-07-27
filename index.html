@@ -360,7 +360,7 @@
   </div>
 </section>
 
-<div class="confidence">
+<div class="confidence" data-home-section="confidence-bar">
   <div class="wrap confidence-grid">
     <div class="confidence-item">
       <div class="confidence-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 3l2.2 4.9 5.3.5-4 3.6 1.2 5.3L12 14.7 7.3 17.3l1.2-5.3-4-3.6 5.3-.5L12 3Z" stroke="#3a4527" stroke-width="1.5" stroke-linejoin="round"/></svg></div>
@@ -380,7 +380,7 @@
   </div>
 </div>
 
-<section>
+<section data-home-section="catalog-grid">
   <div class="wrap">
     <div class="section-head"><p class="eyebrow">Catálogo</p><h2>Nuestros productos</h2></div>
     <div class="prod-grid" id="homeProductGrid">
@@ -393,7 +393,7 @@
   </div>
 </section>
 
-<section id="destacado">
+<section id="destacado" data-home-section="featured-products">
   <div class="wrap">
     <div class="section-head"><p class="eyebrow">Producto destacado</p><h2>Lo mejor de nuestra cosecha</h2></div>
     <div class="featured" id="featuredContainer">
@@ -513,13 +513,15 @@
       supabaseClient.from('site_colors').select('*').eq('id', 1).single()
     ]);
 
-    // Reordena las 2 secciones editables según lo configurado en Home Editor
-    // (se posicionan una junto a la otra, sin tocar el resto de la página)
-    if (sections && sections.length === 2){
-      const el0 = document.querySelector(`[data-home-section="${sections[0].id}"]`);
-      const el1 = document.querySelector(`[data-home-section="${sections[1].id}"]`);
-      if (el0 && el1 && el0.parentElement === el1.parentElement){
-        el0.parentElement.insertBefore(el0, el1);
+    // Reordena las secciones editables según lo configurado en Home Editor
+    // (se van posicionando de a pares, consecutivas, sin tocar el resto de la página)
+    if (sections && sections.length > 1){
+      for (let i = 0; i < sections.length - 1; i++){
+        const elCurrent = document.querySelector(`[data-home-section="${sections[i].id}"]`);
+        const elNext = document.querySelector(`[data-home-section="${sections[i + 1].id}"]`);
+        if (elCurrent && elNext && elCurrent.parentElement === elNext.parentElement){
+          elCurrent.parentElement.insertBefore(elCurrent, elNext);
+        }
       }
     }
 

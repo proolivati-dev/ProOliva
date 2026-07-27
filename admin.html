@@ -4426,9 +4426,12 @@
   // ---------- Orden de las secciones del inicio ----------
   const HOME_SECTION_LABELS = {
     'promo-photos': { label: 'Fotos promocionales (carrusel)', hint: 'El bloque de 3 fotos que rotan' },
-    'category-grid': { label: 'Categorías destacadas', hint: 'La grilla de 4 tarjetas de categoría' }
+    'category-grid': { label: 'Categorías destacadas', hint: 'La grilla de 4 tarjetas de categoría' },
+    'confidence-bar': { label: 'Franja de confianza', hint: '+25 años de experiencia, envío y medios de pago' },
+    'catalog-grid': { label: 'Nuestros productos', hint: 'Catálogo dinámico (últimos productos cargados)' },
+    'featured-products': { label: 'Productos destacados', hint: 'Carrusel de productos marcados como destacados' }
   };
-  let homeSectionOrder = ['promo-photos', 'category-grid'];
+  let homeSectionOrder = ['promo-photos', 'category-grid', 'confidence-bar', 'catalog-grid', 'featured-products'];
   let homeSectionsLoaded = false;
 
   async function loadHomeSections(){
@@ -4565,8 +4568,6 @@
         <span class="hpm-sub">Bienvenido a ProOliva</span>
       </div>
       ${sectionsHtml}
-      <div class="hpm-block hpm-fixed">🔒 Nuestros productos (catálogo dinámico)</div>
-      <div class="hpm-block hpm-fixed">🔒 Confianza (25+ años / envío / medios de pago)</div>
       <div class="hpm-block hpm-subscribe">🔒 Suscríbete a nuestras ofertas</div>
       <div class="hpm-block hpm-footer">🔒 Pie de página</div>
     `;
