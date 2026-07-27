@@ -36,18 +36,18 @@
   .nav-item-wrap::after{ content:''; position:absolute; top:100%; left:50%; transform:translateX(-50%); width:340px; height:16px;}
   .nav-dropdown{
     position:absolute; top:100%; left:50%; transform:translateX(-50%); margin-top:16px;
-    background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:22px;
+    background:var(--paper); border:1px solid var(--line); border-radius:0; padding:22px;
     display:none; gap:28px; z-index:70; min-width:340px;
     box-shadow:0 24px 48px -20px rgba(32,40,26,0.35);
   }
   .nav-item-wrap:hover .nav-dropdown{ display:flex;}
   .nav-dropdown-links{ display:flex; flex-direction:column; gap:2px; min-width:150px; flex-shrink:0;}
-  .nav-dropdown-links a{ padding:8px 10px; border-radius:6px; font-size:13px; font-weight:600; text-transform:none; letter-spacing:normal; opacity:0.75;}
+  .nav-dropdown-links a{ padding:8px 10px; border-radius:0; font-size:13px; font-weight:600; text-transform:none; letter-spacing:normal; opacity:0.75;}
   .nav-dropdown-links a:hover{ background:var(--linen); opacity:1;}
   .nav-dropdown-products{ display:flex; gap:16px; padding-left:24px; border-left:1px solid var(--line);}
   .nav-dropdown-products:only-child{ padding-left:0; border-left:none;}
   .nav-dropdown-product{ display:flex; flex-direction:column; gap:8px; width:110px; opacity:1; text-transform:none; letter-spacing:normal;}
-  .ndp-img{ display:block; width:110px; height:110px; border-radius:10px; overflow:hidden; background:var(--linen);}
+  .ndp-img{ display:block; width:110px; height:110px; border-radius:0; overflow:hidden; background:var(--linen);}
   .ndp-img img{ width:100%; height:100%; object-fit:cover; transition:transform .3s;}
   .nav-dropdown-product:hover .ndp-img img{ transform:scale(1.06);}
   .ndp-name{ font-size:12px; font-weight:600; line-height:1.3; color:var(--ink); white-space:normal;}
@@ -55,9 +55,9 @@
   .nav-actions{ display:flex; align-items:center; justify-content:flex-end; gap:18px;}
   .nav-actions-link{ font-size:13.5px; font-weight:600; text-transform:uppercase; letter-spacing:0.02em; opacity:0.8; transition:opacity .15s; white-space:nowrap;}
   .nav-actions-link:hover{ opacity:1; color:var(--olive-deep);}
-  .icon-link-btn{ position:relative; width:38px; height:38px; border-radius:50%; border:1.5px solid var(--line); display:flex; align-items:center; justify-content:center; transition:border-color .15s; flex-shrink:0; background:transparent; cursor:pointer;}
+  .icon-link-btn{ position:relative; width:38px; height:38px; border-radius:0; border:1.5px solid var(--line); display:flex; align-items:center; justify-content:center; transition:border-color .15s; flex-shrink:0; background:transparent; cursor:pointer;}
   .icon-link-btn:hover{ border-color:var(--olive-deep);}
-  .btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:13px 24px; border-radius:6px; font-size:13.5px; font-weight:700; letter-spacing:0.02em; text-transform:uppercase; cursor:pointer; border:1px solid transparent; transition:transform .15s, background .15s; white-space:nowrap;}
+  .btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:13px 24px; border-radius:0; font-size:13.5px; font-weight:700; letter-spacing:0.02em; text-transform:uppercase; cursor:pointer; border:1px solid transparent; transition:transform .15s, background .15s; white-space:nowrap;}
   .btn:hover{ transform:translateY(-1px); }
   .btn-primary{ background:var(--olive-deep); color:var(--paper); }
   .btn-primary:hover{ background:var(--ink); }
@@ -68,18 +68,18 @@
   .btn-block{ width:100%; padding:15px 24px; font-size:14px;}
 
   /* ---------- cart ---------- */
-  .cart-badge{ position:absolute; top:-5px; right:-5px; background:var(--olive-deep); color:#fff; font-family:'IBM Plex Mono',monospace; font-size:10px; font-weight:700; min-width:18px; height:18px; border-radius:10px; display:flex; align-items:center; justify-content:center; padding:0 4px;}
+  .cart-badge{ position:absolute; top:-5px; right:-5px; background:var(--olive-deep); color:#fff; font-family:'IBM Plex Mono',monospace; font-size:10px; font-weight:700; min-width:18px; height:18px; border-radius:0; display:flex; align-items:center; justify-content:center; padding:0 4px;}
   .cart-backdrop{ position:fixed; inset:0; background:rgba(20,24,15,0.5); z-index:90; opacity:0; pointer-events:none; transition:opacity .25s;}
   .cart-backdrop.open{ opacity:1; pointer-events:auto;}
   .cart-drawer{ position:fixed; top:0; right:0; height:100vh; width:400px; max-width:92vw; background:var(--paper); z-index:95; box-shadow:-14px 0 40px rgba(0,0,0,0.25); transform:translateX(100%); transition:transform .32s cubic-bezier(.2,.8,.2,1); display:flex; flex-direction:column;}
   .cart-drawer.open{ transform:translateX(0);}
   .cart-drawer-header{ display:flex; align-items:center; justify-content:space-between; padding:22px 24px; border-bottom:1px solid var(--line);}
   .cart-drawer-header h3{ font-size:18px;}
-  .cart-close-btn{ background:transparent; border:none; cursor:pointer; width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:50%; transition:background .15s;}
+  .cart-close-btn{ background:transparent; border:none; cursor:pointer; width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:0; transition:background .15s;}
   .cart-close-btn:hover{ background:var(--linen);}
   .cart-items{ flex:1; overflow-y:auto; padding:8px 24px;}
   .cart-item{ display:flex; gap:14px; padding:16px 0; border-bottom:1px solid var(--line);}
-  .cart-item-img{ width:60px; height:60px; border-radius:8px; overflow:hidden; background:var(--linen); flex-shrink:0;}
+  .cart-item-img{ width:60px; height:60px; border-radius:0; overflow:hidden; background:var(--linen); flex-shrink:0;}
   .cart-item-img img{ width:100%; height:100%; object-fit:cover;}
   .cart-item-info{ flex:1; min-width:0;}
   .cart-item-info h4{ font-family:'Archivo',sans-serif; font-weight:600; font-size:13.5px; margin-bottom:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
@@ -95,7 +95,7 @@
   .cart-clear-btn{ width:100%; text-align:center; background:transparent; border:none; cursor:pointer; font-size:12.5px; opacity:0.5; margin-top:10px; padding:6px;}
   .cart-clear-btn:hover{ opacity:0.85;}
 
-  .qty-stepper{ display:inline-flex; align-items:center; border:1.5px solid var(--line); border-radius:6px; overflow:hidden; flex-shrink:0; background:var(--paper);}
+  .qty-stepper{ display:inline-flex; align-items:center; border:1.5px solid var(--line); border-radius:0; overflow:hidden; flex-shrink:0; background:var(--paper);}
   .qty-btn{ width:34px; height:44px; background:transparent; border:none; cursor:pointer; font-size:17px; font-weight:600; color:var(--ink); transition:background .15s;}
   .qty-btn:hover{ background:var(--linen);}
   .qty-value{ width:36px; text-align:center; font-size:14.5px; font-weight:600;}
@@ -109,12 +109,12 @@
   /* ---------- gallery + info hero ---------- */
   .product-hero{ padding:28px 0 0; display:grid; grid-template-columns:64px 1fr 1fr; gap:24px; align-items:start;}
   .thumb-strip{ display:flex; flex-direction:column; gap:10px;}
-  .thumb{ width:64px; height:64px; border-radius:8px; border:2px solid var(--olive-deep); overflow:hidden; cursor:pointer; background:var(--paper);}
+  .thumb{ width:64px; height:64px; border-radius:0; border:2px solid var(--olive-deep); overflow:hidden; cursor:pointer; background:var(--paper);}
   .thumb img{ width:100%; height:100%; object-fit:cover;}
-  .main-image{ position:relative; background:var(--paper); border:1px solid var(--line); border-radius:14px; aspect-ratio:1144/1200; overflow:hidden; display:flex; align-items:center; justify-content:center;}
+  .main-image{ position:relative; background:var(--paper); border:1px solid var(--line); border-radius:0; aspect-ratio:1144/1200; overflow:hidden; display:flex; align-items:center; justify-content:center;}
   .main-image img{ width:100%; height:100%; object-fit:cover;}
-  .image-counter{ position:absolute; top:14px; right:14px; background:var(--olive-deep); color:#fff; font-family:'IBM Plex Mono',monospace; font-size:11px; padding:4px 10px; border-radius:20px; font-weight:600;}
-  .product-badge{ position:absolute; top:14px; left:14px; background:var(--gold); color:var(--ink); font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:0.06em; text-transform:uppercase; padding:6px 12px; border-radius:20px; font-weight:600;}
+  .image-counter{ position:absolute; top:14px; right:14px; background:var(--olive-deep); color:#fff; font-family:'IBM Plex Mono',monospace; font-size:11px; padding:4px 10px; border-radius:0; font-weight:600;}
+  .product-badge{ position:absolute; top:14px; left:14px; background:var(--gold); color:var(--ink); font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:0.06em; text-transform:uppercase; padding:6px 12px; border-radius:0; font-weight:600;}
 
   .product-info .eyebrow{ display:block; margin-bottom:8px;}
   .product-info h1{ font-size:26px; margin-bottom:8px;}
@@ -123,28 +123,28 @@
   .price-main{ font-family:'Archivo',sans-serif; font-weight:700; font-size:34px; color:var(--olive-deep);}
   .price-unit{ font-size:13.5px; opacity:0.6;}
   .product-meta-row{ display:flex; gap:8px; flex-wrap:wrap; margin:16px 0 24px;}
-  .meta-chip{ font-size:12px; font-weight:600; background:var(--paper); border:1px solid var(--line); padding:6px 12px; border-radius:20px;}
+  .meta-chip{ font-size:12px; font-weight:600; background:var(--paper); border:1px solid var(--line); padding:6px 12px; border-radius:0;}
   .add-to-cart-row{ display:flex; gap:10px; margin-bottom:14px;}
   .add-to-cart-row .btn{ flex:1;}
   .wsp-secondary-link{ display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; opacity:0.7; margin-bottom:20px;}
   .wsp-secondary-link:hover{ opacity:1; color:var(--olive-deep);}
   .secondary-actions{ display:flex; gap:10px; margin-top:4px;}
-  .secondary-action-btn{ flex:1; display:flex; align-items:center; justify-content:center; gap:8px; background:transparent; border:1.5px solid var(--line); border-radius:6px; padding:11px; font-size:13px; font-weight:600; cursor:pointer; transition:border-color .15s; color:var(--ink);}
+  .secondary-action-btn{ flex:1; display:flex; align-items:center; justify-content:center; gap:8px; background:transparent; border:1.5px solid var(--line); border-radius:0; padding:11px; font-size:13px; font-weight:600; cursor:pointer; transition:border-color .15s; color:var(--ink);}
   .secondary-action-btn:hover{ border-color:var(--olive-deep);}
   .product-trust{ display:flex; flex-direction:column; gap:12px; border-top:1px solid var(--line); margin-top:24px; padding-top:22px;}
   .product-trust div{ display:flex; align-items:center; gap:10px; font-size:13.5px; opacity:0.75;}
 
   /* ---------- description ---------- */
-  .description-section{ margin:56px 0; background:var(--paper); border:1px solid var(--line); border-radius:12px; overflow:hidden;}
+  .description-section{ margin:56px 0; background:var(--paper); border:1px solid var(--line); border-radius:0; overflow:hidden;}
   .description-toggle{ width:100%; display:flex; align-items:center; justify-content:space-between; padding:22px 28px; background:transparent; border:none; cursor:pointer; text-align:left;}
   .description-toggle h2{ font-size:19px;}
-  .toggle-icon{ font-family:'Archivo',sans-serif; font-size:22px; font-weight:700; color:var(--olive-deep); width:28px; height:28px; border:1.5px solid var(--line); border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .toggle-icon{ font-family:'Archivo',sans-serif; font-size:22px; font-weight:700; color:var(--olive-deep); width:28px; height:28px; border:1.5px solid var(--line); border-radius:0; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
   .description-body{ padding:0 28px 28px;}
   .description-body h3{ font-size:15px; margin:22px 0 10px;}
   .description-body p{ font-size:14.5px; opacity:0.82; line-height:1.75;}
   .description-body ul{ margin:0 0 0 18px; font-size:14.5px; opacity:0.82;}
   .description-body li{ margin-bottom:6px;}
-  .about-brand{ display:flex; align-items:center; gap:20px; background:var(--linen); border-radius:10px; padding:22px; margin-top:10px;}
+  .about-brand{ display:flex; align-items:center; gap:20px; background:var(--linen); border-radius:0; padding:22px; margin-top:10px;}
   .about-brand img{ height:56px; flex-shrink:0;}
   .about-brand p{ margin:0; opacity:0.8;}
 
@@ -153,11 +153,11 @@
   .related .section-head-row{ display:flex; align-items:center; justify-content:space-between; margin-bottom:22px;}
   .related h2{ font-size:22px;}
   .carousel-wrap{ position:relative; display:flex; align-items:center; gap:10px;}
-  .carousel-arrow{ width:40px; height:40px; border-radius:50%; border:1.5px solid var(--line); background:var(--paper); display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; transition:border-color .15s;}
+  .carousel-arrow{ width:40px; height:40px; border-radius:0; border:1.5px solid var(--line); background:var(--paper); display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; transition:border-color .15s;}
   .carousel-arrow:hover{ border-color:var(--olive-deep);}
   .carousel-track{ display:flex; gap:18px; overflow-x:auto; scroll-behavior:smooth; scrollbar-width:none; padding-bottom:4px;}
   .carousel-track::-webkit-scrollbar{ display:none;}
-  .rel-card{ flex:0 0 220px; background:var(--paper); border:1px solid var(--line); border-radius:12px; overflow:hidden; transition:transform .15s, box-shadow .15s;}
+  .rel-card{ flex:0 0 220px; background:var(--paper); border:1px solid var(--line); border-radius:0; overflow:hidden; transition:transform .15s, box-shadow .15s;}
   .rel-card:hover{ transform:translateY(-3px); box-shadow:0 14px 26px -16px rgba(32,40,26,0.35);}
   .rel-visual{ aspect-ratio:1144/1200; background:var(--linen); overflow:hidden;}
   .rel-visual img{ width:100%; height:100%; object-fit:cover;}
@@ -165,7 +165,7 @@
   .rel-cat{ font-family:'IBM Plex Mono',monospace; font-size:9.5px; text-transform:uppercase; letter-spacing:0.06em; color:var(--gold-deep);}
   .rel-body h4{ font-family:'Archivo', sans-serif; font-weight:600; font-size:14px; margin:5px 0 4px;}
   .rel-price{ font-family:'Archivo', sans-serif; font-weight:700; color:var(--olive-deep); font-size:14px; margin-bottom:10px;}
-  .rel-add-btn{ width:100%; background:var(--olive-deep); color:#fff; border:none; border-radius:6px; padding:8px; font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.02em; cursor:pointer; transition:background .15s;}
+  .rel-add-btn{ width:100%; background:var(--olive-deep); color:#fff; border:none; border-radius:0; padding:8px; font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.02em; cursor:pointer; transition:background .15s;}
   .rel-add-btn:hover{ background:var(--ink);}
 
   .state-msg{ text-align:center; padding:100px 20px; opacity:0.7;}
@@ -179,7 +179,7 @@
   .foot-grid a, .foot-grid .row{ display:flex; align-items:center; gap:8px; font-size:14px; opacity:0.75; margin-bottom:10px;}
   .foot-bottom{ display:flex; justify-content:space-between; padding-top:20px; border-top:1px solid var(--line); font-size:12px; opacity:0.55;}
 
-  .wsp-float{ position:fixed; bottom:26px; right:26px; z-index:80; width:58px; height:58px; border-radius:50%; background:#25D366; display:flex; align-items:center; justify-content:center; box-shadow:0 10px 24px rgba(37,211,102,0.4); transition:transform .15s;}
+  .wsp-float{ position:fixed; bottom:26px; right:26px; z-index:80; width:58px; height:58px; border-radius:0; background:#25D366; display:flex; align-items:center; justify-content:center; box-shadow:0 10px 24px rgba(37,211,102,0.4); transition:transform .15s;}
   .wsp-float:hover{ transform:scale(1.07);}
 
   .skeleton{ background:linear-gradient(90deg, var(--line) 25%, rgba(32,40,26,0.06) 37%, var(--line) 63%); background-size:400% 100%; animation:shimmer 1.4s ease infinite;}
@@ -228,7 +228,7 @@
 </div>
 
 <div id="loadingState" class="wrap" style="padding:28px 0;">
-  <div class="skeleton" style="aspect-ratio:1/1; border-radius:14px; max-width:600px;"></div>
+  <div class="skeleton" style="aspect-ratio:1/1; border-radius:0; max-width:600px;"></div>
 </div>
 
 <div id="notFoundState" class="state-msg wrap" style="display:none;">
