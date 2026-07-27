@@ -384,6 +384,20 @@
 <script src="cart.js"></script>
 <script src="subscribe.js"></script>
 <script>
+  // ---------- Paleta de colores (Home Editor) ----------
+  (async () => {
+    const { data: colors } = await supabaseClient.from('site_colors').select('*').eq('id', 1).single();
+    if (!colors) return;
+    const map = {
+      ink: '--ink', olive: '--olive', olive_deep: '--olive-deep', olive_light: '--olive-light',
+      gold: '--gold', gold_deep: '--gold-deep', aubergine: '--aubergine', coffee: '--coffee',
+      linen: '--linen', paper: '--paper'
+    };
+    Object.entries(map).forEach(([col, cssVar]) => {
+      if (colors[col]) document.documentElement.style.setProperty(cssVar, colors[col]);
+    });
+  })();
+
   let allProducts = [];
   let allCategories = [];
   let activeCategory = 'all';

@@ -310,7 +310,7 @@
   </div>
 </div>
 
-<section class="promo-photos" aria-label="Promociones">
+<section class="promo-photos" aria-label="Promociones" data-home-section="promo-photos">
   <div class="wrap">
     <div class="promo-photo-viewport">
       <div class="promo-photo-track" id="promoPhotoTrack">
@@ -335,7 +335,7 @@
   </div>
 </section>
 
-<section id="productos" style="padding-top:0; padding-bottom:0;">
+<section id="productos" style="padding-top:0; padding-bottom:0;" data-home-section="category-grid">
   <div class="wrap">
     <div class="cat-grid">
       <a class="cat-card" id="catMesaLink" href="productos.html?cat=aceitunas-mesa">
@@ -506,6 +506,36 @@
 <script src="cart.js"></script>
 <script src="subscribe.js"></script>
 <script>
+  // ---------- Orden de secciones + paleta de colores (Home Editor) ----------
+  (async () => {
+    const [{ data: sections }, { data: colors }] = await Promise.all([
+      supabaseClient.from('home_sections').select('*').order('sort_order'),
+      supabaseClient.from('site_colors').select('*').eq('id', 1).single()
+    ]);
+
+    // Reordena las 2 secciones editables según lo configurado en Home Editor
+    // (se posicionan una junto a la otra, sin tocar el resto de la página)
+    if (sections && sections.length === 2){
+      const el0 = document.querySelector(`[data-home-section="${sections[0].id}"]`);
+      const el1 = document.querySelector(`[data-home-section="${sections[1].id}"]`);
+      if (el0 && el1 && el0.parentElement === el1.parentElement){
+        el0.parentElement.insertBefore(el0, el1);
+      }
+    }
+
+    // Aplica la paleta de colores personalizada (si hay algo guardado)
+    if (colors){
+      const map = {
+        ink: '--ink', olive: '--olive', olive_deep: '--olive-deep', olive_light: '--olive-light',
+        gold: '--gold', gold_deep: '--gold-deep', aubergine: '--aubergine', coffee: '--coffee',
+        linen: '--linen', paper: '--paper'
+      };
+      Object.entries(map).forEach(([col, cssVar]) => {
+        if (colors[col]) document.documentElement.style.setProperty(cssVar, colors[col]);
+      });
+    }
+  })();
+
   const CATEGORY_LABELS = {
     'aceites': 'Aceites de oliva',
     'aceitunas-mesa': 'Aceitunas de mesa',

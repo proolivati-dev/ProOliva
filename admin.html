@@ -151,6 +151,33 @@
   .modal-actions .btn{ width:auto; flex:1;}
   .image-preview{ width:100%; height:140px; border-radius:8px; background:var(--linen); border:1.5px dashed var(--line); display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:6px; position:relative;}
   .site-images-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:20px;}
+  .image-group-panel{ border:1.5px solid var(--olive-light); background:var(--linen);}
+  .image-group-header{ margin-bottom:16px;}
+  .image-group-header h3{ margin-bottom:2px;}
+
+  .section-order-row{ display:flex; align-items:center; gap:12px; background:var(--linen); border:1px solid var(--line); border-radius:8px; padding:12px 14px; margin-bottom:8px;}
+  .section-order-arrows{ display:flex; flex-direction:column; gap:2px;}
+  .section-order-arrows button{ width:24px; height:19px; border:1px solid var(--line); background:var(--paper); border-radius:4px; cursor:pointer; font-size:9px; line-height:1; padding:0;}
+  .section-order-arrows button:disabled{ opacity:0.25; cursor:default;}
+  .section-order-name{ font-weight:700; font-size:13.5px; flex:1;}
+  .section-order-hint{ font-size:11.5px; opacity:0.55;}
+  .section-fixed-row{ display:flex; align-items:center; gap:12px; background:var(--paper); border:1px dashed var(--line); border-radius:8px; padding:12px 14px; margin-bottom:8px; opacity:0.75;}
+  .section-fixed-row .lock{ font-size:14px;}
+
+  .color-palette-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:14px;}
+  .color-swatch-field{ display:flex; align-items:center; gap:10px; background:var(--linen); border:1px solid var(--line); border-radius:8px; padding:8px 10px;}
+  .color-swatch-field input[type="color"]{ width:34px; height:34px; border:none; border-radius:6px; cursor:pointer; padding:0; background:none; flex-shrink:0;}
+  .color-swatch-field label{ font-size:12px; font-weight:700; margin:0;}
+
+  .home-preview-mock{ border:1px solid var(--line); border-radius:12px; overflow:hidden; max-width:480px; margin:0 auto;}
+  .hpm-block{ padding:14px 16px; font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; display:flex; align-items:center; gap:8px;}
+  .hpm-header{ background:var(--hp-ink, var(--ink)); color:var(--hp-paper, var(--paper));}
+  .hpm-hero{ background:var(--hp-olive-deep, var(--olive-deep)); color:var(--hp-paper, var(--paper)); padding:34px 16px; flex-direction:column; align-items:flex-start; gap:4px;}
+  .hpm-hero .hpm-sub{ font-size:15px; text-transform:none; font-weight:700; letter-spacing:normal;}
+  .hpm-section{ background:var(--hp-linen, var(--linen)); color:var(--hp-ink, var(--ink)); border-bottom:1px solid rgba(0,0,0,0.08); padding:22px 16px; cursor:default;}
+  .hpm-fixed{ background:var(--hp-paper, var(--paper)); color:var(--hp-ink, var(--ink)); opacity:0.6; border-bottom:1px solid rgba(0,0,0,0.06);}
+  .hpm-subscribe{ background:var(--hp-gold, var(--gold)); color:var(--hp-ink, var(--ink));}
+  .hpm-footer{ background:var(--hp-ink, var(--ink)); color:var(--hp-paper, var(--paper)); opacity:0.85;}
   .site-image-card{ background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:18px;}
   .site-image-card h4{ font-size:14.5px; margin-bottom:2px;}
   .site-image-card .hint{ font-size:11.5px; opacity:0.55; margin-bottom:10px;}
@@ -965,17 +992,52 @@
       <div class="admin-toolbar">
         <div>
           <h2>Home Editor</h2>
-          <p>Edita las fotos, títulos y enlaces del inicio (index.html) — queda todo guardado en Supabase, ya no hace falta tocar GitHub.</p>
+          <p>Edita las fotos, títulos, orden y colores del inicio (index.html) — queda todo guardado en Supabase, ya no hace falta tocar GitHub.</p>
         </div>
       </div>
-      <div class="site-images-grid" id="siteImagesGrid"></div>
 
-      <div class="panel" style="margin-top:32px;">
+      <div class="panel">
         <h3 style="margin-bottom:4px;">Categorías y barra de navegación</h3>
         <p class="hint" style="margin-bottom:16px;">Marca qué categorías aparecen en el menú principal de index.html, productos.html y producto.html — la primera de la lista es la que sale primero. Para cada una, elige qué categorías relacionadas se despliegan al pasar el mouse por encima.</p>
         <div id="navCategoriesManager"></div>
         <button type="button" class="btn btn-primary" id="saveNavCategoriesBtn" style="width:auto; margin-top:14px;">Guardar barra de navegación</button>
         <div class="site-image-status" id="navCategoriesStatus"></div>
+      </div>
+
+      <div class="panel" style="margin-top:24px;">
+        <h3 style="margin-bottom:4px;">Orden de las secciones del inicio</h3>
+        <p class="hint" style="margin-bottom:16px;">El banner principal y la barra de "Suscríbete" quedan siempre fijos en su lugar — acá solo ordenas estos 2 bloques entre ellos.</p>
+        <div id="sectionOrderList"></div>
+      </div>
+
+      <div class="panel" style="margin-top:24px;">
+        <h3 style="margin-bottom:4px;">Paleta de colores</h3>
+        <p class="hint" style="margin-bottom:16px;">Son los mismos colores que usa index.html — cámbialos acá y se actualizan en todo el sitio, sin tocar código.</p>
+        <div class="color-palette-grid" id="colorPaletteGrid"></div>
+        <button type="button" class="btn btn-primary" id="saveColorsBtn" style="width:auto; margin-top:14px;">Guardar paleta de colores</button>
+        <div class="site-image-status" id="colorsStatus"></div>
+      </div>
+
+      <div class="panel" style="margin-top:24px;">
+        <h3 style="margin-bottom:4px;">Vista previa del inicio</h3>
+        <p class="hint" style="margin-bottom:16px;">Se actualiza sola cuando cambias el orden o los colores. Los bloques con 🔒 quedan siempre fijos.</p>
+        <div class="home-preview-mock" id="homePreview"></div>
+      </div>
+
+      <div class="panel image-group-panel" style="margin-top:24px;">
+        <div class="image-group-header">
+          <h3>Fotos promocionales (carrusel)</h3>
+          <p class="hint">Las 3 fotos que rotan debajo del banner principal — se editan como un solo conjunto.</p>
+        </div>
+        <div class="site-images-grid" id="promoImagesGrid"></div>
+      </div>
+
+      <div class="panel image-group-panel" style="margin-top:24px;">
+        <div class="image-group-header">
+          <h3>Categorías destacadas (grilla del inicio)</h3>
+          <p class="hint">Las 4 tarjetas de categoría que aparecen debajo del carrusel de fotos — se editan como un solo conjunto.</p>
+        </div>
+        <div class="site-images-grid" id="categoryImagesGrid"></div>
       </div>
     </div>
 
@@ -1924,6 +1986,8 @@
     if (tabId === 'home-editor'){
       if (!siteImagesLoaded) loadSiteImages();
       if (!navCategoriesLoaded) loadNavCategories();
+      if (!homeSectionsLoaded) loadHomeSections();
+      if (!siteColorsLoaded) loadSiteColors();
     }
     if (tabId === 'config' && !shippingConfigLoaded) loadShippingConfig();
     if (tabId === 'cotizacion' && !quoteSimulatorLoaded) initQuoteSimulator();
@@ -4298,8 +4362,10 @@
   }
 
   function renderSiteImagesGrid(){
-    const grid = document.getElementById('siteImagesGrid');
-    grid.innerHTML = SITE_IMAGE_SLOTS.map(slot => `
+    const promoGrid = document.getElementById('promoImagesGrid');
+    const categoryGrid = document.getElementById('categoryImagesGrid');
+
+    promoGrid.innerHTML = SITE_IMAGE_SLOTS.filter(s => s.type === 'promo').map(slot => `
       <div class="site-image-card">
         <h4>${slot.label}</h4>
         <p class="hint">${slot.hint}</p>
@@ -4311,13 +4377,31 @@
         <p class="hint" style="margin-top:8px; margin-bottom:0;">Tamaño recomendado: ${slot.size}</p>
         <div class="site-image-status" id="siteImgStatus-${slot.key}"></div>
 
-        ${slot.type === 'category' ? `
-          <div class="field" style="margin-top:14px;">
-            <label>Título sobre la imagen</label>
-            <input type="text" id="siteImgTitle-${slot.key}" placeholder="Ej: ACEITUNAS DE MESA">
-          </div>
-        ` : ''}
-        <div class="field" style="${slot.type === 'promo' ? 'margin-top:14px;' : ''}">
+        <div class="field" style="margin-top:14px;">
+          <label>Enlace al hacer clic <span style="opacity:0.5; font-weight:400;">(opcional)</span></label>
+          <input type="text" id="siteImgLink-${slot.key}" placeholder="Ej: productos.html?cat=ofertas">
+        </div>
+        <button type="button" class="btn btn-primary" id="siteImgSaveMeta-${slot.key}">Guardar cambios</button>
+      </div>
+    `).join('');
+
+    categoryGrid.innerHTML = SITE_IMAGE_SLOTS.filter(s => s.type === 'category').map(slot => `
+      <div class="site-image-card">
+        <h4>${slot.label}</h4>
+        <p class="hint">${slot.hint}</p>
+
+        ${siteImagePreviewHtml(slot)}
+
+        <label class="btn btn-outline site-image-upload-btn" for="siteImgFile-${slot.key}">Elegir imagen</label>
+        <input type="file" accept="image/*" id="siteImgFile-${slot.key}" style="display:none;">
+        <p class="hint" style="margin-top:8px; margin-bottom:0;">Tamaño recomendado: ${slot.size}</p>
+        <div class="site-image-status" id="siteImgStatus-${slot.key}"></div>
+
+        <div class="field" style="margin-top:14px;">
+          <label>Título sobre la imagen</label>
+          <input type="text" id="siteImgTitle-${slot.key}" placeholder="Ej: ACEITUNAS DE MESA">
+        </div>
+        <div class="field">
           <label>Enlace al hacer clic <span style="opacity:0.5; font-weight:400;">(opcional)</span></label>
           <input type="text" id="siteImgLink-${slot.key}" placeholder="Ej: productos.html?cat=ofertas">
         </div>
@@ -4337,6 +4421,155 @@
         document.getElementById(`siteImgLinkBadge-${slot.key}`).style.display = e.target.value.trim() ? 'flex' : 'none';
       });
     });
+  }
+
+  // ---------- Orden de las secciones del inicio ----------
+  const HOME_SECTION_LABELS = {
+    'promo-photos': { label: 'Fotos promocionales (carrusel)', hint: 'El bloque de 3 fotos que rotan' },
+    'category-grid': { label: 'Categorías destacadas', hint: 'La grilla de 4 tarjetas de categoría' }
+  };
+  let homeSectionOrder = ['promo-photos', 'category-grid'];
+  let homeSectionsLoaded = false;
+
+  async function loadHomeSections(){
+    homeSectionsLoaded = true;
+    const { data } = await supabaseClient.from('home_sections').select('*').order('sort_order');
+    if (data && data.length > 0) homeSectionOrder = data.map(r => r.id);
+    renderSectionOrderList();
+  }
+
+  function renderSectionOrderList(){
+    const container = document.getElementById('sectionOrderList');
+    if (!container) return;
+
+    const rows = homeSectionOrder.map((id, idx) => {
+      const info = HOME_SECTION_LABELS[id] || { label: id, hint: '' };
+      return `
+        <div class="section-order-row">
+          <div class="section-order-arrows">
+            <button type="button" ${idx === 0 ? 'disabled' : ''} onclick="moveHomeSection('${id}', -1)" title="Subir">▲</button>
+            <button type="button" ${idx === homeSectionOrder.length - 1 ? 'disabled' : ''} onclick="moveHomeSection('${id}', 1)" title="Bajar">▼</button>
+          </div>
+          <div>
+            <div class="section-order-name">${idx + 1}. ${info.label}</div>
+            <div class="section-order-hint">${info.hint}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    container.innerHTML = `
+      <div class="section-fixed-row"><span class="lock">🔒</span> Banner principal ("Bienvenido a ProOliva") — siempre primero</div>
+      ${rows}
+      <div class="section-fixed-row"><span class="lock">🔒</span> Suscríbete a nuestras ofertas — siempre fijo, cerca del pie de página</div>
+    `;
+    renderHomePreview();
+  }
+
+  window.moveHomeSection = function(id, dir){
+    const idx = homeSectionOrder.indexOf(id);
+    const newIdx = idx + dir;
+    if (idx === -1 || newIdx < 0 || newIdx >= homeSectionOrder.length) return;
+    [homeSectionOrder[idx], homeSectionOrder[newIdx]] = [homeSectionOrder[newIdx], homeSectionOrder[idx]];
+    renderSectionOrderList();
+    saveHomeSectionsOrder();
+  };
+
+  async function saveHomeSectionsOrder(){
+    await supabaseClient.from('home_sections').delete().gte('sort_order', 0);
+    await supabaseClient.from('home_sections').insert(homeSectionOrder.map((id, i) => ({ id, sort_order: i })));
+  }
+
+  // ---------- Paleta de colores ----------
+  const COLOR_FIELDS = [
+    { key: 'ink', label: 'Ink (texto principal)', fallback: '#20281a' },
+    { key: 'olive', label: 'Olive', fallback: '#55643b' },
+    { key: 'olive_deep', label: 'Olive deep', fallback: '#3a4527' },
+    { key: 'olive_light', label: 'Olive light', fallback: '#8a9a66' },
+    { key: 'gold', label: 'Gold', fallback: '#c89b3c' },
+    { key: 'gold_deep', label: 'Gold deep', fallback: '#9c7326' },
+    { key: 'aubergine', label: 'Aubergine', fallback: '#3d2b2e' },
+    { key: 'coffee', label: 'Coffee', fallback: '#3f2e20' },
+    { key: 'linen', label: 'Linen (fondo)', fallback: '#f3eee0' },
+    { key: 'paper', label: 'Paper (fondo claro)', fallback: '#fbf9f2' }
+  ];
+  let siteColorValues = {};
+  let siteColorsLoaded = false;
+
+  async function loadSiteColors(){
+    siteColorsLoaded = true;
+    const { data } = await supabaseClient.from('site_colors').select('*').eq('id', 1).single();
+    siteColorValues = {};
+    COLOR_FIELDS.forEach(f => { siteColorValues[f.key] = (data && data[f.key]) || f.fallback; });
+    renderColorPalette();
+  }
+
+  function renderColorPalette(){
+    const container = document.getElementById('colorPaletteGrid');
+    if (!container) return;
+    container.innerHTML = COLOR_FIELDS.map(f => `
+      <div class="color-swatch-field">
+        <input type="color" id="color-${f.key}" value="${siteColorValues[f.key]}">
+        <label for="color-${f.key}">${f.label}</label>
+      </div>
+    `).join('');
+    COLOR_FIELDS.forEach(f => {
+      document.getElementById(`color-${f.key}`).addEventListener('input', (e) => {
+        siteColorValues[f.key] = e.target.value;
+        renderHomePreview();
+      });
+    });
+  }
+
+  document.getElementById('saveColorsBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('saveColorsBtn');
+    const statusEl = document.getElementById('colorsStatus');
+    btn.disabled = true;
+    btn.textContent = 'Guardando...';
+    try {
+      const payload = { id: 1 };
+      COLOR_FIELDS.forEach(f => { payload[f.key] = siteColorValues[f.key]; });
+      const { error } = await supabaseClient.from('site_colors').upsert(payload);
+      if (error) throw error;
+      statusEl.textContent = 'Paleta de colores guardada ✓';
+      statusEl.className = 'site-image-status ok';
+    } catch (err){
+      statusEl.textContent = 'No se pudo guardar: ' + err.message;
+      statusEl.className = 'site-image-status error';
+      console.error(err);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Guardar paleta de colores';
+    }
+  });
+
+  // ---------- Vista previa del inicio ----------
+  function renderHomePreview(){
+    const container = document.getElementById('homePreview');
+    if (!container) return;
+    const c = siteColorValues;
+    const varStyle = c.ink
+      ? `--hp-ink:${c.ink}; --hp-paper:${c.paper}; --hp-linen:${c.linen}; --hp-olive-deep:${c.olive_deep}; --hp-gold:${c.gold};`
+      : '';
+
+    const sectionsHtml = homeSectionOrder.map(id => {
+      const info = HOME_SECTION_LABELS[id] || { label: id };
+      return `<div class="hpm-block hpm-section">${info.label}</div>`;
+    }).join('');
+
+    container.style = varStyle;
+    container.innerHTML = `
+      <div class="hpm-block hpm-header">🔒 Header + menú</div>
+      <div class="hpm-block hpm-hero">
+        <span>🔒 Banner principal</span>
+        <span class="hpm-sub">Bienvenido a ProOliva</span>
+      </div>
+      ${sectionsHtml}
+      <div class="hpm-block hpm-fixed">🔒 Nuestros productos (catálogo dinámico)</div>
+      <div class="hpm-block hpm-fixed">🔒 Confianza (25+ años / envío / medios de pago)</div>
+      <div class="hpm-block hpm-subscribe">🔒 Suscríbete a nuestras ofertas</div>
+      <div class="hpm-block hpm-footer">🔒 Pie de página</div>
+    `;
   }
 
   function setMockupImage(key, url){
