@@ -67,11 +67,11 @@
   .nav-actions{ display:flex; align-items:center; justify-content:flex-end; gap:18px;}
   .nav-actions-link{ font-size:13.5px; font-weight:600; text-transform:uppercase; letter-spacing:0.02em; opacity:0.8; transition:opacity .15s; white-space:nowrap;}
   .nav-actions-link:hover{ opacity:1; color:var(--olive-deep);}
-  .icon-link-btn{ position:relative; width:38px; height:38px; border-radius:0; border:1.5px solid var(--line); display:flex; align-items:center; justify-content:center; transition:border-color .15s; flex-shrink:0; background:transparent; cursor:pointer;}
-  .icon-link-btn:hover{ border-color:var(--olive-deep);}
+  .icon-link-btn{ position:relative; width:38px; height:38px; border:none; display:flex; align-items:center; justify-content:center; transition:opacity .15s; flex-shrink:0; background:transparent; cursor:pointer;}
+  .icon-link-btn:hover{ opacity:0.7;}
 
   /* ---------- cart ---------- */
-  .cart-badge{ position:absolute; top:-5px; right:-5px; background:var(--olive-deep); color:#fff; font-family:'IBM Plex Mono',monospace; font-size:10px; font-weight:700; min-width:18px; height:18px; border-radius:0; display:flex; align-items:center; justify-content:center; padding:0 4px;}
+  .cart-badge{ position:absolute; top:-5px; right:-5px; background:var(--olive-deep); color:#fff; font-family:'IBM Plex Mono',monospace; font-size:10px; font-weight:700; min-width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; padding:0 4px;}
   .cart-backdrop{ position:fixed; inset:0; background:rgba(20,24,15,0.5); z-index:90; opacity:0; pointer-events:none; transition:opacity .25s;}
   .cart-backdrop.open{ opacity:1; pointer-events:auto;}
   .cart-drawer{ position:fixed; top:0; right:0; height:100vh; height:100dvh; width:400px; max-width:92vw; background:var(--paper); z-index:95; box-shadow:-14px 0 40px rgba(0,0,0,0.25); transform:translateX(100%); transition:transform .32s cubic-bezier(.2,.8,.2,1); display:flex; flex-direction:column;}
@@ -138,7 +138,7 @@
   .hero-line-nowrap{ white-space:nowrap; display:inline-block;}
 
   /* ---------- fotos promocionales (carrusel, mismo tamaño, slide lateral) ---------- */
-  .promo-photos{ position:relative; padding:32px 0; background:var(--paper);}
+  .promo-photos{ position:relative; padding:0 0 32px; background:var(--paper);}
   .promo-photo-viewport{ position:relative; overflow:hidden; border-radius:0; box-shadow:0 20px 44px -22px rgba(32,40,26,0.4); height:clamp(260px, 40vw, 540px);}
   .promo-photo-track{ display:flex; width:100%; height:100%; transition:transform .7s cubic-bezier(.65,0,.35,1);}
   .promo-photo-slide{ flex:0 0 100%; width:100%; height:100%; position:relative;}
@@ -150,7 +150,7 @@
   .promo-photo-bar{ width:34px; height:4px; border-radius:0; background:rgba(255,255,255,0.45); cursor:pointer; transition:background .25s, width .25s; border:none; padding:0;}
   .promo-photo-bar.active{ background:#fff; width:52px;}
   @media (max-width:860px){
-    .promo-photos{ padding:24px 0;}
+    .promo-photos{ padding:0 0 24px;}
   }
 
   section{ padding:64px 0; }
@@ -171,7 +171,7 @@
   .confidence{ background:var(--paper); border-top:1px solid var(--line); border-bottom:1px solid var(--line); padding:40px 0;}
   .confidence-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:36px;}
   .confidence-item{ text-align:center; padding:0 12px;}
-  .confidence-icon{ width:54px; height:54px; border-radius:0; background:var(--linen); display:flex; align-items:center; justify-content:center; margin:0 auto 16px;}
+  .confidence-icon{ width:54px; height:54px; border-radius:50%; background:var(--linen); display:flex; align-items:center; justify-content:center; margin:0 auto 16px;}
   .confidence-item h3{ font-size:16.5px; margin-bottom:8px;}
   .confidence-item p{ font-size:13.5px; opacity:0.68;}
 
@@ -496,8 +496,8 @@
   <div class="cart-items" id="cartItems"></div>
   <div class="cart-footer">
     <div class="cart-total-row"><span>Total</span><span id="cartTotal">$0</span></div>
-    <a class="btn btn-primary btn-block" id="cartPayBtn" href="checkout.html" style="margin-bottom:8px;">Pagar ahora con Webpay</a>
-    <a class="btn btn-wsp btn-block" id="cartCheckoutBtn" href="#" target="_blank" rel="noopener">Cotizar carrito por WhatsApp</a>
+    <a class="btn btn-primary btn-block" id="cartPayBtn" href="checkout.html" style="margin-bottom:8px;">PAGAR AHORA</a>
+    <a class="btn btn-wsp btn-block" id="cartCheckoutBtn" href="#" target="_blank" rel="noopener">COTIZAR PEDIDO POR WHATSAPP</a>
     <button class="cart-clear-btn" id="cartClearBtn">Vaciar carrito</button>
   </div>
 </div>
