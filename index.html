@@ -522,15 +522,21 @@
       supabaseClient.from('site_colors').select('*').eq('id', 1).single()
     ]);
 
-    // Reordena las secciones editables según lo configurado en Home Editor
-    // (se van posicionando de a pares, consecutivas, sin tocar el resto de la página)
-    if (sections && sections.length > 1){
-      for (let i = 0; i < sections.length - 1; i++){
-        const elCurrent = document.querySelector(`[data-home-section="${sections[i].id}"]`);
-        const elNext = document.querySelector(`[data-home-section="${sections[i + 1].id}"]`);
-        if (elCurrent && elNext && elCurrent.parentElement === elNext.parentElement){
-          elCurrent.parentElement.insertBefore(elCurrent, elNext);
-        }
+    // Reordena las secciones editables según lo configurado en Home Editor.
+    // Se insertan, en el orden deseado, justo antes de un punto fijo que
+    // siempre viene después de todas ellas (la barra de "Suscríbete") —
+    // así terminan exactamente en ese orden sin importar cuántas posiciones
+    // se haya movido cada una. (La versión anterior solo intercambiaba pares
+    // consecutivos, y fallaba con más de un movimiento a la vez.)
+    if (sections && sections.length > 0){
+      const anchor = document.querySelector('.subscribe-bar');
+      if (anchor && anchor.parentElement){
+        sections.forEach(row => {
+          const el = document.querySelector(`[data-home-section="${row.id}"]`);
+          if (el && el.parentElement === anchor.parentElement){
+            anchor.parentElement.insertBefore(el, anchor);
+          }
+        });
       }
     }
 
